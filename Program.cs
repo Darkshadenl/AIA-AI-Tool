@@ -1,27 +1,47 @@
+using aia_api;
+
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
-app.MapPost("/uploadzip", async (IFormFile zipFile, HttpContext context) =>
+app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context) =>
 {
-    if (zipFile is null || zipFile.Length == 0)
+    if (compressedFile is null || compressedFile.Length == 0)
     {
         context.Response.StatusCode = 400;
         await context.Response.WriteAsync("No file received or file is empty.");
         return;
     }
 
-    if (zipFile.ContentType != "application/zip" && zipFile.ContentType != "application/gzip")
+    if (compressedFile.ContentType != "application/zip" && compressedFile.ContentType != "application/gzip")
     {
         context.Response.StatusCode = 400;
         await context.Response.WriteAsync("Invalid file type. Only ZIP and tar.gz files are allowed.");
         return;
     }
 
+    var handleCompressedFile = new HandleCompressedFile();
+
+    var memoryStream = new MemoryStream();
+    await compressedFile.CopyToAsync(memoryStream);
+    memoryStream.Position = 0;
+
+    switch (compressedFile.ContentType)
+    {
+        case "application/zip":
+            handleCompressedFile.HandleZipFileInMemory(memoryStream);
+            break;
+        case "application/gzip":
+            handleCompressedFile.HandleTarGzFileInMemory(compressedFile);
+            break;
+        default:
+            throw new NotImplementedException();
+    }
+
     // Hier kun je de logica toevoegen om het ZIP-bestand te verwerken
     // Bijvoorbeeld: Opslaan in Azure Blob Storage, uitpakken, enz.
 
     context.Response.StatusCode = 200;
-    await context.Response.WriteAsync("ZIP file successfully received.");
+    await context.Response.WriteAsync("File successfully received.");
 });
 
 
