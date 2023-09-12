@@ -8,7 +8,6 @@
 
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'https' " />
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
-
   <ItemGroup>
     <ProjectReference Include="InterfacesAia\InterfacesAia.csproj" />
   </ItemGroup>

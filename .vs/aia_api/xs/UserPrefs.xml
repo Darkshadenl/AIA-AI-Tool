@@ -1,31 +1,32 @@
 ﻿<Properties StartupConfiguration="{48837BEF-8C03-48E4-AF8F-3125565A3C66}|https">
-  <MultiItemStartupConfigurations />
-  <MonoDevelop.Ide.Workbench ActiveDocument="interfacesAia/Class1.cs">
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.Workbench ActiveDocument="Application/FileHandler/GZipHandlerInMemory.cs">
     <Files>
-      <File FileName="interfacesAia/Class1.cs" Line="5" Column="1" />
+      <File FileName="Application/FileHandler/GZipHandlerInMemory.cs" Line="18" Column="53" />
+      <File FileName="Application/FileHandler/ZipHandlerInMemory.cs" Line="29" Column="6" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State name="__root__">
-          <Node name="aia_api" expanded="True">
+          <Node name="aia_api">
             <Node name="aia_api">
-              <Node name="Dependencies" expanded="True">
-                <Node name="FrameworkReferences" expanded="True" />
+              <Node name="Application" expanded="True">
+                <Node name="FileHandler" expanded="True">
+                  <Node name="GZipHandlerInMemory.cs" selected="True" />
+                </Node>
               </Node>
             </Node>
-            <Node name="interfacesAia">
-              <Node name="Class1.cs" selected="True" />
-            </Node>
+            <Node name="InterfacesAia" expanded="True" />
           </Node>
         </State>
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>
-  <MonoDevelop.Ide.ItemProperties.interfacesAia FirstBuild="True" />
   <MonoDevelop.Ide.ItemProperties.aia__api PreferredExecutionTarget="/Applications/Microsoft Edge.app" />
+  <MonoDevelop.Ide.ItemProperties.interfacesAia FirstBuild="True" />
+  <MultiItemStartupConfigurations />
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore />
-  </MonoDevelop.Ide.DebuggingService.Breakpoints>
-  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
 </Properties>

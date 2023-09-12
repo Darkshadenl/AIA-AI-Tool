@@ -1,11 +1,10 @@
 using System.IO.Compression;
-using InterfacesAia;
 
 namespace aia_api.Application.FileHandler;
 
-public class GZipHandlerInMemory : ICompressedFileHandler
+public class GZipHandlerInMemory : InterfacesAia.ICompressedFileHandler
 {
-    private ICompressedFileHandler _next;
+    private InterfacesAia.ICompressedFileHandler _next;
     private Dictionary<string, int> _extensionsCount = new();
     private string _contentType = "\"application/gzip\"";
 
@@ -27,7 +26,7 @@ public class GZipHandlerInMemory : ICompressedFileHandler
 
     }
 
-    public void SetNext(ICompressedFileHandler next)
+    public void SetNext(InterfacesAia.ICompressedFileHandler next)
     {
         _next = next;
     }
