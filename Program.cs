@@ -1,7 +1,13 @@
 using aia_api;
+using aia_api.Application.FileHandler;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
+
+var fileHandlerStreet = new ZipHandlerInMemory();
+fileHandlerStreet.SetNext(new GZipHandlerInMemory());
+
+var supportedContentTypes = new[] { "application/zip", "application/gzip" };
 
 app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context) =>
 {
@@ -12,30 +18,17 @@ app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context) =>
         return;
     }
 
-    if (compressedFile.ContentType != "application/zip" && compressedFile.ContentType != "application/gzip")
+    if (!supportedContentTypes.Contains(compressedFile.ContentType))
     {
         context.Response.StatusCode = 400;
         await context.Response.WriteAsync("Invalid file type. Only ZIP and tar.gz files are allowed.");
         return;
     }
 
-    var handleCompressedFile = new HandleCompressedFile();
-
     var memoryStream = new MemoryStream();
     await compressedFile.CopyToAsync(memoryStream);
     memoryStream.Position = 0;
-
-    switch (compressedFile.ContentType)
-    {
-        case "application/zip":
-            handleCompressedFile.HandleZipFileInMemory(memoryStream);
-            break;
-        case "application/gzip":
-            handleCompressedFile.HandleTarGzFileInMemory(compressedFile);
-            break;
-        default:
-            throw new NotImplementedException();
-    }
+    var filteredResult = fileHandlerStreet.Handle(memoryStream, compressedFile.ContentType);
 
     // Hier kun je de logica toevoegen om het ZIP-bestand te verwerken
     // Bijvoorbeeld: Opslaan in Azure Blob Storage, uitpakken, enz.

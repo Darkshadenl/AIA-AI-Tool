@@ -1,20 +1,21 @@
-namespace aia_api;
-
-using System.IO;
 using System.IO.Compression;
+using InterfacesAia;
 
-public class HandleCompressedFile
+namespace aia_api.Application.FileHandler;
+
+public class GZipHandlerInMemory : ICompressedFileHandler
 {
+    private ICompressedFileHandler _next;
     private Dictionary<string, int> _extensionsCount = new();
+    private string _contentType = "\"application/gzip\"";
 
-    public void HandleTarGzFileInMemory(IFormFile tarGzFile)
+    public async Task<MemoryStream> Handle(MemoryStream input, string contentType)
     {
-        throw new NotImplementedException();
-    }
+        // TODO Check filesize. If too large, do _next.Handle()
 
-    public async Task<MemoryStream> HandleZipFileInMemory(MemoryStream zipMemoryStream)
-    {
-        using var archive = InitializeInputArchive(zipMemoryStream);
+        if (contentType != _contentType) return await _next.Handle(input, contentType);
+
+        using var archive = InitializeInputArchive(input);
         var outputMemoryStream = new MemoryStream();
         using var outputArchive = InitializeOutputArchive(outputMemoryStream);
 
@@ -23,6 +24,12 @@ public class HandleCompressedFile
         LogExtensionsCount();
 
         return outputMemoryStream;
+
+    }
+
+    public void SetNext(ICompressedFileHandler next)
+    {
+        _next = next;
     }
 
     private ZipArchive InitializeInputArchive(MemoryStream zipMemoryStream)
@@ -39,7 +46,7 @@ public class HandleCompressedFile
     {
         foreach (var entry in archive.Entries)
         {
-            if (IsDirectory(entry)) continue;
+            if (string.IsNullOrEmpty(GetExtension(entry))) continue;
 
             var extension = GetExtension(entry);
 
@@ -50,11 +57,6 @@ public class HandleCompressedFile
                 await CopyEntryToNewArchive(entry, outputArchive);
             }
         }
-    }
-
-    private bool IsDirectory(ZipArchiveEntry entry)
-    {
-        return string.IsNullOrEmpty(Path.GetExtension(entry.FullName));
     }
 
     private string GetExtension(ZipArchiveEntry entry)
@@ -88,7 +90,4 @@ public class HandleCompressedFile
         foreach (var (key, value) in _extensionsCount)
             Console.WriteLine($"{key}: {value}");
     }
-
-
-
 }
