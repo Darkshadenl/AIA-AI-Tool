@@ -5,48 +5,88 @@ using System.IO.Compression;
 
 public class HandleCompressedFile
 {
-    private Dictionary<string, int> extensionsCount = new Dictionary<string, int>();
+    private Dictionary<string, int> _extensionsCount = new();
 
     public void HandleTarGzFileInMemory(IFormFile tarGzFile)
     {
         throw new NotImplementedException();
     }
 
-    public async void HandleZipFileInMemory(MemoryStream zipMemoryStream)
+    public async Task<MemoryStream> HandleZipFileInMemory(MemoryStream zipMemoryStream)
     {
-        var extensionsCount = new Dictionary<string, int>();
+        using var archive = InitializeInputArchive(zipMemoryStream);
+        var outputMemoryStream = new MemoryStream();
+        using var outputArchive = InitializeOutputArchive(outputMemoryStream);
 
-        // Setup archive on a memorystream to read from zip
-        using var archive = new ZipArchive(zipMemoryStream, ZipArchiveMode.Read, true);
+        await ProcessEntries(archive, outputArchive);
 
-        // Setup memorystream for creating new zip
-        using var outputMemoryStream = new MemoryStream();
-        using var outputArchive = new ZipArchive(outputMemoryStream, ZipArchiveMode.Create, true);
+        LogExtensionsCount();
 
+        return outputMemoryStream;
+    }
+
+    private ZipArchive InitializeInputArchive(MemoryStream zipMemoryStream)
+    {
+        return new ZipArchive(zipMemoryStream, ZipArchiveMode.Read, true);
+    }
+
+    private ZipArchive InitializeOutputArchive(MemoryStream outputMemoryStream)
+    {
+        return new ZipArchive(outputMemoryStream, ZipArchiveMode.Create, true);
+    }
+
+    private async Task ProcessEntries(ZipArchive archive, ZipArchive outputArchive)
+    {
         foreach (var entry in archive.Entries)
         {
-            if (string.IsNullOrEmpty(Path.GetExtension(entry.FullName)))
-                continue;
+            if (IsDirectory(entry)) continue;
 
-            var extension = Path.GetExtension(entry.FullName);
+            var extension = GetExtension(entry);
 
+            CountExtension(extension);
 
-            if (!extensionsCount.ContainsKey(extension))
-                extensionsCount[extension] = 1;
-            else
-                extensionsCount[extension]++;
-
-            if (!new[] { ".py", ".cs", ".ts", ".js" }.Contains(extension)) continue;
-
-            var newEntry = outputArchive.CreateEntry(entry.FullName);
-            await using var originalStream = entry.Open();
-            await using var newStream = newEntry.Open();
-            await originalStream.CopyToAsync(newStream);
+            if (IsSupportedExtension(extension))
+            {
+                await CopyEntryToNewArchive(entry, outputArchive);
+            }
         }
+    }
 
-        foreach (var (key, value) in extensionsCount)
+    private bool IsDirectory(ZipArchiveEntry entry)
+    {
+        return string.IsNullOrEmpty(Path.GetExtension(entry.FullName));
+    }
+
+    private string GetExtension(ZipArchiveEntry entry)
+    {
+        return Path.GetExtension(entry.FullName);
+    }
+
+    private void CountExtension(string extension)
+    {
+        if (!_extensionsCount.ContainsKey(extension))
+            _extensionsCount[extension] = 1;
+        else
+            _extensionsCount[extension]++;
+    }
+
+    private bool IsSupportedExtension(string extension)
+    {
+        return new[] { ".py", ".cs", ".ts", ".js" }.Contains(extension);
+    }
+
+    private async Task CopyEntryToNewArchive(ZipArchiveEntry entry, ZipArchive outputArchive)
+    {
+        var newEntry = outputArchive.CreateEntry(entry.FullName);
+        await using var originalStream = entry.Open();
+        await using var newStream = newEntry.Open();
+        await originalStream.CopyToAsync(newStream);
+    }
+
+    private void LogExtensionsCount()
+    {
+        foreach (var (key, value) in _extensionsCount)
             Console.WriteLine($"{key}: {value}");
-
     }
 
 

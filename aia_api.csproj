@@ -6,4 +6,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'https' " />
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
+
+  <ItemGroup>
+    <Reference Include="MyLib">
+      <HintPath>/path/to/your/lib/MyLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

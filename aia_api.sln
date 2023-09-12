@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 25.0.1706.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aia_api", "aia_api.csproj", "{48837BEF-8C03-48E4-AF8F-3125565A3C66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InterfacesAia", "InterfacesAia\InterfacesAia.csproj", "{8B489E1B-9CDB-4220-8B55-3F167817A6E5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{48837BEF-8C03-48E4-AF8F-3125565A3C66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48837BEF-8C03-48E4-AF8F-3125565A3C66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48837BEF-8C03-48E4-AF8F-3125565A3C66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48837BEF-8C03-48E4-AF8F-3125565A3C66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B489E1B-9CDB-4220-8B55-3F167817A6E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B489E1B-9CDB-4220-8B55-3F167817A6E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B489E1B-9CDB-4220-8B55-3F167817A6E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B489E1B-9CDB-4220-8B55-3F167817A6E5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {39D6D8F4-F103-40D7-AF7B-9A49CB3ACA24}
+	EndGlobalSection
+EndGlobal
