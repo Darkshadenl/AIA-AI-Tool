@@ -1,5 +1,5 @@
+using aia_api.Application.EndpointFilter;
 using aia_api.Application.FileHandler;
-using aia_api.Application.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -8,8 +8,6 @@ var fileHandlerStreet = new ZipHandlerInMemory();
 fileHandlerStreet.SetNext(new GZipHandlerInMemory());
 
 var supportedContentTypes = new[] { "application/zip", "application/gzip" };
-
-app.UseEmptyFileCheckMiddleware();
 
 app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context) =>
 {
@@ -30,7 +28,7 @@ app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context) =>
 
     context.Response.StatusCode = 200;
     await context.Response.WriteAsync("File successfully received.");
-});
+}).AddEndpointFilter<EmptyFileFilter>();
 
 
 
