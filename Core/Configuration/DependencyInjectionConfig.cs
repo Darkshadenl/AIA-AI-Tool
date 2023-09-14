@@ -1,21 +1,19 @@
 using Azure.Storage;
 using Azure.Storage.Blobs;
-using DotNetEnv;
-
 namespace aia_api.Configuration;
 
 public static class DependencyInjectionConfig
 {
     public static void AddProjectServices(this IServiceCollection services, IConfiguration configuration)
     {
-        var blobServiceEndpoint = configuration.GetConnectionString("BLOBSERVICEENDPOINT");
-        var blobContainerName = configuration.GetConnectionString("BLOBCONTAINERNAME");
-        var accountName = configuration.GetConnectionString("ACCOUNTNAME");
-        var accountKey = configuration.GetConnectionString("STORAGEACCOUNTKEY");
+        var blobServiceEndpoint = configuration.GetValue<string>("BLOB_SERVICE_ENDPOINT");
+        var blobContainerName = configuration.GetValue<string>("BLOB_CONTAINER_NAME");
+        var accountName = configuration.GetValue<string>("ACCOUNT_NAME");
+        var accountKey = configuration.GetValue<string>("STORAGE_ACCOUNT_KEY");
 
         var connectionString = new Uri(blobServiceEndpoint + blobContainerName);
         var credential = new StorageSharedKeyCredential(accountName, accountKey);
 
-        services.AddSingleton(x => new BlobServiceClient(connectionString, credential));
+        services.AddSingleton(new BlobServiceClient(connectionString, credential));
     }
 }

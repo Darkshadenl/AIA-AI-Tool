@@ -1,6 +1,5 @@
-using Azure.Storage;
+using Azure.Core.Extensions;
 using Azure.Storage.Blobs;
-using DotNetEnv;
 
 namespace aia_api.Application.Azure;
 
@@ -9,21 +8,15 @@ public class AzureClient
     private readonly BlobServiceClient _blobServiceClient;
     private readonly string _blobContainerName;
 
-    public AzureClient()
+    public AzureClient(IConfiguration configuration, BlobServiceClient blobClient)
     {
-        var blobServiceEndpoint = Env.GetString("BLOBSERVICEENDPOINT");
-        var storageAccountKey = Env.GetString("STORAGEACCOUNTKEY");
-        var accountName = Env.GetString("ACCOUNTNAME");
-        _blobContainerName = Env.GetString("BLOBCONTAINERNAME");
-
-        _blobServiceClient = new BlobServiceClient(new Uri(blobServiceEndpoint),
-            new StorageSharedKeyCredential(accountName, storageAccountKey));
+        _blobContainerName = configuration.GetValue<string>("BLOBCONTAINERNAME") ?? string.Empty;
+        _blobServiceClient = blobClient;
     }
 
     public async Task Pipeline(MemoryStream stream, string fileName)
     {
-        var containerClient = _blobServiceClient.GetBlobContainerClient(_blobContainerName);
-        BlobClient blobClient = containerClient.GetBlobClient(fileName);
+        var blobClient = CreateBlobClients(fileName);
 
         byte[] buffer = new byte[4 * 1024];
         stream.Position = 0;
@@ -45,4 +38,11 @@ public class AzureClient
         }
     }
 
+    private BlobClient CreateBlobClients(string fileName)
+    {
+        var c = IAzureClientBuilder<>
+        var containerClient = _blobServiceClient.GetBlobContainerClient(_blobContainerName);
+        BlobClient blobClient = containerClient.GetBlobClient(fileName);
+        return blobClient;
+    }
 }
