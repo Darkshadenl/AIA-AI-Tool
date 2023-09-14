@@ -1,11 +1,13 @@
 using aia_api.Application.Azure;
 using aia_api.Application.EndpointFilter;
 using aia_api.Application.FileHandler;
-using DotNetEnv;
+using aia_api.Configuration;
 
-Env.Load();
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddProjectServices(builder.Configuration);
+
 var app = builder.Build();
+
 
 var fileHandlerStreet = new ZipHandlerInMemory();
 
