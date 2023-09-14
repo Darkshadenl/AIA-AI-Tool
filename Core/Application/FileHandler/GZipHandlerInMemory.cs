@@ -3,25 +3,28 @@ using InterfacesAia;
 
 namespace aia_api.Application.FileHandler;
 
-public class GZipHandlerInMemory : ICompressedFileHandler
+public class GZipHandlerInMemory : AbstractFileHandler
 {
-    private ICompressedFileHandler _next;
-    private Dictionary<string, int> _extensionsCount = new();
-    private string _contentType = "\"application/gzip\"";
+    private const string ContentType = "application/gzip";
 
     public async Task<MemoryStream> Handle(MemoryStream input, string contentType)
     {
-        // TODO Check filesize. If too large, do _next.Handle()
+        if (!IsValidFile(input, contentType, ContentType))
+            throw new NotSupportedException("Invalid file type. Only ZIP files are allowed.");
 
-        if (contentType != _contentType) return await _next.Handle(input, contentType);
+        // using var archive = InitializeInputArchive(input);
+        // var outputMemoryStream = new MemoryStream();
+        // using var outputArchive = InitializeOutputArchive(outputMemoryStream);
 
-        using var archive = InitializeInputArchive(input);
+        await using var gzipStream = new GZipStream(input, CompressionMode.Decompress);
         var outputMemoryStream = new MemoryStream();
-        using var outputArchive = InitializeOutputArchive(outputMemoryStream);
 
-        await ProcessEntries(archive, outputArchive);
+        await gzipStream.CopyToAsync(outputMemoryStream);
 
-        LogExtensionsCount();
+
+        // await ProcessEntries(archive, outputArchive);
+
+        // LogExtensionsCount();
 
         return outputMemoryStream;
 
@@ -32,32 +35,32 @@ public class GZipHandlerInMemory : ICompressedFileHandler
         _next = next;
     }
 
-    private ZipArchive InitializeInputArchive(MemoryStream zipMemoryStream)
-    {
-        return new ZipArchive(zipMemoryStream, ZipArchiveMode.Read, true);
-    }
+    // private GZipStream InitializeInputArchive(MemoryStream zipMemoryStream)
+    // {
+    //     return new ZipArchive(zipMemoryStream, ZipArchiveMode.Read, true);
+    // }
+    //
+    // private GZipStream InitializeOutputArchive(MemoryStream outputMemoryStream)
+    // {
+    //     return new ZipArchive(outputMemoryStream, ZipArchiveMode.Create, true);
+    // }
 
-    private ZipArchive InitializeOutputArchive(MemoryStream outputMemoryStream)
-    {
-        return new ZipArchive(outputMemoryStream, ZipArchiveMode.Create, true);
-    }
-
-    private async Task ProcessEntries(ZipArchive archive, ZipArchive outputArchive)
-    {
-        foreach (var entry in archive.Entries)
-        {
-            if (string.IsNullOrEmpty(GetExtension(entry))) continue;
-
-            var extension = GetExtension(entry);
-
-            CountExtension(extension);
-
-            if (IsSupportedExtension(extension))
-            {
-                await CopyEntryToNewArchive(entry, outputArchive);
-            }
-        }
-    }
+    // private async Task ProcessEntries(MemoryStream archive, ZipArchive outputArchive)
+    // {
+    //     foreach (var entry in archive.Entries)
+    //     {
+    //         if (string.IsNullOrEmpty(GetExtension(entry))) continue;
+    //
+    //         var extension = GetExtension(entry);
+    //
+    //         CountExtension(extension);
+    //
+    //         if (IsSupportedExtension(extension))
+    //         {
+    //             await CopyEntryToNewArchive(entry, outputArchive);
+    //         }
+    //     }
+    // }
 
     private string GetExtension(ZipArchiveEntry entry)
     {
@@ -77,13 +80,13 @@ public class GZipHandlerInMemory : ICompressedFileHandler
         return new[] { ".py", ".cs", ".ts", ".js" }.Contains(extension);
     }
 
-    private async Task CopyEntryToNewArchive(ZipArchiveEntry entry, ZipArchive outputArchive)
-    {
-        var newEntry = outputArchive.CreateEntry(entry.FullName);
-        await using var originalStream = entry.Open();
-        await using var newStream = newEntry.Open();
-        await originalStream.CopyToAsync(newStream);
-    }
+    // private async Task CopyEntryToNewArchive(GZipStream entry, GZipStream outputArchive)
+    // {
+    //     var newEntry = outputArchive.CreateEntry(entry.FullName);
+    //     await using var originalStream = entry.Open();
+    //     await using var newStream = newEntry.Open();
+    //     await originalStream.CopyToAsync(newStream);
+    // }
 
     private void LogExtensionsCount()
     {

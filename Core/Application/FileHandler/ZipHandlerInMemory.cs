@@ -1,19 +1,15 @@
 using System.IO.Compression;
-using InterfacesAia;
 
 namespace aia_api.Application.FileHandler;
 
-public class ZipHandlerInMemory : ICompressedFileHandler
+public class ZipHandlerInMemory : AbstractFileHandler
 {
-    private ICompressedFileHandler _next;
-    private Dictionary<string, int> _extensionsCount = new();
-    private string _contentType = "\"application/zip\"";
+    private const string ContentType = "application/zip";
 
-    public async Task<MemoryStream> Handle(MemoryStream input, string contentType)
+    public new async Task<MemoryStream> Handle(MemoryStream input, string inputContentType)
     {
-        // TODO Check filesize. If too large, do _next.Handle()
-
-        if (contentType != _contentType) return await _next.Handle(input, contentType);
+        if (!IsValidFile(input, inputContentType, ContentType))
+            throw new NotSupportedException("Invalid file type. Only ZIP files are allowed.");
 
         using var archive = InitializeInputArchive(input);
         var outputMemoryStream = new MemoryStream();
@@ -21,14 +17,12 @@ public class ZipHandlerInMemory : ICompressedFileHandler
 
         await ProcessEntries(archive, outputArchive);
 
-        LogExtensionsCount();
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+        {
+            // LogExtensionsCount();
+        }
 
         return outputMemoryStream;
-    }
-
-    public void SetNext(ICompressedFileHandler next)
-    {
-        _next = next;
     }
 
     private ZipArchive InitializeInputArchive(MemoryStream zipMemoryStream)
@@ -63,30 +57,11 @@ public class ZipHandlerInMemory : ICompressedFileHandler
         return Path.GetExtension(entry.FullName);
     }
 
-    private void CountExtension(string extension)
-    {
-        if (!_extensionsCount.ContainsKey(extension))
-            _extensionsCount[extension] = 1;
-        else
-            _extensionsCount[extension]++;
-    }
-
-    private bool IsSupportedExtension(string extension)
-    {
-        return new[] { ".py", ".cs", ".ts", ".js" }.Contains(extension);
-    }
-
     private async Task CopyEntryToNewArchive(ZipArchiveEntry entry, ZipArchive outputArchive)
     {
         var newEntry = outputArchive.CreateEntry(entry.FullName);
         await using var originalStream = entry.Open();
         await using var newStream = newEntry.Open();
         await originalStream.CopyToAsync(newStream);
-    }
-
-    private void LogExtensionsCount()
-    {
-        foreach (var (key, value) in _extensionsCount)
-            Console.WriteLine($"{key}: {value}");
     }
 }
