@@ -5,7 +5,7 @@ project.lock.json
 *.pyc
 nupkg/
 .env
-
+launchSettings.json
 # Visual Studio Code
 .vscode
 
