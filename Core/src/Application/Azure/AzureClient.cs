@@ -1,4 +1,3 @@
-using Azure.Core.Extensions;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
 

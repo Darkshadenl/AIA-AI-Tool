@@ -1,6 +1,6 @@
 namespace aia_api.Application.Azure;
 
-public class AzureBlobStorageSettings
+public record AzureBlobStorageSettings
 {
     public string StorageAccountKey { get; set; }
     public string AccountName { get; set; }
