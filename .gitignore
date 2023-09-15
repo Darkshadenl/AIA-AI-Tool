@@ -30,3 +30,7 @@ bld/
 msbuild.log
 msbuild.err
 msbuild.wrn
+
+# .net core files
+appsettings.json
+appsettings.development.json

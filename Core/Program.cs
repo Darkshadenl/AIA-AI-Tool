@@ -2,9 +2,9 @@ using aia_api.Application.Azure;
 using aia_api.Application.EndpointFilter;
 using aia_api.Application.FileHandler;
 using aia_api.Configuration;
-using Azure.Core.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddProjectConfigs(builder.Configuration);
 builder.Services.AddProjectServices(builder.Configuration);
 
 var app = builder.Build();
@@ -13,7 +13,7 @@ var fileHandlerStreet = new ZipHandlerInMemory();
 
 var supportedContentTypes = new[] { "application/zip" };
 
-app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context) =>
+app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context, AzureClient client) =>
 {
     if (!supportedContentTypes.Contains(compressedFile.ContentType))
     {
@@ -30,8 +30,7 @@ app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context) =>
     await using (var memStream = filteredResult.Result)
     {
         memStream.Position = 0;
-        // var azureApi = client;
-        // await azureApi.Pipeline(memStream, compressedFile.FileName);
+        await client.Pipeline(memStream, compressedFile.FileName);
     }
 
     context.Response.StatusCode = 200;

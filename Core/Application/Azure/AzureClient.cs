@@ -1,5 +1,6 @@
 using Azure.Core.Extensions;
 using Azure.Storage.Blobs;
+using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.Azure;
 
@@ -8,9 +9,9 @@ public class AzureClient
     private readonly BlobServiceClient _blobServiceClient;
     private readonly string _blobContainerName;
 
-    public AzureClient(IConfiguration configuration, BlobServiceClient blobClient)
+    public AzureClient(BlobServiceClient blobClient, IOptions<AzureBlobStorageSettings> settings)
     {
-        _blobContainerName = configuration.GetValue<string>("BLOBCONTAINERNAME") ?? string.Empty;
+        _blobContainerName = settings.Value.BlobContainerName;
         _blobServiceClient = blobClient;
     }
 
@@ -40,7 +41,6 @@ public class AzureClient
 
     private BlobClient CreateBlobClients(string fileName)
     {
-        var c = IAzureClientBuilder<>
         var containerClient = _blobServiceClient.GetBlobContainerClient(_blobContainerName);
         BlobClient blobClient = containerClient.GetBlobClient(fileName);
         return blobClient;

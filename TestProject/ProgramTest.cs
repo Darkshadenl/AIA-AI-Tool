@@ -11,6 +11,6 @@ public class ProgramTest
     [Test]
     public void Test1()
     {
-        Assert.Pass();
+
     }
 }
