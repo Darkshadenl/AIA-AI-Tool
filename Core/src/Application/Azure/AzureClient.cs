@@ -1,3 +1,4 @@
+using aia_api.Domain.Azure;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
 

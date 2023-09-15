@@ -1,4 +1,5 @@
 using aia_api.Application.Azure;
+using aia_api.Domain.Azure;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 
