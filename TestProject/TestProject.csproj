@@ -21,7 +21,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Application\EndpointFilter\" />
       <Folder Include="Application\FileHandler\" />
     </ItemGroup>
 

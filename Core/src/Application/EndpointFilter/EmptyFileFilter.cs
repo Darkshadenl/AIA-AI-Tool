@@ -4,11 +4,19 @@ public class EmptyFileFilter : IEndpointFilter
 {
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        if (context.HttpContext.Request.ContentLength == 0)
+        try
         {
-            context.HttpContext.Response.StatusCode = 400;
-            await context.HttpContext.Response.WriteAsync("No file received or file is empty.");
-            return null;
+            if (context.HttpContext.Request.ContentLength == 0)
+            {
+                context.HttpContext.Response.StatusCode = 400;
+                await context.HttpContext.Response.WriteAsync("No file received or file is empty.");
+                return null;
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
         }
 
         var form = context.HttpContext.Request.ReadFormAsync();
