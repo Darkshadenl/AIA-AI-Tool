@@ -122,4 +122,28 @@ public class EmptyFileFilterTest
         });
     }
 
+    [Test]
+    public async Task InvokeAsync_ShouldHandleException_WhenExceptionThrown()
+    {
+        // Arrange
+        var requestMock = new Mock<HttpRequest>();
+        var responseMock = new Mock<HttpResponse>();
+
+        _context.Setup(x => x.HttpContext).Returns(new DefaultHttpContext());
+        _context.Setup(x => x.HttpContext.Request).Returns(requestMock.Object);
+        _context.Setup(x => x.HttpContext.Response).Returns(responseMock.Object);
+        requestMock.SetupGet(x => x.ContentLength).Throws<Exception>();
+
+        // Act
+        var result = await new EmptyFileFilter().InvokeAsync(_context.Object, _next.Object);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo(null));
+            responseMock.VerifySet(x => x.StatusCode = 400, Times.Once);
+        });
+
+    }
+
 }

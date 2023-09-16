@@ -40,7 +40,3 @@ app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context, Azu
 
 
 app.Run();
-
-namespace aia_api
-{
-}
