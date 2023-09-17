@@ -2,6 +2,7 @@ using aia_api.Application.Azure;
 using aia_api.Application.EndpointFilter;
 using aia_api.Application.FileHandler;
 using aia_api.Configuration;
+using aia_api.Routes;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProjectConfigs(builder.Configuration);
@@ -12,6 +13,12 @@ var app = builder.Build();
 var fileHandlerStreet = new ZipHandlerInMemory();
 
 var supportedContentTypes = new[] { "application/zip" };
+
+/*
+ * Example of extracting route functionality to separate file
+ */
+app.MapPost("/uploadZip", ZipUploadHandler.UploadZipHandler(fileHandlerStreet))
+    .AddEndpointFilter<EmptyFileFilter>();
 
 app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context, AzureClient client) =>
 {
