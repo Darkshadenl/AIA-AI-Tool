@@ -36,9 +36,9 @@ public class UploadRouter
         };
     }
 
-    public static Func<UploadRepoDTO, HttpContext, GitlabApi, Task> RepoHandler()
+    public static Func<UploadRepoDTO, HttpContext, Task> RepoHandler()
     {
-        return async (UploadRepoDTO dto, HttpContext context, GitlabApi gitlabApi) =>
+        return async (UploadRepoDTO dto, HttpContext context, HttpClient httpClient) =>
         {
             var url = dto.HttpsRepoUrl;
 
@@ -56,7 +56,21 @@ public class UploadRouter
                 return;
             }
 
-            gitlabApi.DownloadRepo(dto.HttpsRepoUrl, dto.apiToken);
+            using (httpClient)
+            {
+                httpClient.DefaultRequestHeaders.Add("Private-Token", dto.apiToken);
+
+                var url2 = $"https://gitlab.com/api/v4/projects/{projectId}/repository/archive.zip";
+                var u3 = "https://gitlab.com/infi-projects/nijmegen/intern/joost/-/archive/main/joost-main.zip";
+
+                using (var response = await httpClient.GetAsync(url))
+                {
+                    await using (var fileStream = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        await response.Content.CopyToAsync(fileStream);
+                    }
+                }
+            }
 
             await Task.CompletedTask;
         };

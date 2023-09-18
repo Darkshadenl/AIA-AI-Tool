@@ -9,9 +9,4 @@ public class GitlabApi
         _clientFactory = factory;
     }
 
-    public async void DownloadRepo(string repoUrl, string apiToken)
-    {
-        var client = _clientFactory.CreateClient(apiToken);
-
-    }
 }
