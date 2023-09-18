@@ -9,9 +9,10 @@ public class UploadRouter
 {
     private static string[] _supportedContentTypes = new[] { "application/zip" };
 
-    public static Func<IFormFile, HttpContext, AzureClient, Task> ZipHandler(ZipHandlerInMemory zipHandlerInMemory)
+    public static Func<IFormFile, HttpContext, AzureClient, IFileHandlerFactory, Task> ZipHandler()
     {
-        return async (IFormFile compressedFile, HttpContext context, AzureClient client) =>
+        return async (IFormFile compressedFile, HttpContext context,
+            AzureClient client, IFileHandlerFactory fileHandlerFactory) =>
         {
             if (!_supportedContentTypes.Contains(compressedFile.ContentType))
             {
@@ -20,10 +21,11 @@ public class UploadRouter
                 return;
             }
 
+            var handlerStreet = fileHandlerFactory.GetFileHandler();
             var memoryStream = new MemoryStream();
             await compressedFile.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
-            var filteredResult = zipHandlerInMemory.Handle(memoryStream, compressedFile.ContentType);
+            var filteredResult = handlerStreet.Handle(memoryStream, compressedFile.ContentType);
 
             await using (var memStream = filteredResult.Result)
             {
@@ -36,11 +38,11 @@ public class UploadRouter
         };
     }
 
-    public static Func<UploadRepoDTO, HttpContext, Task> RepoHandler()
+    public static Func<UploadRepoDTO, HttpContext, HttpClient, Task> RepoHandler()
     {
         return async (UploadRepoDTO dto, HttpContext context, HttpClient httpClient) =>
         {
-            var url = dto.HttpsRepoUrl;
+            var url = dto.HttpsRepoDownloadUrl;
 
             if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
@@ -60,12 +62,9 @@ public class UploadRouter
             {
                 httpClient.DefaultRequestHeaders.Add("Private-Token", dto.apiToken);
 
-                var url2 = $"https://gitlab.com/api/v4/projects/{projectId}/repository/archive.zip";
-                var u3 = "https://gitlab.com/infi-projects/nijmegen/intern/joost/-/archive/main/joost-main.zip";
-
                 using (var response = await httpClient.GetAsync(url))
                 {
-                    await using (var fileStream = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    await using (var fileStream = new FileStream("./TempDownloads", FileMode.Create, FileAccess.Write, FileShare.None))
                     {
                         await response.Content.CopyToAsync(fileStream);
                     }

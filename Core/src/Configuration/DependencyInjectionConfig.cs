@@ -1,5 +1,7 @@
 using aia_api.Application.Azure;
-using aia_api.Domain.Azure;
+using aia_api.Application.FileHandler;
+using aia_api.Application.Gitlab;
+using aia_api.Configuration.Azure;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 
@@ -11,24 +13,29 @@ public static class DependencyInjectionConfig
     {
         var blobConfig = configuration.GetSection("AzureBlobStorage");
         services.Configure<AzureBlobStorageSettings>(blobConfig);
+        var settings = configuration.GetSection("Settings");
+        services.Configure<Settings>(settings);
     }
 
     public static void AddProjectServices(this IServiceCollection services, IConfiguration configuration)
     {
-        var c = configuration.GetSection("AzureBlobStorage").Get<AzureBlobStorageSettings>();
+        var azureBlobStorageSettings = configuration.GetSection("AzureBlobStorage").Get<AzureBlobStorageSettings>();
 
-        if (c == null)
-            throw new ArgumentNullException(nameof(c));
+        if (azureBlobStorageSettings == null)
+            throw new ArgumentNullException(nameof(azureBlobStorageSettings));
 
-        var blobServiceEndpoint = c.BlobServiceEndpoint;
-        var blobContainerName = c.BlobContainerName;
-        var accountName = c.AccountName;
-        var accountKey = c.StorageAccountKey;
+        var blobServiceEndpoint = azureBlobStorageSettings.BlobServiceEndpoint;
+        var blobContainerName = azureBlobStorageSettings.BlobContainerName;
+        var accountName = azureBlobStorageSettings.AccountName;
+        var accountKey = azureBlobStorageSettings.StorageAccountKey;
 
         var connectionString = new Uri(blobServiceEndpoint + blobContainerName);
         var credential = new StorageSharedKeyCredential(accountName, accountKey);
 
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
         services.AddScoped<AzureClient>();
+        services.AddScoped<HttpClient>();
+        services.AddScoped<GitLabClientFactory>();
+        services.AddScoped<IFileHandlerFactory, FileHandlerFactory>();
     }
 }

@@ -1,7 +1,7 @@
 namespace InterfacesAia;
 
-public interface ICompressedFileHandler
+public interface IUploadedFileHandler
 {
     Task<MemoryStream> Handle(MemoryStream input, string extension);
-    void SetNext(ICompressedFileHandler next);
+    void SetNext(IUploadedFileHandler next);
 }

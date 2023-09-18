@@ -1,4 +1,6 @@
 using System.IO.Compression;
+using aia_api.Configuration.Azure;
+using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
 
@@ -6,7 +8,11 @@ public class ZipHandlerInMemory : AbstractFileHandler
 {
     private const string ContentType = "application/zip";
 
-    public new async Task<MemoryStream> Handle(MemoryStream input, string inputContentType)
+    public ZipHandlerInMemory(IOptions<Settings> extensionSettings) : base(extensionSettings)
+    {
+    }
+
+    public override async Task<MemoryStream> Handle(MemoryStream input, string inputContentType)
     {
         if (!IsValidFile(input, inputContentType, ContentType))
             throw new NotSupportedException("Invalid file type. Only ZIP files are allowed.");
