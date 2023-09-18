@@ -17,10 +17,12 @@ var supportedContentTypes = new[] { "application/zip" };
 /*
  * Example of extracting route functionality to separate file
  */
-app.MapPost("/uploadZip", ZipUploadHandler.UploadZipHandler(fileHandlerStreet))
+app.MapPost("/api/upload/zip", UploadRouter.ZipHandler(fileHandlerStreet))
     .AddEndpointFilter<EmptyFileFilter>();
 
-app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context, AzureClient client) =>
+app.MapPost("/api/upload/repo", UploadRouter.RepoHandler());
+
+app.MapPost("/api/upload", async (IFormFile compressedFile, HttpContext context, AzureClient client) =>
 {
     if (!supportedContentTypes.Contains(compressedFile.ContentType))
     {

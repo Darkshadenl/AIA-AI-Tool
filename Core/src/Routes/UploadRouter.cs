@@ -1,13 +1,15 @@
 using aia_api.Application.Azure;
 using aia_api.Application.FileHandler;
+using aia_api.Application.Gitlab;
+using aia_api.Routes.DTO;
 
 namespace aia_api.Routes;
 
-public class ZipUploadHandler
+public class UploadRouter
 {
     private static string[] _supportedContentTypes = new[] { "application/zip" };
 
-    public static Func<IFormFile, HttpContext, AzureClient, Task> UploadZipHandler(ZipHandlerInMemory zipHandlerInMemory)
+    public static Func<IFormFile, HttpContext, AzureClient, Task> ZipHandler(ZipHandlerInMemory zipHandlerInMemory)
     {
         return async (IFormFile compressedFile, HttpContext context, AzureClient client) =>
         {
@@ -31,6 +33,32 @@ public class ZipUploadHandler
 
             context.Response.StatusCode = 200;
             await context.Response.WriteAsync("File successfully received.");
+        };
+    }
+
+    public static Func<UploadRepoDTO, HttpContext, GitlabApi, Task> RepoHandler()
+    {
+        return async (UploadRepoDTO dto, HttpContext context, GitlabApi gitlabApi) =>
+        {
+            var url = dto.HttpsRepoUrl;
+
+            if (url.Length == 0)
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("Invalid url. Please provide a valid url.");
+                return;
+            }
+
+            if (dto.apiToken.Length == 0)
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("Invalid api token. Please provide a valid api token.");
+                return;
+            }
+
+            gitlabApi.DownloadRepo(dto.HttpsRepoUrl, dto.apiToken);
+
+            await Task.CompletedTask;
         };
     }
 }
