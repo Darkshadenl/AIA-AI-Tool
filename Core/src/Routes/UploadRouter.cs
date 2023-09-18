@@ -42,12 +42,16 @@ public class UploadRouter
     {
         return async (UploadRepoDTO dto, HttpContext context, HttpClient httpClient) =>
         {
-            var url = dto.HttpsRepoDownloadUrl;
+            var projectId = dto.projectId;
+            var url = $"https://gitlab.com/api/v4/projects/{projectId}/repository/archive.zip";
+            var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "TempDownloads");
+            var fileName = $"{dto.projectId}.zip";
+            var fullPath = Path.Combine(directoryPath, fileName);
 
-            if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
+            if (projectId.Length == 0 || string.IsNullOrWhiteSpace(projectId))
             {
                 context.Response.StatusCode = 400;
-                await context.Response.WriteAsync("Invalid url. Please provide a valid url.");
+                await context.Response.WriteAsync("Invalid project id. Please provide a valid projectid.");
                 return;
             }
 
@@ -58,20 +62,33 @@ public class UploadRouter
                 return;
             }
 
-            using (httpClient)
-            {
-                httpClient.DefaultRequestHeaders.Add("Private-Token", dto.apiToken);
+            using var downloadClient = httpClient;
+            downloadClient.DefaultRequestHeaders.Add("Private-Token", dto.apiToken);
 
-                using (var response = await httpClient.GetAsync(url))
-                {
-                    await using (var fileStream = new FileStream("./TempDownloads", FileMode.Create, FileAccess.Write, FileShare.None))
-                    {
-                        await response.Content.CopyToAsync(fileStream);
-                    }
-                }
+            using var response = await downloadClient.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("Invalid project id. Please provide a valid projectid.");
+                return;
             }
 
-            await Task.CompletedTask;
+            try
+            {
+                await using var fileStream =
+                    new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                await response.Content.CopyToAsync(fileStream);
+                Console.WriteLine("File downloaded.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
+            context.Response.StatusCode = 200;
+            await context.Response.WriteAsync("File successfully received.");
         };
     }
 }
