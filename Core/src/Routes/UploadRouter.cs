@@ -47,15 +47,15 @@ public class UploadRouter
 
             if (projectId.Length == 0 || string.IsNullOrWhiteSpace(projectId))
             {
-                context.Response.StatusCode = 400;
                 await context.Response.WriteAsync("Invalid project id. Please provide a valid projectid.");
+                context.Response.StatusCode = 400;
                 return;
             }
 
             if (apiToken.Length == 0 || string.IsNullOrWhiteSpace(apiToken))
             {
-                context.Response.StatusCode = 400;
                 await context.Response.WriteAsync("Invalid api token. Please provide a valid api token.");
+                context.Response.StatusCode = 400;
                 return;
             }
 
@@ -65,8 +65,10 @@ public class UploadRouter
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                throw;
+                Console.WriteLine($"Exception: {e.Message}, StackTrace: {e.StackTrace}");
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("Could not download repository.");
+                return;
             }
 
             context.Response.StatusCode = 200;
