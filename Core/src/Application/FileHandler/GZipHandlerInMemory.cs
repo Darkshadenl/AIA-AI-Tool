@@ -1,11 +1,17 @@
 using System.IO.Compression;
+using aia_api.Configuration.Azure;
 using InterfacesAia;
+using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
 
 public class GZipHandlerInMemory : AbstractFileHandler
 {
     private const string ContentType = "application/gzip";
+
+    public GZipHandlerInMemory(IOptions<Settings> extensionSettings) : base(extensionSettings)
+    {
+    }
 
     public async Task<MemoryStream> Handle(MemoryStream input, string contentType)
     {
@@ -30,9 +36,9 @@ public class GZipHandlerInMemory : AbstractFileHandler
 
     }
 
-    public void SetNext(ICompressedFileHandler next)
+    public void SetNext(IUploadedFileHandler next)
     {
-        _next = next;
+        Next = next;
     }
 
     // private GZipStream InitializeInputArchive(MemoryStream zipMemoryStream)
@@ -69,11 +75,12 @@ public class GZipHandlerInMemory : AbstractFileHandler
 
     private void CountExtension(string extension)
     {
-        if (!_extensionsCount.ContainsKey(extension))
-            _extensionsCount[extension] = 1;
+        if (!ExtensionsCount.ContainsKey(extension))
+            ExtensionsCount[extension] = 1;
         else
-            _extensionsCount[extension]++;
+            ExtensionsCount[extension]++;
     }
+
 
     private bool IsSupportedExtension(string extension)
     {
@@ -90,7 +97,8 @@ public class GZipHandlerInMemory : AbstractFileHandler
 
     private void LogExtensionsCount()
     {
-        foreach (var (key, value) in _extensionsCount)
+        foreach (var (key, value) in ExtensionsCount)
             Console.WriteLine($"{key}: {value}");
     }
+
 }

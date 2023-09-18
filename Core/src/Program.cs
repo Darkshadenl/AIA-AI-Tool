@@ -9,11 +9,9 @@ builder.Services.AddProjectServices(builder.Configuration);
 
 var app = builder.Build();
 
-var fileHandlerStreet = new ZipHandlerInMemory();
-
 var supportedContentTypes = new[] { "application/zip" };
 
-app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context, AzureClient client) =>
+app.MapPost("/api/upload/zip", async (IFormFile compressedFile, HttpContext context, AzureClient client, IFileHandlerFactory fileHandlerStreetFactory) =>
 {
     if (!supportedContentTypes.Contains(compressedFile.ContentType))
     {
@@ -22,6 +20,7 @@ app.MapPost("/upload", async (IFormFile compressedFile, HttpContext context, Azu
         return;
     }
 
+    var fileHandlerStreet = fileHandlerStreetFactory.GetFileHandler();
     var memoryStream = new MemoryStream();
     await compressedFile.CopyToAsync(memoryStream);
     memoryStream.Position = 0;

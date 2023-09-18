@@ -1,28 +1,36 @@
+using aia_api.Configuration.Azure;
 using InterfacesAia;
+using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
 
-public abstract class AbstractFileHandler : ICompressedFileHandler
+public abstract class AbstractFileHandler : IUploadedFileHandler
 {
-    protected ICompressedFileHandler _next;
-    protected Dictionary<string, int> _extensionsCount = new();
-    protected const int FileSizeInGb = 1 * 1024 * 1024 * 1024;
+    protected IUploadedFileHandler Next;
+    protected readonly Dictionary<string, int> ExtensionsCount = new();
+    private readonly Settings _supportedContentTypes;
+    protected int FileSizeInGb = 1 * 1024 * 1024 * 1024;
 
-    public Task<MemoryStream> Handle(MemoryStream input, string extension)
+    protected AbstractFileHandler(IOptions<Settings> extensionSettings)
+    {
+        _supportedContentTypes = extensionSettings.Value;
+    }
+
+    public virtual Task<MemoryStream> Handle(MemoryStream input, string extension)
     {
         throw new NotImplementedException();
     }
 
-    public void SetNext(ICompressedFileHandler next)
+    public void SetNext(IUploadedFileHandler next)
     {
-        _next = next;
+        Next = next;
     }
 
     protected bool IsValidFile(MemoryStream input, string inputContentType, string contentType)
     {
         if (inputContentType == contentType && input.Length <= FileSizeInGb) return true;
 
-        if (_next == null)
+        if (Next == null)
             throw new Exception("No handler found for this file type.");
 
         return false;
@@ -30,20 +38,21 @@ public abstract class AbstractFileHandler : ICompressedFileHandler
 
     protected void CountExtension(string extension)
     {
-        if (!_extensionsCount.ContainsKey(extension))
-            _extensionsCount[extension] = 1;
+        if (!ExtensionsCount.ContainsKey(extension))
+            ExtensionsCount[extension] = 1;
         else
-            _extensionsCount[extension]++;
+            ExtensionsCount[extension]++;
     }
 
     protected bool IsSupportedExtension(string extension)
     {
-        return new[] { ".py", ".cs", ".ts", ".js" }.Contains(extension);
+        var extensions = _supportedContentTypes.AllowedFiles;
+        return extensions.Contains(extension);
     }
 
     protected void LogExtensionsCount()
     {
-        foreach (var (key, value) in _extensionsCount)
+        foreach (var (key, value) in ExtensionsCount)
             Console.WriteLine($"{key}: {value}");
     }
 }

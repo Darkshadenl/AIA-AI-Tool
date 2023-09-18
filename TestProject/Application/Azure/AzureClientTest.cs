@@ -1,6 +1,6 @@
 using System.Text;
 using aia_api.Application.Azure;
-using aia_api.Domain.Azure;
+using aia_api.Configuration.Azure;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
 using Moq;
