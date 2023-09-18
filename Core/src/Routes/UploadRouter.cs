@@ -42,14 +42,14 @@ public class UploadRouter
         {
             var url = dto.HttpsRepoUrl;
 
-            if (url.Length == 0)
+            if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
                 context.Response.StatusCode = 400;
                 await context.Response.WriteAsync("Invalid url. Please provide a valid url.");
                 return;
             }
 
-            if (dto.apiToken.Length == 0)
+            if (dto.apiToken.Length == 0 || string.IsNullOrWhiteSpace(dto.apiToken))
             {
                 context.Response.StatusCode = 400;
                 await context.Response.WriteAsync("Invalid api token. Please provide a valid api token.");
