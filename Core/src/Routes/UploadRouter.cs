@@ -63,6 +63,9 @@ public class UploadRouter
             try
             {
                 var path = await gitlabApi.DownloadRepository(projectId, apiToken);
+
+                // filter out files
+
                 // Upload to Azure
 
             }
