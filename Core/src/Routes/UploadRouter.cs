@@ -28,11 +28,12 @@ public class UploadRouter
             inputMemoryStream.Stream.Position = 0;
             var filteredResult = handlerStreet.Handle(inputMemoryStream, compressedFile.ContentType);
 
-            await using (var memStream = filteredResult.Result)
-            {
-                memStream.Position = 0;
-                await client.Pipeline(memStream, compressedFile.FileName);
-            }
+            // TODO opvangen met COR
+            // await using (var memStream = filteredResult.Result)
+            // {
+            //     memStream.Position = 0;
+            //     await client.Pipeline(memStream, compressedFile.FileName);
+            // }
 
             context.Response.StatusCode = 200;
             await context.Response.WriteAsync("File successfully received.");

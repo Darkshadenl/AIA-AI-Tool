@@ -19,7 +19,7 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
         _supportedContentTypes = extensionSettings.Value;
     }
 
-    public virtual Task<MemoryStream> Handle(IInputData input, string inputContentType)
+    public virtual Task Handle(IInputData input, string inputContentType)
     {
         throw new NotImplementedException();
     }
