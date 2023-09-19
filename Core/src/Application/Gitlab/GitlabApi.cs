@@ -20,7 +20,7 @@ public class GitlabApi
     /// <param name="path">The path where the repository will be downloaded (default is "TempDownloads").</param>
     /// <returns>The path where the repository was downloaded.</returns>
     /// <exception cref="Exception">Thrown if the repository download fails.</exception>
-    public async Task<string> DownloadRepository(string projectId, string apiToken, string path = "TempDownloads")
+    public async Task<string> DownloadRepository(string projectId, string apiToken, string path = "Temp")
     {
         var url = $"https://gitlab.com/api/v4/projects/{projectId}/repository/archive.zip";
 

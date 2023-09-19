@@ -4,6 +4,7 @@ using aia_api.Application.FileHandler;
 using aia_api.Application.Gitlab;
 using aia_api.Application.Helpers;
 using aia_api.Routes.DTO;
+using InterfacesAia;
 
 namespace aia_api.Routes;
 
@@ -22,8 +23,10 @@ public class UploadRouter
                 return;
             }
 
+            var fileName = compressedFile.FileName;
             var handlerStreet = fileHandlerFactory.GetFileHandler();
-            var outputPath = FilesystemHelpers.CreateZipFilePathWithDate();
+            handlerStreet.SetOutputBaseName(fileName);
+            var outputPath = FilesystemHelpers.GenerateFilePathWithDate(fileName);
 
             try
             {
@@ -68,9 +71,10 @@ public class UploadRouter
 
             try
             {
-                var path = await gitlabApi.DownloadRepository(projectId, apiToken);
-                var handlerStreet = fileHandlerFactory.GetFileHandler();
-                await handlerStreet.Handle(path, "application/zip");
+                var downloadPath = await gitlabApi.DownloadRepository(projectId, apiToken);
+                IUploadedFileHandler handlerStreet = fileHandlerFactory.GetFileHandler();
+                handlerStreet.SetOutputBaseName(projectId);
+                await handlerStreet.Handle(downloadPath, "application/zip");
             }
             catch (Exception e)
             {

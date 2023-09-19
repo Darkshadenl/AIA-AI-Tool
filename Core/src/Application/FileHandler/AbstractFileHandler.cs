@@ -9,6 +9,7 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
     protected IUploadedFileHandler Next;
     protected readonly Dictionary<string, int> ExtensionsCount = new();
     private readonly Settings _supportedContentTypes;
+    protected string OutputBaseName = string.Empty;
 
     protected AbstractFileHandler(IOptions<Settings> extensionSettings)
     {
@@ -20,6 +21,11 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
     public void SetNext(IUploadedFileHandler next)
     {
         Next = next;
+    }
+
+    public void SetOutputBaseName(string name)
+    {
+        OutputBaseName = name;
     }
 
     protected bool IsValidFile(string inputContentType, string contentType)

@@ -38,6 +38,7 @@ public class FileHandlerFactory : IFileHandlerFactory
         azureUploader.setAzureClient(_azureClient);
         fileValidator.SetNext(zipHandler);
         zipHandler.SetNext(azureUploader);
+
         return fileValidator;
     }
 

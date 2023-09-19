@@ -22,8 +22,12 @@ namespace aia_api.Application.FileHandler
                 await Next.Handle(path, inputContentType);
                 return;
             }
+            var fileName = "output";
 
-            var outputFilePath = FilesystemHelpers.CreateZipFilePathWithDate("output", "TempOutput");
+            if (!string.IsNullOrWhiteSpace(OutputBaseName))
+                fileName = OutputBaseName;
+
+            var outputFilePath = FilesystemHelpers.GenerateFilePathWithDate(fileName, "TempOutput");
 
             if (!Directory.Exists("TempOutput"))
                 Directory.CreateDirectory("TempOutput");
