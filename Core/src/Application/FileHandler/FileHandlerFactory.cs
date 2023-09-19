@@ -1,4 +1,4 @@
-using aia_api.Application.FileHandler.InputTypes;
+using aia_api.Application.Azure;
 using aia_api.Configuration.Azure;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
@@ -14,37 +14,35 @@ public enum FileDataType
 public interface IFileHandlerFactory
 {
     IUploadedFileHandler GetFileHandler();
-    IInputData GetInputData(FileDataType type);
 }
 
 public class FileHandlerFactory : IFileHandlerFactory
 {
     private readonly IOptions<Settings> _extensionSettings;
     private readonly IUploadedFileHandler _fileHandlerStreet;
+    private readonly AzureClient _azureClient;
 
-    public FileHandlerFactory(IOptions<Settings> extensionSettings)
+    public FileHandlerFactory(IOptions<Settings> extensionSettings, AzureClient azureClient)
     {
         _extensionSettings = extensionSettings;
-        _fileHandlerStreet = BuildFilehandlerStreet();
+        _azureClient = azureClient;
+        _fileHandlerStreet = BuildFileHandlerStreet();
     }
 
-    private IUploadedFileHandler BuildFilehandlerStreet()
+    private IUploadedFileHandler BuildFileHandlerStreet()
     {
-        return new ZipHandlerInMemory(_extensionSettings);
+        var fileValidator = new FileValidator(_extensionSettings);
+        var zipHandler = new ZipHandler(_extensionSettings);
+        var azureUploader = new AzureUploadHandler(_extensionSettings);
+
+        azureUploader.setAzureClient(_azureClient);
+        fileValidator.SetNext(zipHandler);
+        zipHandler.SetNext(azureUploader);
+        return fileValidator;
     }
 
     public IUploadedFileHandler GetFileHandler()
     {
         return _fileHandlerStreet;
-    }
-
-    public IInputData GetInputData(FileDataType type)
-    {
-        return type switch
-        {
-            FileDataType.MemoryStream => new MemoryStreamFileData(),
-            FileDataType.FilePath => new FilePathFileData(),
-            _ => throw new ArgumentException("Invalid type", nameof(type))
-        };
     }
 }

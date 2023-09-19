@@ -9,7 +9,7 @@ launchSettings.json
 # Visual Studio Code
 .vscode
 Core/TempDownloads/
-
+TempOutput/
 # User-specific files
 *.suo
 *.user

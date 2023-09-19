@@ -23,7 +23,12 @@ public class GitlabApi
     public async Task<string> DownloadRepository(string projectId, string apiToken, string path = "TempDownloads")
     {
         var url = $"https://gitlab.com/api/v4/projects/{projectId}/repository/archive.zip";
+
         var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), path);
+
+        if (!Directory.Exists(directoryPath))
+            Directory.CreateDirectory(directoryPath);
+
         var date = DateTime.Now.ToString("dd-MM-yyyy HH-mm-ss").Replace(" ", "_");
         var fileName = $"{projectId}_{date}.zip";
         var fullPath = Path.Combine(directoryPath, fileName);
@@ -39,7 +44,7 @@ public class GitlabApi
         await using var fileStream =
             new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None);
         await response.Content.CopyToAsync(fileStream);
-        return path;
+        return fullPath;
     }
 
 }

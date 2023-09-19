@@ -17,5 +17,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\Domain\" />
+    <Folder Include="TempDownloads\" />
   </ItemGroup>
 </Project>

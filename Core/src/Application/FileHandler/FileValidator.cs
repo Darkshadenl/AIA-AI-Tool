@@ -9,28 +9,25 @@ namespace aia_api.Application.FileHandler;
 /// </summary>
 public class FileValidator : AbstractFileHandler
 {
-    private readonly string[] _contentType = new string[] { "application/zip" };
+    private readonly string[] _contentType = { "application/zip" };
 
     public FileValidator(IOptions<Settings> extensionSettings) : base(extensionSettings)
     { }
 
-    public override Task Handle(IInputData input, string inputContentType)
+    public override async Task Handle(string path, string inputContentType)
     {
-        GetFileDataType(input);
-        compatibleHandlerExists(inputContentType);
+        if (!File.Exists(path))
+            throw new FileNotFoundException("The specified file does not exist.");
 
-        throw new Exception("No handler found for this file type.");
+        var fileInfo = new FileInfo(path);
+
+        if (fileInfo.Length == 0)
+            throw new Exception("The file is empty.");
+
+        if (!_contentType.Contains(inputContentType))
+            throw new Exception("Invalid file type.");
+
+        await Next.Handle(path, inputContentType);
     }
-
-    private bool compatibleHandlerExists(string inputContentType)
-    {
-        if (inputContentType == contentType && input.Length <= FileSizeInGb) return true;
-
-        if (Next == null)
-            throw new Exception("No handler found for this file type.");
-
-        return false;
-    }
-
 
 }
