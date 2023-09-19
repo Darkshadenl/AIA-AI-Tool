@@ -1,5 +1,7 @@
 using System.IO.Compression;
+using aia_api.Application.FileHandler.InputTypes;
 using aia_api.Configuration.Azure;
+using InterfacesAia;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
@@ -10,14 +12,22 @@ public class ZipHandlerInMemory : AbstractFileHandler
 
     public ZipHandlerInMemory(IOptions<Settings> extensionSettings) : base(extensionSettings)
     {
+        HandlerType = FileDataType.MemoryStream;
     }
 
-    public override async Task<MemoryStream> Handle(MemoryStream input, string inputContentType)
+    public override async Task<MemoryStream> Handle(IInputData input, string inputContentType)
     {
-        if (!IsValidFile(input, inputContentType, ContentType))
+        var inputFileDataType = GetFileDataType(input);
+        if (!inputFileDataType.Equals(HandlerType))
+            await Next.Handle(input, inputContentType);
+
+        var memoryStreamFileData = (MemoryStreamFileData) input;
+        var stream = memoryStreamFileData.Stream;
+
+        if (!IsValidFile(stream, inputContentType, ContentType))
             throw new NotSupportedException("Invalid file type. Only ZIP files are allowed.");
 
-        using var archive = InitializeInputArchive(input);
+        using var archive = InitializeInputArchive(stream);
         var outputMemoryStream = new MemoryStream();
         using var outputArchive = InitializeOutputArchive(outputMemoryStream);
 

@@ -2,6 +2,6 @@ namespace InterfacesAia;
 
 public interface IUploadedFileHandler
 {
-    Task<MemoryStream> Handle(MemoryStream input, string extension);
+    Task<MemoryStream> Handle(IInputData input, string inputContentType);
     void SetNext(IUploadedFileHandler next);
 }

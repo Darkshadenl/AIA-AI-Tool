@@ -1,12 +1,20 @@
+using aia_api.Application.FileHandler.InputTypes;
 using aia_api.Configuration.Azure;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
 
+public enum FileDataType
+{
+    MemoryStream,
+    FilePath
+}
+
 public interface IFileHandlerFactory
 {
     IUploadedFileHandler GetFileHandler();
+    IInputData GetInputData(FileDataType type);
 }
 
 public class FileHandlerFactory : IFileHandlerFactory
@@ -25,9 +33,21 @@ public class FileHandlerFactory : IFileHandlerFactory
         return new ZipHandlerInMemory(_extensionSettings);
     }
 
-
     public IUploadedFileHandler GetFileHandler()
     {
         return _fileHandlerStreet;
+    }
+
+    public IInputData GetInputData(FileDataType type)
+    {
+        switch (type)
+        {
+            case FileDataType.MemoryStream:
+                return new MemoryStreamFileData();
+            case FileDataType.FilePath:
+                return new FilePathFileData();
+            default:
+                throw new ArgumentException("Invalid type", nameof(type));
+        };
     }
 }

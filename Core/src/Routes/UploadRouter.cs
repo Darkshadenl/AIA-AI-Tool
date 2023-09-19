@@ -1,5 +1,6 @@
 using aia_api.Application.Azure;
 using aia_api.Application.FileHandler;
+using aia_api.Application.FileHandler.InputTypes;
 using aia_api.Application.Gitlab;
 using aia_api.Routes.DTO;
 
@@ -7,12 +8,11 @@ namespace aia_api.Routes;
 
 public class UploadRouter
 {
-    private static string[] _supportedContentTypes = new[] { "application/zip" };
+    private static string[] _supportedContentTypes = { "application/zip" };
 
     public static Func<IFormFile, HttpContext, AzureClient, IFileHandlerFactory, Task> ZipHandler()
     {
-        return async (IFormFile compressedFile, HttpContext context,
-            AzureClient client, IFileHandlerFactory fileHandlerFactory) =>
+        return async (compressedFile, context, client, fileHandlerFactory) =>
         {
             if (!_supportedContentTypes.Contains(compressedFile.ContentType))
             {
@@ -22,10 +22,11 @@ public class UploadRouter
             }
 
             var handlerStreet = fileHandlerFactory.GetFileHandler();
-            var memoryStream = new MemoryStream();
-            await compressedFile.CopyToAsync(memoryStream);
-            memoryStream.Position = 0;
-            var filteredResult = handlerStreet.Handle(memoryStream, compressedFile.ContentType);
+            var inputMemoryStream = (MemoryStreamFileData) fileHandlerFactory.GetInputData(FileDataType.MemoryStream);
+            inputMemoryStream.Stream = new MemoryStream();
+            await compressedFile.CopyToAsync(inputMemoryStream.Stream);
+            inputMemoryStream.Stream.Position = 0;
+            var filteredResult = handlerStreet.Handle(inputMemoryStream, compressedFile.ContentType);
 
             await using (var memStream = filteredResult.Result)
             {
@@ -38,9 +39,9 @@ public class UploadRouter
         };
     }
 
-    public static Func<UploadRepoDTO, HttpContext, GitlabApi, Task> RepoHandler()
+    public static Func<UploadRepoDTO, HttpContext, GitlabApi, AzureClient, IFileHandlerFactory, Task> RepoHandler()
     {
-        return async (UploadRepoDTO dto, HttpContext context, GitlabApi gitlabApi) =>
+        return async (dto, context, gitlabApi, client, fileHandlerFactory) =>
         {
             var projectId = dto.projectId;
             var apiToken = dto.apiToken;
@@ -61,7 +62,9 @@ public class UploadRouter
 
             try
             {
-                await gitlabApi.DownloadRepository(projectId, apiToken);
+                var path = await gitlabApi.DownloadRepository(projectId, apiToken);
+                // Upload to Azure
+
             }
             catch (Exception e)
             {

@@ -1,3 +1,4 @@
+using aia_api.Application.FileHandler.InputTypes;
 using aia_api.Configuration.Azure;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
@@ -9,6 +10,8 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
     protected IUploadedFileHandler Next;
     protected readonly Dictionary<string, int> ExtensionsCount = new();
     private readonly Settings _supportedContentTypes;
+    protected FileDataType HandlerType;
+
     protected int FileSizeInGb = 1 * 1024 * 1024 * 1024;
 
     protected AbstractFileHandler(IOptions<Settings> extensionSettings)
@@ -16,7 +19,7 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
         _supportedContentTypes = extensionSettings.Value;
     }
 
-    public virtual Task<MemoryStream> Handle(MemoryStream input, string extension)
+    public virtual Task<MemoryStream> Handle(IInputData input, string inputContentType)
     {
         throw new NotImplementedException();
     }
@@ -24,6 +27,16 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
     public void SetNext(IUploadedFileHandler next)
     {
         Next = next;
+    }
+
+    public FileDataType GetFileDataType(IInputData input)
+    {
+        if (input is MemoryStreamFileData)
+            return FileDataType.MemoryStream;
+        if (input is FilePathFileData)
+            return FileDataType.FilePath;
+
+        throw new ArgumentException("Invalid type", nameof(input));
     }
 
     protected bool IsValidFile(MemoryStream input, string inputContentType, string contentType)

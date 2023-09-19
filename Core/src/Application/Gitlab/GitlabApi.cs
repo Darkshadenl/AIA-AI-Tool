@@ -11,11 +11,21 @@ public class GitlabApi
         _httpClient = httpClient;
     }
 
-    public async Task DownloadRepository(string projectId, string apiToken)
+
+    /// <summary>
+    /// Downloads a repository from GitLab using the provided project ID and API token.
+    /// </summary>
+    /// <param name="projectId">The ID of the project.</param>
+    /// <param name="apiToken">The API token for authentication.</param>
+    /// <param name="path">The path where the repository will be downloaded (default is "TempDownloads").</param>
+    /// <returns>The path where the repository was downloaded.</returns>
+    /// <exception cref="Exception">Thrown if the repository download fails.</exception>
+    public async Task<string> DownloadRepository(string projectId, string apiToken, string path = "TempDownloads")
     {
         var url = $"https://gitlab.com/api/v4/projects/{projectId}/repository/archive.zip";
-        var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "TempDownloads");
-        var fileName = $"{projectId}.zip";
+        var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), path);
+        var date = DateTime.Now.ToString("dd-MM-yyyy HH-mm-ss").Replace(" ", "_");
+        var fileName = $"{projectId}_{date}.zip";
         var fullPath = Path.Combine(directoryPath, fileName);
 
         using var downloadClient = _httpClient;
@@ -29,8 +39,7 @@ public class GitlabApi
         await using var fileStream =
             new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None);
         await response.Content.CopyToAsync(fileStream);
-        Console.WriteLine("File downloaded.");
-
+        return path;
     }
 
 }
