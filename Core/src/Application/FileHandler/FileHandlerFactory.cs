@@ -40,14 +40,11 @@ public class FileHandlerFactory : IFileHandlerFactory
 
     public IInputData GetInputData(FileDataType type)
     {
-        switch (type)
+        return type switch
         {
-            case FileDataType.MemoryStream:
-                return new MemoryStreamFileData();
-            case FileDataType.FilePath:
-                return new FilePathFileData();
-            default:
-                throw new ArgumentException("Invalid type", nameof(type));
+            FileDataType.MemoryStream => new MemoryStreamFileData(),
+            FileDataType.FilePath => new FilePathFileData(),
+            _ => throw new ArgumentException("Invalid type", nameof(type))
         };
     }
 }
