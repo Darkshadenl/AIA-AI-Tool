@@ -18,6 +18,7 @@ public class ZipHandlerInMemory : AbstractFileHandler
     public override async Task<MemoryStream> Handle(IInputData input, string inputContentType)
     {
         var inputFileDataType = GetFileDataType(input);
+
         if (!inputFileDataType.Equals(HandlerType))
             await Next.Handle(input, inputContentType);
 

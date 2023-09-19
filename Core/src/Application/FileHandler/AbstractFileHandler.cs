@@ -29,7 +29,7 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
         Next = next;
     }
 
-    public FileDataType GetFileDataType(IInputData input)
+    protected FileDataType GetFileDataType(IInputData input)
     {
         if (input is MemoryStreamFileData)
             return FileDataType.MemoryStream;

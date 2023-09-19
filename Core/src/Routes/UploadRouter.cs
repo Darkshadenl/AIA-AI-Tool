@@ -8,13 +8,13 @@ namespace aia_api.Routes;
 
 public class UploadRouter
 {
-    private static string[] _supportedContentTypes = { "application/zip" };
-
     public static Func<IFormFile, HttpContext, AzureClient, IFileHandlerFactory, Task> ZipHandler()
     {
+        string[] supportedContentTypes =  { "application/zip" };
+
         return async (compressedFile, context, client, fileHandlerFactory) =>
         {
-            if (!_supportedContentTypes.Contains(compressedFile.ContentType))
+            if (!supportedContentTypes.Contains(compressedFile.ContentType))
             {
                 context.Response.StatusCode = 400;
                 await context.Response.WriteAsync("Invalid file type. Only ZIP files are allowed.");
