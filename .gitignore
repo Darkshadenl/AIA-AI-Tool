@@ -8,7 +8,7 @@ nupkg/
 launchSettings.json
 # Visual Studio Code
 .vscode
-Core/TempDownloads/
+Core/Temp/
 TempOutput/
 # User-specific files
 *.suo
