@@ -2,15 +2,12 @@ namespace aia_api.Application.Gitlab;
 
 public class GitlabApi
 {
-    private readonly GitLabClientFactory _clientFactory;
     private readonly HttpClient _httpClient;
 
-    public GitlabApi(GitLabClientFactory factory, HttpClient httpClient)
+    public GitlabApi(HttpClient httpClient)
     {
-        _clientFactory = factory;
         _httpClient = httpClient;
     }
-
 
     /// <summary>
     /// Downloads a repository from GitLab using the provided project ID and API token.

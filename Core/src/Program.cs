@@ -15,3 +15,5 @@ app.MapPost("/api/upload/repo", UploadRouter.RepoHandler());
 
 
 app.Run();
+
+public partial class Program { }

@@ -30,7 +30,6 @@ public static class DependencyInjectionConfig
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
         services.AddScoped<AzureClient>();
         services.AddScoped<HttpClient>();
-        services.AddScoped<GitLabClientFactory>();
         services.AddScoped<GitlabApi>();
         services.AddScoped<IFileHandlerFactory, FileHandlerFactory>();
     }
