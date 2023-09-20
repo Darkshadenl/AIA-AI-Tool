@@ -25,7 +25,7 @@ public class ZipHandlerInMemory : AbstractFileHandler
 
         if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
         {
-            // LogExtensionsCount();
+            LogExtensionsCount();
         }
 
         return outputMemoryStream;
