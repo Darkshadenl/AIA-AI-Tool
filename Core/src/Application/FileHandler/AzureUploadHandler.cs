@@ -16,10 +16,22 @@ public class AzureUploadHandler : AbstractFileHandler
         _azureClient = azureClient;
     }
 
-    public override Task Handle(string inputPath, string outputPath, string inputContentType)
+    public override async Task Handle(string inputPath, string outputPath, string inputContentType)
     {
-        Console.WriteLine("AzureUploadHandler");
-        return Task.CompletedTask;
+        try
+        {
+            await _azureClient.ZipPipeline(outputPath, Path.GetFileName(outputPath));
+        }
+        catch (IOException e)
+        {
+            Console.WriteLine($"Something went wrong while reading or writing: {e.Message}");
+        }
+        catch (Exception e)
+        {
+            // General exception catch, if none of the above apply
+            Console.WriteLine($"An unexpected error occurred: {e.Message}");
+            throw;
+        }
     }
 
 }

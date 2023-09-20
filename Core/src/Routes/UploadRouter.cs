@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using aia_api.Application.Azure;
 using aia_api.Application.FileHandler;
 using aia_api.Application.Gitlab;

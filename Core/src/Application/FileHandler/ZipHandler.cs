@@ -1,5 +1,4 @@
 using System.IO.Compression;
-using aia_api.Application.Helpers;
 using aia_api.Configuration.Azure;
 using Microsoft.Extensions.Options;
 

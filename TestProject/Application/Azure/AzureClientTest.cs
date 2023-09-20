@@ -42,7 +42,7 @@ public class AzureClientTest
         blobClientMock.Setup(x => x.OpenWriteAsync(true, default, default)).ReturnsAsync(blobWriteStreamMock.Object);
 
         // Act
-        await _azureClient.Pipeline(memoryStream, fileName);
+        await _azureClient.MemoryStreamPipeline(memoryStream, fileName);
 
         // Assert
         _blobServiceClientMock.Verify(x => x.GetBlobContainerClient(blobContainerName), Times.Once);
@@ -69,7 +69,7 @@ public class AzureClientTest
         blobClientMock.Setup(x => x.OpenWriteAsync(true, default, default)).ReturnsAsync(blobWriteStreamMock.Object);
 
         // Act
-        await _azureClient.Pipeline(memoryStream.Object, fileName);
+        await _azureClient.MemoryStreamPipeline(memoryStream.Object, fileName);
 
         // Assert
         memoryStream.Verify(x => x.ReadAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), default), Times.AtLeastOnce);
@@ -93,7 +93,7 @@ public class AzureClientTest
         blobClientMock.Setup(x => x.OpenWriteAsync(true, default, default)).ReturnsAsync(blobWriteStreamMock.Object);
 
         // Act
-        await _azureClient.Pipeline(memoryStream, fileName);
+        await _azureClient.MemoryStreamPipeline(memoryStream, fileName);
 
         // Assert
         blobWriteStreamMock.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), default), Times.AtLeastOnce);
@@ -119,9 +119,9 @@ public class AzureClientTest
         blobClientMock.Setup(x => x.OpenWriteAsync(true, default, default)).ReturnsAsync(blobWriteStreamMock.Object);
 
         // Act
-        var task1 = _azureClient.Pipeline(memoryStream1, fileName);
-        var task2 = _azureClient.Pipeline(memoryStream2, fileName);
-        var task3 = _azureClient.Pipeline(memoryStream3, fileName);
+        var task1 = _azureClient.MemoryStreamPipeline(memoryStream1, fileName);
+        var task2 = _azureClient.MemoryStreamPipeline(memoryStream2, fileName);
+        var task3 = _azureClient.MemoryStreamPipeline(memoryStream3, fileName);
 
         await Task.WhenAll(task1, task2, task3);
 

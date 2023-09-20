@@ -8,6 +8,7 @@ public class AzureClient
 {
     private readonly BlobServiceClient _blobServiceClient;
     private readonly string _blobContainerName;
+    private const string UploadSuccessMessage = "File successfully uploaded.";
 
     public AzureClient(BlobServiceClient blobClient, IOptions<AzureBlobStorageSettings> settings)
     {
@@ -15,27 +16,31 @@ public class AzureClient
         _blobServiceClient = blobClient;
     }
 
-    public async Task Pipeline(MemoryStream stream, string fileName)
+    public async Task ZipPipeline(string zipPath, string fileName)
+    {
+        await using var fileStream = new FileStream(zipPath, FileMode.Open, FileAccess.Read);
+        await UploadStreamToBlob(fileStream, fileName);
+        Console.WriteLine(UploadSuccessMessage);
+    }
+
+    public async Task MemoryStreamPipeline(MemoryStream stream, string fileName)
+    {
+        stream.Position = 0;
+        await UploadStreamToBlob(stream, fileName);
+        Console.WriteLine(UploadSuccessMessage);
+    }
+
+    private async Task UploadStreamToBlob(Stream inputStream, string fileName)
     {
         var blobClient = CreateBlobClients(fileName);
 
         byte[] buffer = new byte[4 * 1024];
-        stream.Position = 0;
         await using var outputStream = await blobClient.OpenWriteAsync(true);
         int bytesRead;
 
-        try
+        while ((bytesRead = await inputStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
         {
-            while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
-            {
-                await outputStream.WriteAsync(buffer, 0, bytesRead);
-            }
-            Console.WriteLine("File successfully uploaded.");
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
+            await outputStream.WriteAsync(buffer, 0, bytesRead);
         }
     }
 
