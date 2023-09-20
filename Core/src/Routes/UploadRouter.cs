@@ -10,6 +10,8 @@ namespace aia_api.Routes;
 
 public class UploadRouter
 {
+    private static string outputDirectory = Path.Combine("Temp", "Filtered");
+
     public static Func<IFormFile, HttpContext, AzureClient, IFileHandlerFactory, Task> ZipHandler()
     {
         string[] supportedContentTypes =  { "application/zip" };
@@ -26,15 +28,17 @@ public class UploadRouter
             var fileName = compressedFile.FileName;
             var handlerStreet = fileHandlerFactory.GetFileHandler();
             var zipPath = FilesystemHelpers.GenerateFilePathWithDate(fileName, "Temp");
-            var filteredZipOutputPath = FilesystemHelpers.GenerateFilePathWithDate(fileName, Path.Combine("Temp", "Output"));
+            var filteredZipOutputPath = FilesystemHelpers.GenerateFilePathWithDate(fileName, outputDirectory);
 
             try
             {
                 Stream inputStream = compressedFile.OpenReadStream();
+                Directory.CreateDirectory(Path.GetDirectoryName(zipPath));
                 var fileStream = new FileStream(zipPath, FileMode.Create);
                 await inputStream.CopyToAsync(fileStream);
                 inputStream.Close();
                 fileStream.Close();
+
                 await handlerStreet.Handle(zipPath, filteredZipOutputPath, compressedFile.ContentType);
             }
             catch (Exception e)
@@ -72,7 +76,7 @@ public class UploadRouter
             try
             {
                 var downloadPath = await gitlabApi.DownloadRepository(projectId, apiToken);
-                var outputFilePath = FilesystemHelpers.GenerateFilePathWithDate(projectId, Path.Combine("Temp", "Output"));
+                var outputFilePath = FilesystemHelpers.GenerateFilePathWithDate(projectId, outputDirectory);
                 IUploadedFileHandler handlerStreet = fileHandlerFactory.GetFileHandler();
                 await handlerStreet.Handle(downloadPath, outputFilePath, "application/zip");
             }

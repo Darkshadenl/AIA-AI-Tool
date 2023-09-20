@@ -32,11 +32,13 @@ public class FileHandlerFactory : IFileHandlerFactory
     private IUploadedFileHandler BuildFileHandlerStreet()
     {
         var fileValidator = new FileValidator(_extensionSettings);
+        var pathHandler = new PathCreationHandler(_extensionSettings);
         var zipHandler = new ZipHandler(_extensionSettings);
         var azureUploader = new AzureUploadHandler(_extensionSettings);
 
         azureUploader.setAzureClient(_azureClient);
-        fileValidator.SetNext(zipHandler);
+        fileValidator.SetNext(pathHandler);
+        pathHandler.SetNext(zipHandler);
         zipHandler.SetNext(azureUploader);
 
         return fileValidator;

@@ -23,9 +23,6 @@ namespace aia_api.Application.FileHandler
                 return;
             }
 
-            if (!Directory.Exists(outputPath))
-                Directory.CreateDirectory(outputPath);
-
             using var archive = InitializeInputArchive(inputPath);
             using var outputArchive = InitializeOutputArchive(outputPath);
 
