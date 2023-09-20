@@ -31,6 +31,8 @@ namespace aia_api.Application.FileHandler
             {
                 // LogExtensionsCount();
             }
+
+            await Next.Handle(inputPath, outputPath, inputContentType);
         }
 
         private ZipArchive InitializeInputArchive(string path)

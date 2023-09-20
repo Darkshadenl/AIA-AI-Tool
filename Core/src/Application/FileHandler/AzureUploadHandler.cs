@@ -30,7 +30,6 @@ public class AzureUploadHandler : AbstractFileHandler
         }
         catch (Exception e)
         {
-            // General exception catch, if none of the above apply
             Console.WriteLine($"An unexpected error occurred: {e.Message}");
             throw;
         }
