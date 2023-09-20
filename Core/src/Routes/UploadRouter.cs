@@ -12,11 +12,11 @@ public class UploadRouter
     private static readonly string FilteredOutputDirectory = Path.Combine("Temp", "Filtered");
     private static readonly string UnfilteredOutputDirectory = "Temp";
 
-    public static Func<IFormFile, HttpContext, AzureClient, IFileHandlerFactory, Task> ZipHandler()
+    public static Func<IFormFile, HttpContext, IFileHandlerFactory, Task> ZipHandler()
     {
         string[] supportedContentTypes =  { "application/zip" };
 
-        return async (compressedFile, context, client, fileHandlerFactory) =>
+        return async (compressedFile, context, fileHandlerFactory) =>
         {
             if (!supportedContentTypes.Contains(compressedFile.ContentType))
             {
