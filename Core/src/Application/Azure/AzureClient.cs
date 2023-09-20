@@ -8,7 +8,6 @@ public class AzureClient
 {
     private readonly BlobServiceClient _blobServiceClient;
     private readonly string _blobContainerName;
-    private const string UploadSuccessMessage = "File successfully uploaded.";
 
     public AzureClient(BlobServiceClient blobClient, IOptions<AzureBlobStorageSettings> settings)
     {
@@ -20,14 +19,12 @@ public class AzureClient
     {
         await using var fileStream = new FileStream(zipPath, FileMode.Open, FileAccess.Read);
         await UploadStreamToBlob(fileStream, fileName);
-        Console.WriteLine(UploadSuccessMessage);
     }
 
     public async Task MemoryStreamPipeline(MemoryStream stream, string fileName)
     {
         stream.Position = 0;
         await UploadStreamToBlob(stream, fileName);
-        Console.WriteLine(UploadSuccessMessage);
     }
 
     private async Task UploadStreamToBlob(Stream inputStream, string fileName)

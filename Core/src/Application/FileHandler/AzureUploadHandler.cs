@@ -32,6 +32,7 @@ public class AzureUploadHandler : AbstractFileHandler
             Console.WriteLine($"An unexpected error occurred: {e.Message}");
             throw;
         }
+        Console.WriteLine(UploadSuccessMessage);
     }
 
 }
