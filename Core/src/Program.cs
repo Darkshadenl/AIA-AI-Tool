@@ -32,8 +32,7 @@ app.MapPost("/api/upload/zip", async (IFormFile compressedFile, HttpContext cont
         await client.Pipeline(memStream, compressedFile.FileName);
     }
 
-    context.Response.StatusCode = 200;
-    await context.Response.WriteAsync("File successfully received.");
+    context.Response.StatusCode = 204;
 }).AddEndpointFilter<EmptyFileFilter>();
 
 
