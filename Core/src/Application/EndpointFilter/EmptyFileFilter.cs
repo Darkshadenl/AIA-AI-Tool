@@ -6,12 +6,6 @@ public class EmptyFileFilter : IEndpointFilter
     {
         try
         {
-            if (context.HttpContext.Request.ContentLength == 0)
-            {
-                context.HttpContext.Response.StatusCode = 400;
-                await context.HttpContext.Response.WriteAsync("No file received or file is empty.");
-                return null;
-            }
             var form = context.HttpContext.Request.ReadFormAsync();
             var file = form.Result.Files.Count > 0 ? form.Result.Files[0] : null;
 
