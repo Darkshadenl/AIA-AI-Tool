@@ -8,6 +8,7 @@ nupkg/
 launchSettings.json
 # Visual Studio Code
 .vscode
+.vs/
 
 # Project specific
 Temp/
