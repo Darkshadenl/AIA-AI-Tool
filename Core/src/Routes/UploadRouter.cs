@@ -25,16 +25,17 @@ public class UploadRouter
 
             var fileName = compressedFile.FileName;
             var handlerStreet = fileHandlerFactory.GetFileHandler();
-            var outputPath = FilesystemHelpers.GenerateFilePathWithDate(fileName);
+            var zipPath = FilesystemHelpers.GenerateFilePathWithDate(fileName, "Temp");
+            var filteredZipOutputPath = FilesystemHelpers.GenerateFilePathWithDate(fileName, Path.Combine("Temp", "Output"));
 
             try
             {
                 Stream inputStream = compressedFile.OpenReadStream();
-                var fileStream = new FileStream(outputPath, FileMode.Create);
+                var fileStream = new FileStream(zipPath, FileMode.Create);
                 await inputStream.CopyToAsync(fileStream);
                 inputStream.Close();
                 fileStream.Close();
-                await handlerStreet.Handle(outputPath, compressedFile.ContentType);
+                await handlerStreet.Handle(zipPath, filteredZipOutputPath, compressedFile.ContentType);
             }
             catch (Exception e)
             {
@@ -71,7 +72,7 @@ public class UploadRouter
             try
             {
                 var downloadPath = await gitlabApi.DownloadRepository(projectId, apiToken);
-                var outputFilePath = FilesystemHelpers.GenerateFilePathWithDate(projectId, "TempOutput");
+                var outputFilePath = FilesystemHelpers.GenerateFilePathWithDate(projectId, Path.Combine("Temp", "Output"));
                 IUploadedFileHandler handlerStreet = fileHandlerFactory.GetFileHandler();
                 await handlerStreet.Handle(downloadPath, outputFilePath, "application/zip");
             }

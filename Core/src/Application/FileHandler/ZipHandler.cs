@@ -23,13 +23,11 @@ namespace aia_api.Application.FileHandler
                 return;
             }
 
-            var outputFilePath = FilesystemHelpers.GenerateFilePathWithDate(fileName, "TempOutput");
-
-            if (!Directory.Exists("TempOutput"))
-                Directory.CreateDirectory("TempOutput");
+            if (!Directory.Exists(outputPath))
+                Directory.CreateDirectory(outputPath);
 
             using var archive = InitializeInputArchive(inputPath);
-            using var outputArchive = InitializeOutputArchive(outputFilePath);
+            using var outputArchive = InitializeOutputArchive(outputPath);
 
             await ProcessEntries(archive, outputArchive);
 
