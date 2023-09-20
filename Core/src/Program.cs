@@ -11,7 +11,7 @@ var app = builder.Build();
 
 var supportedContentTypes = new[] { "application/zip" };
 
-app.MapPost("/api/upload/zip", async (IFormFile compressedFile, HttpContext context, AzureClient client, IFileHandlerFactory fileHandlerStreetFactory) =>
+app.MapPost("/api/upload", async (IFormFile compressedFile, HttpContext context, AzureClient client, IFileHandlerFactory fileHandlerStreetFactory) =>
 {
     if (!supportedContentTypes.Contains(compressedFile.ContentType))
     {
