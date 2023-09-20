@@ -1,9 +1,10 @@
-using aia_api.Application.Azure;
+using aia_api.Application.FileHandler;
 using aia_api.Configuration.Azure;
+using aia_api.Services;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
 
-namespace aia_api.Application.FileHandler;
+namespace aia_api.Application.Helpers.Factories;
 
 public interface IFileHandlerFactory
 {
@@ -14,12 +15,12 @@ public class FileHandlerFactory : IFileHandlerFactory
 {
     private readonly IOptions<Settings> _extensionSettings;
     private readonly IUploadedFileHandler _fileHandlerStreet;
-    private readonly AzureClient _azureClient;
+    private readonly AzureService _azureService;
 
-    public FileHandlerFactory(IOptions<Settings> extensionSettings, AzureClient azureClient)
+    public FileHandlerFactory(IOptions<Settings> extensionSettings, AzureService azureService)
     {
         _extensionSettings = extensionSettings;
-        _azureClient = azureClient;
+        _azureService = azureService;
         _fileHandlerStreet = BuildFileHandlerStreet();
     }
 
@@ -30,7 +31,7 @@ public class FileHandlerFactory : IFileHandlerFactory
         var zipHandler = new ZipHandler(_extensionSettings);
         var azureUploader = new AzureUploadHandler(_extensionSettings);
 
-        azureUploader.setAzureClient(_azureClient);
+        azureUploader.setAzureClient(_azureService);
         fileValidator.SetNext(pathHandler);
         pathHandler.SetNext(zipHandler);
         zipHandler.SetNext(azureUploader);

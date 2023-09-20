@@ -2,14 +2,14 @@ using aia_api.Configuration.Azure;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
 
-namespace aia_api.Application.Azure;
+namespace aia_api.Services;
 
-public class AzureClient
+public class AzureService
 {
     private readonly BlobServiceClient _blobServiceClient;
     private readonly string _blobContainerName;
 
-    public AzureClient(BlobServiceClient blobClient, IOptions<AzureBlobStorageSettings> settings)
+    public AzureService(BlobServiceClient blobClient, IOptions<AzureBlobStorageSettings> settings)
     {
         _blobContainerName = settings.Value.BlobContainerName;
         _blobServiceClient = blobClient;

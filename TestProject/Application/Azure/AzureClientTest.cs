@@ -1,6 +1,6 @@
 using System.Text;
-using aia_api.Application.Azure;
 using aia_api.Configuration.Azure;
+using aia_api.Services;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -13,7 +13,7 @@ public class AzureClientTest
 {
     private Mock<BlobServiceClient> _blobServiceClientMock;
     private Mock<IOptions<AzureBlobStorageSettings>> _settingsMock;
-    private AzureClient _azureClient;
+    private AzureService _azureService;
 
     [SetUp]
     public void Setup()
@@ -22,7 +22,7 @@ public class AzureClientTest
         _settingsMock = new Mock<IOptions<AzureBlobStorageSettings>>();
         _settingsMock.Setup(s => s.Value).Returns(new AzureBlobStorageSettings { BlobContainerName = "testContainer" });
 
-        _azureClient = new AzureClient(_blobServiceClientMock.Object, _settingsMock.Object);
+        _azureService = new AzureService(_blobServiceClientMock.Object, _settingsMock.Object);
     }
 
     [Test]
@@ -42,7 +42,7 @@ public class AzureClientTest
         blobClientMock.Setup(x => x.OpenWriteAsync(true, default, default)).ReturnsAsync(blobWriteStreamMock.Object);
 
         // Act
-        await _azureClient.MemoryStreamPipeline(memoryStream, fileName);
+        await _azureService.MemoryStreamPipeline(memoryStream, fileName);
 
         // Assert
         _blobServiceClientMock.Verify(x => x.GetBlobContainerClient(blobContainerName), Times.Once);
@@ -69,7 +69,7 @@ public class AzureClientTest
         blobClientMock.Setup(x => x.OpenWriteAsync(true, default, default)).ReturnsAsync(blobWriteStreamMock.Object);
 
         // Act
-        await _azureClient.MemoryStreamPipeline(memoryStream.Object, fileName);
+        await _azureService.MemoryStreamPipeline(memoryStream.Object, fileName);
 
         // Assert
         memoryStream.Verify(x => x.ReadAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), default), Times.AtLeastOnce);
@@ -93,7 +93,7 @@ public class AzureClientTest
         blobClientMock.Setup(x => x.OpenWriteAsync(true, default, default)).ReturnsAsync(blobWriteStreamMock.Object);
 
         // Act
-        await _azureClient.MemoryStreamPipeline(memoryStream, fileName);
+        await _azureService.MemoryStreamPipeline(memoryStream, fileName);
 
         // Assert
         blobWriteStreamMock.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), default), Times.AtLeastOnce);
@@ -119,9 +119,9 @@ public class AzureClientTest
         blobClientMock.Setup(x => x.OpenWriteAsync(true, default, default)).ReturnsAsync(blobWriteStreamMock.Object);
 
         // Act
-        var task1 = _azureClient.MemoryStreamPipeline(memoryStream1, fileName);
-        var task2 = _azureClient.MemoryStreamPipeline(memoryStream2, fileName);
-        var task3 = _azureClient.MemoryStreamPipeline(memoryStream3, fileName);
+        var task1 = _azureService.MemoryStreamPipeline(memoryStream1, fileName);
+        var task2 = _azureService.MemoryStreamPipeline(memoryStream2, fileName);
+        var task3 = _azureService.MemoryStreamPipeline(memoryStream3, fileName);
 
         await Task.WhenAll(task1, task2, task3);
 

@@ -1,28 +1,28 @@
-using aia_api.Application.Azure;
 using aia_api.Configuration.Azure;
+using aia_api.Services;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
 
 public class AzureUploadHandler : AbstractFileHandler
 {
-    private AzureClient _azureClient;
+    private AzureService _azureService;
     private const string UploadSuccessMessage = "File successfully uploaded.";
 
     public AzureUploadHandler(IOptions<Settings> extensionSettings) : base(extensionSettings)
     {
     }
 
-    public void setAzureClient(AzureClient azureClient)
+    public void setAzureClient(AzureService azureService)
     {
-        _azureClient = azureClient;
+        _azureService = azureService;
     }
 
     public override async Task Handle(string inputPath, string outputPath, string inputContentType)
     {
         try
         {
-            await _azureClient.ZipPipeline(outputPath, Path.GetFileName(outputPath));
+            await _azureService.ZipPipeline(outputPath, Path.GetFileName(outputPath));
             Console.WriteLine(UploadSuccessMessage);
         }
         catch (IOException e)

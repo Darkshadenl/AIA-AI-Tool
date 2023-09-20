@@ -1,7 +1,7 @@
-using aia_api.Application.Azure;
 using aia_api.Application.FileHandler;
-using aia_api.Application.Gitlab;
+using aia_api.Application.Helpers.Factories;
 using aia_api.Configuration.Azure;
+using aia_api.Services;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 
@@ -28,9 +28,10 @@ public static class DependencyInjectionConfig
         var credential = new StorageSharedKeyCredential(aBss.AccountName, aBss.StorageAccountKey);
 
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
-        services.AddScoped<AzureClient>();
+        services.AddScoped<AzureService>();
         services.AddScoped<HttpClient>();
-        services.AddScoped<GitlabApi>();
+        services.AddScoped<GitlabService>();
         services.AddScoped<IFileHandlerFactory, FileHandlerFactory>();
+        services.AddScoped<IStorageService, StorageService>();
     }
 }

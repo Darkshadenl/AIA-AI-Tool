@@ -1,7 +1,8 @@
 using aia_api.Application.FileHandler;
-using aia_api.Application.Gitlab;
 using aia_api.Application.Helpers;
+using aia_api.Application.Helpers.Factories;
 using aia_api.Routes.DTO;
+using aia_api.Services;
 using InterfacesAia;
 
 namespace aia_api.Routes;
@@ -50,7 +51,7 @@ public class UploadRouter
         };
     }
 
-    public static  Func<UploadRepoDTO, HttpContext, GitlabApi, IFileHandlerFactory, Task> RepoHandler()
+    public static  Func<UploadRepoDTO, HttpContext, GitlabService, IFileHandlerFactory, Task> RepoHandler()
     {
         return async (dto, context, gitlabApi, fileHandlerFactory) =>
         {
