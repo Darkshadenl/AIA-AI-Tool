@@ -4,9 +4,14 @@ project.lock.json
 .DS_Store
 *.pyc
 nupkg/
-
+.env
+launchSettings.json
 # Visual Studio Code
 .vscode
+.vs/
+
+# Project specific
+Temp/
 
 # User-specific files
 *.suo
@@ -29,3 +34,7 @@ bld/
 msbuild.log
 msbuild.err
 msbuild.wrn
+
+# .net core files
+appsettings.json
+appsettings.development.json
