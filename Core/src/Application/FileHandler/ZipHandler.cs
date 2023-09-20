@@ -12,27 +12,23 @@ namespace aia_api.Application.FileHandler
         public ZipHandler(IOptions<Settings> extensionSettings) : base(extensionSettings)
         { }
 
-        public override async Task Handle(string path, string inputContentType)
+        public override async Task Handle(string inputPath, string outputPath, string inputContentType)
         {
             if (!IsValidFile(inputContentType, ContentType))
             {
                 if (Next == null)
-                    throw new Exception("No handler found for this file type.");
+                    throw new Exception("No next handler found for this file type.");
 
-                await Next.Handle(path, inputContentType);
+                await Next.Handle(inputPath, outputPath, inputContentType);
                 return;
             }
-            var fileName = "output";
-
-            if (!string.IsNullOrWhiteSpace(OutputBaseName))
-                fileName = OutputBaseName;
 
             var outputFilePath = FilesystemHelpers.GenerateFilePathWithDate(fileName, "TempOutput");
 
             if (!Directory.Exists("TempOutput"))
                 Directory.CreateDirectory("TempOutput");
 
-            using var archive = InitializeInputArchive(path);
+            using var archive = InitializeInputArchive(inputPath);
             using var outputArchive = InitializeOutputArchive(outputFilePath);
 
             await ProcessEntries(archive, outputArchive);

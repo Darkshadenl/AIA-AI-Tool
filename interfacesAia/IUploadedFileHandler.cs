@@ -2,7 +2,6 @@ namespace InterfacesAia;
 
 public interface IUploadedFileHandler
 {
-    Task Handle(string path, string inputContentType);
+    Task Handle(string inputPath, string outputPath, string inputContentType);
     void SetNext(IUploadedFileHandler next);
-    void SetOutputBaseName(string name);
 }

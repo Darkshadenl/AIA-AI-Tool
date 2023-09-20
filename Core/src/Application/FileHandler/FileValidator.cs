@@ -14,12 +14,12 @@ public class FileValidator : AbstractFileHandler
     public FileValidator(IOptions<Settings> extensionSettings) : base(extensionSettings)
     { }
 
-    public override async Task Handle(string path, string inputContentType)
+    public override async Task Handle(string inputPath, string outputPath, string inputContentType)
     {
-        if (!File.Exists(path))
+        if (!File.Exists(inputPath))
             throw new FileNotFoundException("The specified file does not exist.");
 
-        var fileInfo = new FileInfo(path);
+        var fileInfo = new FileInfo(inputPath);
 
         if (fileInfo.Length == 0)
             throw new Exception("The file is empty.");
@@ -27,7 +27,7 @@ public class FileValidator : AbstractFileHandler
         if (!_contentType.Contains(inputContentType))
             throw new Exception("Invalid file type.");
 
-        await Next.Handle(path, inputContentType);
+        await Next.Handle(inputPath,  outputPath, inputContentType);
     }
 
 }

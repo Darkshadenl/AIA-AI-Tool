@@ -25,7 +25,6 @@ public class UploadRouter
 
             var fileName = compressedFile.FileName;
             var handlerStreet = fileHandlerFactory.GetFileHandler();
-            handlerStreet.SetOutputBaseName(fileName);
             var outputPath = FilesystemHelpers.GenerateFilePathWithDate(fileName);
 
             try
@@ -72,9 +71,9 @@ public class UploadRouter
             try
             {
                 var downloadPath = await gitlabApi.DownloadRepository(projectId, apiToken);
+                var outputFilePath = FilesystemHelpers.GenerateFilePathWithDate(projectId, "TempOutput");
                 IUploadedFileHandler handlerStreet = fileHandlerFactory.GetFileHandler();
-                handlerStreet.SetOutputBaseName(projectId);
-                await handlerStreet.Handle(downloadPath, "application/zip");
+                await handlerStreet.Handle(downloadPath, outputFilePath, "application/zip");
             }
             catch (Exception e)
             {

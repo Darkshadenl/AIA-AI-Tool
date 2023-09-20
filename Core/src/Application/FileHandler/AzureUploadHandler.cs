@@ -15,7 +15,7 @@ public class AzureUploadHandler : AbstractFileHandler
 
     }
 
-    public override Task Handle(string input, string inputContentType)
+    public override Task Handle(string inputPath, string inputContentType)
     {
         Console.WriteLine("AzureUploadHandler");
         return Task.CompletedTask;
