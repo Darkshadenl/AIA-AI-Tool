@@ -16,7 +16,7 @@ public class GitlabService
     /// </summary>
     /// <param name="projectId">The ID of the project.</param>
     /// <param name="apiToken">The API token for authentication.</param>
-    /// <param name="path">The path where the repository will be downloaded (default is "TempDownloads").</param>
+    /// <param name="path">The path where the repository will be downloaded.</param>
     /// <returns>The path where the repository was downloaded.</returns>
     /// <exception cref="Exception">Thrown if the repository download fails.</exception>
     public async Task<string> DownloadRepository(string projectId, string apiToken)

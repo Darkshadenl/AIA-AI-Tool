@@ -4,12 +4,11 @@ using aia_api.Services;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
 using Moq;
-using Moq.AutoMock;
 
-namespace TestProject.Application.Azure;
+namespace TestProject.Services;
 
 [TestFixture]
-public class AzureClientTest
+public class AzureServiceTest
 {
     private Mock<BlobServiceClient> _blobServiceClientMock;
     private Mock<IOptions<AzureBlobStorageSettings>> _settingsMock;
