@@ -6,41 +6,50 @@ namespace aia_api.Application.FileHandler
 {
     public class ZipHandler : AbstractFileHandler
     {
+        private readonly IOptions<Settings> _settings;
         private const string ContentType = "application/zip";
 
-        public ZipHandler(IOptions<Settings> extensionSettings) : base(extensionSettings)
-        { }
+        public ZipHandler(IOptions<Settings> settings) : base(settings)
+        {
+            _settings = settings;
+        }
 
-        public override async Task Handle(string inputPath, string outputPath, string inputContentType)
+        public override async Task Handle(string inputPath, string inputContentType)
         {
             if (!IsValidFile(inputContentType, ContentType))
             {
                 if (Next == null)
                     throw new Exception("No next handler found for this file type.");
 
-                await Next.Handle(inputPath, outputPath, inputContentType);
+                await Next.Handle(inputPath,  inputContentType);
                 return;
             }
 
             using var archive = InitializeInputArchive(inputPath);
-            using var outputArchive = InitializeOutputArchive(outputPath);
+            using var outputArchive =
+                InitializeOutputArchive(Path.Combine(_settings.Value.OutputFolderPath, Path.GetFileName(inputPath)));
 
             await ProcessEntries(archive, outputArchive);
 
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
                 LogExtensionsCount();
 
-            archive.Dispose();
             outputArchive.Dispose();
+            archive.Dispose();
 
-            await Next.Handle(inputPath, outputPath, inputContentType);
+            await Next.Handle(inputPath, inputContentType);
         }
 
         private ZipArchive InitializeInputArchive(string path) =>
             ZipFile.OpenRead(path);
 
-        private ZipArchive InitializeOutputArchive(string outputPath) =>
-            ZipFile.Open(outputPath, ZipArchiveMode.Create);
+        private ZipArchive InitializeOutputArchive(string outputPath)
+        {
+            if (!Directory.Exists(_settings.Value.OutputFolderPath))
+                Directory.CreateDirectory(_settings.Value.OutputFolderPath);
+
+            return ZipFile.Open(outputPath, ZipArchiveMode.Create);
+        }
 
         private async Task ProcessEntries(ZipArchive archive, ZipArchive outputArchive)
         {

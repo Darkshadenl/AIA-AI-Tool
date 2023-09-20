@@ -15,21 +15,21 @@ public class AzureService
         _blobServiceClient = blobClient;
     }
 
-    public async Task ZipPipeline(string zipPath, string fileName)
+    public async Task FileSystemPipeline(string path, string blobFileName)
     {
-        await using var fileStream = new FileStream(zipPath, FileMode.Open, FileAccess.ReadWrite);
-        await UploadStreamToBlob(fileStream, fileName);
+        await using var fileStream = new FileStream(Path.Combine(path, blobFileName), FileMode.Open, FileAccess.ReadWrite);
+        await UploadStreamToBlob(fileStream, blobFileName);
     }
 
-    public async Task MemoryStreamPipeline(MemoryStream stream, string fileName)
+    public async Task MemoryStreamPipeline(MemoryStream stream, string blobFileName)
     {
         stream.Position = 0;
-        await UploadStreamToBlob(stream, fileName);
+        await UploadStreamToBlob(stream, blobFileName);
     }
 
-    private async Task UploadStreamToBlob(Stream inputStream, string fileName)
+    private async Task UploadStreamToBlob(Stream inputStream, string blobFileName)
     {
-        var blobClient = CreateBlobClients(fileName);
+        var blobClient = CreateBlobClients(blobFileName);
 
         byte[] buffer = new byte[4 * 1024];
         await using var outputStream = await blobClient.OpenWriteAsync(true);

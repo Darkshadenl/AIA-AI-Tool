@@ -6,11 +6,13 @@ namespace aia_api.Application.FileHandler;
 
 public class AzureUploadHandler : AbstractFileHandler
 {
+    private readonly IOptions<Settings> _settings;
     private AzureService _azureService;
     private const string UploadSuccessMessage = "File successfully uploaded.";
 
-    public AzureUploadHandler(IOptions<Settings> extensionSettings) : base(extensionSettings)
+    public AzureUploadHandler(IOptions<Settings> settings) : base(settings)
     {
+        _settings = settings;
     }
 
     public void setAzureClient(AzureService azureService)
@@ -18,11 +20,11 @@ public class AzureUploadHandler : AbstractFileHandler
         _azureService = azureService;
     }
 
-    public override async Task Handle(string inputPath, string outputPath, string inputContentType)
+    public override async Task Handle(string inputPath, string inputContentType)
     {
         try
         {
-            await _azureService.ZipPipeline(outputPath, Path.GetFileName(outputPath));
+            await _azureService.FileSystemPipeline(_settings.Value.OutputFolderPath, Path.GetFileName(inputPath));
             Console.WriteLine(UploadSuccessMessage);
         }
         catch (IOException e)

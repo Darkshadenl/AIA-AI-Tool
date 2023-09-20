@@ -12,11 +12,11 @@ public class UploadRouter
     private static readonly string FilteredOutputDirectory = Path.Combine("Temp", "Filtered");
     private static readonly string UnfilteredOutputDirectory = "Temp";
 
-    public static Func<IFormFile, HttpContext, IFileHandlerFactory, Task> ZipHandler()
+    public static Func<IFormFile, HttpContext, IFileHandlerFactory, IStorageService, Task> ZipHandler()
     {
         string[] supportedContentTypes =  { "application/zip" };
 
-        return async (compressedFile, context, fileHandlerFactory) =>
+        return async (compressedFile, context, fileHandlerFactory, storageService) =>
         {
             if (!supportedContentTypes.Contains(compressedFile.ContentType))
             {
@@ -27,19 +27,12 @@ public class UploadRouter
 
             var fileName = compressedFile.FileName;
             var handlerStreet = fileHandlerFactory.GetFileHandler();
-            var zipPath = FilesystemHelpers.GenerateFilePathWithDate(fileName, UnfilteredOutputDirectory);
-            var filteredZipOutputPath = FilesystemHelpers.GenerateFilePathWithDate(fileName, FilteredOutputDirectory);
 
             try
             {
                 Stream inputStream = compressedFile.OpenReadStream();
-                Directory.CreateDirectory(Path.GetDirectoryName(zipPath));
-                var fileStream = new FileStream(zipPath, FileMode.Create);
-                await inputStream.CopyToAsync(fileStream);
-                inputStream.Close();
-                fileStream.Close();
-
-                await handlerStreet.Handle(zipPath, filteredZipOutputPath, compressedFile.ContentType);
+                var path = await storageService.StoreInTemp(inputStream, fileName);
+                await handlerStreet.Handle(path, compressedFile.ContentType);
             }
             catch (Exception e)
             {
@@ -75,9 +68,8 @@ public class UploadRouter
             try
             {
                 var downloadPath = await gitlabApi.DownloadRepository(projectId, apiToken);
-                var outputFilePath = FilesystemHelpers.GenerateFilePathWithDate(projectId, FilteredOutputDirectory);
                 IUploadedFileHandler handlerStreet = fileHandlerFactory.GetFileHandler();
-                await handlerStreet.Handle(downloadPath, outputFilePath, "application/zip");
+                await handlerStreet.Handle(downloadPath, "application/zip");
             }
             catch (Exception e)
             {

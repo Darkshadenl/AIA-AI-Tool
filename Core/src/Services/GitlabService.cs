@@ -34,7 +34,7 @@ public class GitlabService
         var date = DateTime.Now.ToString("dd-MM-yyyy HH-mm-ss").Replace(" ", "_");
         var fileName = $"{projectId}_{date}.zip";
 
-        return await _storageService.StoreResponseContentInTemp(response, fileName);
+        return await _storageService.StoreInTemp(response, fileName);
     }
 
 }

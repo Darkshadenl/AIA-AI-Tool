@@ -9,9 +9,17 @@ public interface IStorageService
     /// Stores the content of a response in the temp folder.
     /// Configure this folder in appsettings.json
     /// </summary>
-    /// <param name="response">Should contain .Content</param>
-    /// <returns>A path to the file</returns>
-    Task<string> StoreResponseContentInTemp(HttpResponseMessage response, string fileName);
+    /// <param name="input">Should contain .Content</param>
+    /// <returns>Filename of the outputfile</returns>
+    Task<string> StoreInTemp(HttpResponseMessage input, string fileName);
+
+    /// <summary>
+    /// Stores the content of a stream in the temp folder.
+    /// Configure this folder in appsettings.json
+    /// </summary>
+    /// <param name="input">Any stream</param>
+    /// <returns>Filename of the outputfile</returns>
+    Task<string> StoreInTemp(Stream input, string fileName);
 }
 
 public class StorageService : IStorageService
@@ -23,17 +31,24 @@ public class StorageService : IStorageService
         _settings = settings;
     }
 
-    public async Task<string> StoreResponseContentInTemp(HttpResponseMessage response, string fileName)
+    public async Task<string> StoreInTemp(HttpResponseMessage input, string fileName)
+    {
+        Stream responseStream = await input.Content.ReadAsStreamAsync();
+        return await StoreInTemp(responseStream, fileName);
+    }
+
+    public async Task<string> StoreInTemp(Stream input, string fileName)
     {
         var directoryPath = _settings.Value.TempFolderPath;
+        var fullPath = Path.Combine(directoryPath, fileName);
 
         if (!Directory.Exists(directoryPath))
             Directory.CreateDirectory(directoryPath);
 
-        var fullPath = Path.Combine(directoryPath, fileName);
-
-        await using var fileStream =  new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None);
-        await response.Content.CopyToAsync(fileStream);
+        await using var fileStream = new FileStream(fullPath, FileMode.Create);
+        await input.CopyToAsync(fileStream);
         return fullPath;
     }
+
+
 }

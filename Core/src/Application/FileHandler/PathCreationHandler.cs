@@ -8,15 +8,14 @@ namespace aia_api.Application.FileHandler;
 /// </summary>
 public class PathCreationHandler  : AbstractFileHandler
 {
-    public PathCreationHandler(IOptions<Settings> extensionSettings) : base(extensionSettings)
+    public PathCreationHandler(IOptions<Settings> settings) : base(settings)
     {
     }
 
-    public override Task Handle(string inputPath, string outputPath, string inputContentType)
+    public override Task Handle(string inputPath, string inputContentType)
     {
-        if (!Directory.Exists(Path.GetDirectoryName(outputPath)))
-            Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
+        // TODO after refactor does nothing anymore
 
-        return Next.Handle(inputPath, outputPath, inputContentType);
+        return Next.Handle(inputPath, inputContentType);
     }
 }

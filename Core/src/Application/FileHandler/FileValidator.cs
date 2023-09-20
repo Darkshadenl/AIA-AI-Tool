@@ -11,10 +11,10 @@ public class FileValidator : AbstractFileHandler
 {
     private readonly string[] _contentType = { "application/zip" };
 
-    public FileValidator(IOptions<Settings> extensionSettings) : base(extensionSettings)
+    public FileValidator(IOptions<Settings> settings) : base(settings)
     { }
 
-    public override async Task Handle(string inputPath, string outputPath, string inputContentType)
+    public override async Task Handle(string inputPath, string inputContentType)
     {
         if (!File.Exists(inputPath))
             throw new FileNotFoundException("The specified file does not exist.");
@@ -27,7 +27,7 @@ public class FileValidator : AbstractFileHandler
         if (!_contentType.Contains(inputContentType))
             throw new Exception("Invalid file type.");
 
-        await Next.Handle(inputPath,  outputPath, inputContentType);
+        await Next.Handle(inputPath, inputContentType);
     }
 
 }

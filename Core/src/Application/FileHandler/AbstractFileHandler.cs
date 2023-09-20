@@ -10,12 +10,12 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
     protected readonly Dictionary<string, int> ExtensionsCount = new();
     private readonly Settings _supportedContentTypes;
 
-    protected AbstractFileHandler(IOptions<Settings> extensionSettings)
+    protected AbstractFileHandler(IOptions<Settings> settings)
     {
-        _supportedContentTypes = extensionSettings.Value;
+        _supportedContentTypes = settings.Value;
     }
 
-    public abstract Task Handle(string inputPath, string outputPath, string inputContentType);
+    public abstract Task Handle(string inputPath, string inputContentType);
 
     public void SetNext(IUploadedFileHandler next)
     {
