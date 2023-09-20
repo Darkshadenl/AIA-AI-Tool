@@ -7,6 +7,8 @@ namespace aia_api.Application.FileHandler;
 public class AzureUploadHandler : AbstractFileHandler
 {
     private AzureClient _azureClient;
+    private const string UploadSuccessMessage = "File successfully uploaded.";
+
     public AzureUploadHandler(IOptions<Settings> extensionSettings) : base(extensionSettings)
     {
     }
