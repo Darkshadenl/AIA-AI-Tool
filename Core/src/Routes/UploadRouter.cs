@@ -10,7 +10,8 @@ namespace aia_api.Routes;
 
 public class UploadRouter
 {
-    private static string outputDirectory = Path.Combine("Temp", "Filtered");
+    private static readonly string FilteredOutputDirectory = Path.Combine("Temp", "Filtered");
+    private static readonly string UnfilteredOutputDirectory = "Temp";
 
     public static Func<IFormFile, HttpContext, AzureClient, IFileHandlerFactory, Task> ZipHandler()
     {
@@ -27,8 +28,8 @@ public class UploadRouter
 
             var fileName = compressedFile.FileName;
             var handlerStreet = fileHandlerFactory.GetFileHandler();
-            var zipPath = FilesystemHelpers.GenerateFilePathWithDate(fileName, "Temp");
-            var filteredZipOutputPath = FilesystemHelpers.GenerateFilePathWithDate(fileName, outputDirectory);
+            var zipPath = FilesystemHelpers.GenerateFilePathWithDate(fileName, UnfilteredOutputDirectory);
+            var filteredZipOutputPath = FilesystemHelpers.GenerateFilePathWithDate(fileName, FilteredOutputDirectory);
 
             try
             {
@@ -76,7 +77,7 @@ public class UploadRouter
             try
             {
                 var downloadPath = await gitlabApi.DownloadRepository(projectId, apiToken);
-                var outputFilePath = FilesystemHelpers.GenerateFilePathWithDate(projectId, outputDirectory);
+                var outputFilePath = FilesystemHelpers.GenerateFilePathWithDate(projectId, FilteredOutputDirectory);
                 IUploadedFileHandler handlerStreet = fileHandlerFactory.GetFileHandler();
                 await handlerStreet.Handle(downloadPath, outputFilePath, "application/zip");
             }
