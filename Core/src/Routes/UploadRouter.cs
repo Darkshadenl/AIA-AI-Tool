@@ -9,9 +9,6 @@ namespace aia_api.Routes;
 
 public class UploadRouter
 {
-    private static readonly string FilteredOutputDirectory = Path.Combine("Temp", "Filtered");
-    private static readonly string UnfilteredOutputDirectory = "Temp";
-
     public static Func<IFormFile, HttpContext, IFileHandlerFactory, IStorageService, Task> ZipHandler()
     {
         string[] supportedContentTypes =  { "application/zip" };
