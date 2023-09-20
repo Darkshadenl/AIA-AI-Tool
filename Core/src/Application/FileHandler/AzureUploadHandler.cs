@@ -23,6 +23,7 @@ public class AzureUploadHandler : AbstractFileHandler
         try
         {
             await _azureClient.ZipPipeline(outputPath, Path.GetFileName(outputPath));
+            Console.WriteLine(UploadSuccessMessage);
         }
         catch (IOException e)
         {
@@ -33,7 +34,6 @@ public class AzureUploadHandler : AbstractFileHandler
             Console.WriteLine($"An unexpected error occurred: {e.Message}");
             throw;
         }
-        Console.WriteLine(UploadSuccessMessage);
     }
 
 }

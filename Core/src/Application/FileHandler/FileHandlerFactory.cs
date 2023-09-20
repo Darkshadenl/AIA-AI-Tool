@@ -5,12 +5,6 @@ using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
 
-public enum FileDataType
-{
-    MemoryStream,
-    FilePath
-}
-
 public interface IFileHandlerFactory
 {
     IUploadedFileHandler GetFileHandler();

@@ -17,7 +17,7 @@ public class AzureClient
 
     public async Task ZipPipeline(string zipPath, string fileName)
     {
-        await using var fileStream = new FileStream(zipPath, FileMode.Open, FileAccess.Read);
+        await using var fileStream = new FileStream(zipPath, FileMode.Open, FileAccess.ReadWrite);
         await UploadStreamToBlob(fileStream, fileName);
     }
 

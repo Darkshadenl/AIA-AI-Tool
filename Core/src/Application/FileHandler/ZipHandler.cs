@@ -28,22 +28,19 @@ namespace aia_api.Application.FileHandler
             await ProcessEntries(archive, outputArchive);
 
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-            {
-                // LogExtensionsCount();
-            }
+                LogExtensionsCount();
+
+            archive.Dispose();
+            outputArchive.Dispose();
 
             await Next.Handle(inputPath, outputPath, inputContentType);
         }
 
-        private ZipArchive InitializeInputArchive(string path)
-        {
-            return ZipFile.OpenRead(path);
-        }
+        private ZipArchive InitializeInputArchive(string path) =>
+            ZipFile.OpenRead(path);
 
-        private ZipArchive InitializeOutputArchive(string outputPath)
-        {
-            return ZipFile.Open(outputPath, ZipArchiveMode.Create);
-        }
+        private ZipArchive InitializeOutputArchive(string outputPath) =>
+            ZipFile.Open(outputPath, ZipArchiveMode.Create);
 
         private async Task ProcessEntries(ZipArchive archive, ZipArchive outputArchive)
         {
@@ -62,10 +59,8 @@ namespace aia_api.Application.FileHandler
             }
         }
 
-        private string GetExtension(ZipArchiveEntry entry)
-        {
-            return Path.GetExtension(entry.FullName);
-        }
+        private string GetExtension(ZipArchiveEntry entry) =>
+            Path.GetExtension(entry.FullName);
 
         private async Task CopyEntryToNewArchive(ZipArchiveEntry entry, ZipArchive outputArchive)
         {

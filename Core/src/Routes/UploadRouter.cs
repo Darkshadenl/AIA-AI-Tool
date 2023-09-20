@@ -46,13 +46,12 @@ public class UploadRouter
                 Console.WriteLine(e);
                 throw;
             }
-
             context.Response.StatusCode = 200;
             await context.Response.WriteAsync("File successfully received.");
         };
     }
 
-    public static Func<UploadRepoDTO, HttpContext, GitlabApi, IFileHandlerFactory, Task> RepoHandler()
+    public static  Func<UploadRepoDTO, HttpContext, GitlabApi, IFileHandlerFactory, Task> RepoHandler()
     {
         return async (dto, context, gitlabApi, fileHandlerFactory) =>
         {
