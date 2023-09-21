@@ -15,7 +15,7 @@ public class UploadHandler : AbstractFileHandler
         _settings = settings;
     }
 
-    public void SetAzureClient(AzureService azureService)
+    public void SetClient(AzureService azureService)
     {
         _azureService = azureService;
     }
@@ -24,7 +24,7 @@ public class UploadHandler : AbstractFileHandler
     {
         try
         {
-            await _azureService.FileSystemPipeline(_settings.Value.OutputFolderPath, Path.GetFileName(inputPath));
+            await _azureService.Pipeline(_settings.Value.OutputFolderPath, Path.GetFileName(inputPath));
             Console.WriteLine(UploadSuccessMessage);
         }
         catch (IOException e)

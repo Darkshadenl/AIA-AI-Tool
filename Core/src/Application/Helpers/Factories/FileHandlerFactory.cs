@@ -31,7 +31,7 @@ public class FileHandlerFactory : IFileHandlerFactory
         var zipHandler = new ZipHandler(_extensionSettings);
         var azureUploader = new UploadHandler(_extensionSettings);
 
-        azureUploader.SetAzureClient(_azureService);
+        azureUploader.SetClient(_azureService);
         fileValidator.SetNext(pathHandler);
         pathHandler.SetNext(zipHandler);
         zipHandler.SetNext(azureUploader);

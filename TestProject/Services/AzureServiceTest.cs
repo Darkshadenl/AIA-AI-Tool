@@ -41,7 +41,7 @@ public class AzureServiceTest
         blobClientMock.Setup(x => x.OpenWriteAsync(true, default, default)).ReturnsAsync(blobWriteStreamMock.Object);
 
         // Act
-        await _azureService.MemoryStreamPipeline(memoryStream, fileName);
+        await _azureService.PipeLine(memoryStream, fileName);
 
         // Assert
         _blobServiceClientMock.Verify(x => x.GetBlobContainerClient(blobContainerName), Times.Once);
@@ -68,7 +68,7 @@ public class AzureServiceTest
         blobClientMock.Setup(x => x.OpenWriteAsync(true, default, default)).ReturnsAsync(blobWriteStreamMock.Object);
 
         // Act
-        await _azureService.MemoryStreamPipeline(memoryStream.Object, fileName);
+        await _azureService.PipeLine(memoryStream.Object, fileName);
 
         // Assert
         memoryStream.Verify(x => x.ReadAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), default), Times.AtLeastOnce);
@@ -92,7 +92,7 @@ public class AzureServiceTest
         blobClientMock.Setup(x => x.OpenWriteAsync(true, default, default)).ReturnsAsync(blobWriteStreamMock.Object);
 
         // Act
-        await _azureService.MemoryStreamPipeline(memoryStream, fileName);
+        await _azureService.PipeLine(memoryStream, fileName);
 
         // Assert
         blobWriteStreamMock.Verify(x => x.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), default), Times.AtLeastOnce);
@@ -118,9 +118,9 @@ public class AzureServiceTest
         blobClientMock.Setup(x => x.OpenWriteAsync(true, default, default)).ReturnsAsync(blobWriteStreamMock.Object);
 
         // Act
-        var task1 = _azureService.MemoryStreamPipeline(memoryStream1, fileName);
-        var task2 = _azureService.MemoryStreamPipeline(memoryStream2, fileName);
-        var task3 = _azureService.MemoryStreamPipeline(memoryStream3, fileName);
+        var task1 = _azureService.PipeLine(memoryStream1, fileName);
+        var task2 = _azureService.PipeLine(memoryStream2, fileName);
+        var task3 = _azureService.PipeLine(memoryStream3, fileName);
 
         await Task.WhenAll(task1, task2, task3);
 
