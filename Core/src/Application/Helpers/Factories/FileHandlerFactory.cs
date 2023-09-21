@@ -29,7 +29,7 @@ public class FileHandlerFactory : IFileHandlerFactory
         var fileValidator = new FileValidator(_extensionSettings);
         var pathHandler = new PathCreationHandler(_extensionSettings);
         var zipHandler = new ZipHandler(_extensionSettings);
-        var azureUploader = new AzureUploadHandler(_extensionSettings);
+        var azureUploader = new UploadHandler(_extensionSettings);
 
         azureUploader.SetAzureClient(_azureService);
         fileValidator.SetNext(pathHandler);

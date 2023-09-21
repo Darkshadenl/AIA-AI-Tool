@@ -4,13 +4,13 @@ using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
 
-public class AzureUploadHandler : AbstractFileHandler
+public class UploadHandler : AbstractFileHandler
 {
     private readonly IOptions<Settings> _settings;
     private AzureService _azureService;
     private const string UploadSuccessMessage = "File successfully uploaded.";
 
-    public AzureUploadHandler(IOptions<Settings> settings) : base(settings)
+    public UploadHandler(IOptions<Settings> settings) : base(settings)
     {
         _settings = settings;
     }
