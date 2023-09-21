@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using aia_api.Configuration.Azure;
 using Microsoft.Extensions.Options;
 
@@ -11,6 +12,7 @@ public interface IStorageService
     /// </summary>
     /// <param name="input">Should contain .Content</param>
     /// <returns>Filename of the outputfile</returns>
+    /// <throws>Exception if content is undefined</throws>
     Task<string> StoreInTemp(HttpResponseMessage input, string fileName);
 
     /// <summary>
@@ -25,10 +27,14 @@ public interface IStorageService
 public class StorageService : IStorageService
 {
     private readonly IOptions<Settings> _settings;
+    private readonly IFileSystem _fileSystem;
+    private readonly IFileStreamFactory _fileStreamFactory;
 
-    public StorageService(IOptions<Settings> settings)
+    public StorageService(IOptions<Settings> settings, IFileSystem fileSystem)
     {
         _settings = settings;
+        _fileSystem = fileSystem;
+        _fileStreamFactory = fileSystem.FileStream;
     }
 
     public async Task<string> StoreInTemp(HttpResponseMessage input, string fileName)
@@ -42,10 +48,10 @@ public class StorageService : IStorageService
         var directoryPath = _settings.Value.TempFolderPath;
         var fullPath = Path.Combine(directoryPath, fileName);
 
-        if (!Directory.Exists(directoryPath))
-            Directory.CreateDirectory(directoryPath);
+        if (!_fileSystem.Directory.Exists(directoryPath))
+            _fileSystem.Directory.CreateDirectory(directoryPath);
 
-        await using var fileStream = new FileStream(fullPath, FileMode.Create);
+        await using var fileStream = _fileStreamFactory.New(fullPath, FileMode.Create);
         await input.CopyToAsync(fileStream);
         return fullPath;
     }

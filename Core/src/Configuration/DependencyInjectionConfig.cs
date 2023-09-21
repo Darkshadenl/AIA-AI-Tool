@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using aia_api.Application.FileHandler;
 using aia_api.Application.Helpers.Factories;
 using aia_api.Configuration.Azure;
@@ -13,6 +14,7 @@ public static class DependencyInjectionConfig
     {
         var blobConfig = configuration.GetSection("AzureBlobStorage");
         var settings = configuration.GetSection("Settings");
+
         services.Configure<AzureBlobStorageSettings>(blobConfig);
         services.Configure<Settings>(settings);
     }
@@ -28,10 +30,13 @@ public static class DependencyInjectionConfig
         var credential = new StorageSharedKeyCredential(aBss.AccountName, aBss.StorageAccountKey);
 
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
+        services.AddSingleton<IFileSystem, FileSystem>();
+
         services.AddScoped<AzureService>();
         services.AddScoped<HttpClient>();
         services.AddScoped<GitlabService>();
         services.AddScoped<IFileHandlerFactory, FileHandlerFactory>();
         services.AddScoped<IStorageService, StorageService>();
+
     }
 }
