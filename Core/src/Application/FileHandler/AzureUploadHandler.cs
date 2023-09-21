@@ -15,7 +15,7 @@ public class AzureUploadHandler : AbstractFileHandler
         _settings = settings;
     }
 
-    public void setAzureClient(AzureService azureService)
+    public void SetAzureClient(AzureService azureService)
     {
         _azureService = azureService;
     }
