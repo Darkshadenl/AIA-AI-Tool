@@ -1,3 +1,4 @@
+```
 graph TD
 
 A[API Endpoints]
@@ -11,3 +12,4 @@ A -->|/api/upload/repo| B
 B -->|Handle| C
 C -->|Handle| D
 D -->|Handle| E
+```
