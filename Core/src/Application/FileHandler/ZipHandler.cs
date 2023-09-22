@@ -25,8 +25,8 @@ namespace aia_api.Application.FileHandler
                 return;
             }
 
-            using var archive = InitializeInputArchive(inputPath);
-            using var outputArchive =
+            using ZipArchive archive = InitializeInputArchive(inputPath);
+            using ZipArchive outputArchive =
                 InitializeOutputArchive(Path.Combine(_settings.Value.OutputFolderPath, Path.GetFileName(inputPath)));
 
             await ProcessEntries(archive, outputArchive);
