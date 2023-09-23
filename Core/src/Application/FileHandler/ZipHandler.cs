@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using System.IO.Compression;
 using aia_api.Configuration.Azure;
 using Microsoft.Extensions.Options;
@@ -7,11 +8,13 @@ namespace aia_api.Application.FileHandler
     public class ZipHandler : AbstractFileHandler
     {
         private readonly IOptions<Settings> _settings;
+        private readonly IFileSystem _fileSystem;
         private const string ContentType = "application/zip";
 
-        public ZipHandler(IOptions<Settings> settings) : base(settings)
+        public ZipHandler(IOptions<Settings> settings, IFileSystem fileSystem) : base(settings)
         {
             _settings = settings;
+            _fileSystem = fileSystem;
         }
 
         public override async Task Handle(string inputPath, string inputContentType)
@@ -40,15 +43,19 @@ namespace aia_api.Application.FileHandler
             await Next.Handle(inputPath, inputContentType);
         }
 
-        private ZipArchive InitializeInputArchive(string path) =>
-            ZipFile.OpenRead(path);
+        private ZipArchive InitializeInputArchive(string path)
+        {
+            var fileStream = _fileSystem.FileStream.New(path, FileMode.Open, FileAccess.Read);
+            return new ZipArchive(fileStream, ZipArchiveMode.Read);
+        }
 
         private ZipArchive InitializeOutputArchive(string outputPath)
         {
             if (!Directory.Exists(_settings.Value.OutputFolderPath))
                 Directory.CreateDirectory(_settings.Value.OutputFolderPath);
 
-            return ZipFile.Open(outputPath, ZipArchiveMode.Create);
+            var fs = _fileSystem.FileStream.New(outputPath, FileMode.Create, FileAccess.Write);
+            return new ZipArchive(fs, ZipArchiveMode.Create);
         }
 
         private async Task ProcessEntries(ZipArchive archive, ZipArchive outputArchive)

@@ -24,13 +24,5 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Core\aia_api.csproj" />
-    <ItemGroup>
-      <Folder Include="Application\Helpers\" />
     </ItemGroup>
-
-    </ItemGroup>
-
-
-
-
 </Project>

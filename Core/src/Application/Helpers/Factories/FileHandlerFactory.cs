@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using aia_api.Application.FileHandler;
 using aia_api.Configuration.Azure;
 using aia_api.Services;
@@ -16,18 +17,20 @@ public class FileHandlerFactory : IFileHandlerFactory
     private readonly IOptions<Settings> _extensionSettings;
     private readonly IUploadedFileHandler _fileHandlerStreet;
     private readonly AzureService _azureService;
+    private readonly IFileSystem _fileSystem;
 
-    public FileHandlerFactory(IOptions<Settings> extensionSettings, AzureService azureService)
+    public FileHandlerFactory(IOptions<Settings> extensionSettings, AzureService azureService, IFileSystem fileSystem)
     {
         _extensionSettings = extensionSettings;
         _azureService = azureService;
+        _fileSystem = fileSystem;
         _fileHandlerStreet = BuildFileHandlerStreet();
     }
 
     private IUploadedFileHandler BuildFileHandlerStreet()
     {
         var fileValidator = new FileValidator(_extensionSettings);
-        var zipHandler = new ZipHandler(_extensionSettings);
+        var zipHandler = new ZipHandler(_extensionSettings, _fileSystem);
         var azureUploader = new UploadHandler(_extensionSettings);
 
         azureUploader.SetClient(_azureService);

@@ -20,8 +20,8 @@ public class StorageServiceTest
         var storageService = new StorageService(mockSettings.Object, mockFileSystem);
 
         // Act & Assert
-        Assert.ThrowsAsync<NullReferenceException>(() => storageService
-            .StoreInTemp(new HttpResponseMessage(), "some_file_name"));
+        Assert.ThrowsAsync<NullReferenceException>(() =>
+            storageService.StoreInTemp(new HttpResponseMessage(), "some_file_name"));
 
         // if no throw, test fails
         return Task.CompletedTask;
