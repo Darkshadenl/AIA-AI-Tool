@@ -33,11 +33,11 @@ public class UploadRouter
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                throw;
+                Console.WriteLine($"Exception: {e.Message}, StackTrace: {e.StackTrace}");
+                context.Response.StatusCode = 400;
+                return;
             }
-            context.Response.StatusCode = 200;
-            await context.Response.WriteAsync("File successfully received.");
+            context.Response.StatusCode = 204;
         };
     }
 
@@ -72,12 +72,10 @@ public class UploadRouter
             {
                 Console.WriteLine($"Exception: {e.Message}, StackTrace: {e.StackTrace}");
                 context.Response.StatusCode = 400;
-                await context.Response.WriteAsync("Could not download repository.");
                 return;
             }
 
-            context.Response.StatusCode = 200;
-            await context.Response.WriteAsync("File successfully received.");
+            context.Response.StatusCode = 204;
         };
     }
 }
