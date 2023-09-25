@@ -1,3 +1,4 @@
+using System.IO.Abstractions.TestingHelpers;
 using System.Text;
 using aia_api.Configuration.Azure;
 using aia_api.Services;
@@ -13,6 +14,7 @@ public class AzureServiceTest
     private Mock<BlobServiceClient> _blobServiceClientMock;
     private Mock<IOptions<AzureBlobStorageSettings>> _settingsMock;
     private AzureService _azureService;
+    private MockFileSystem _mockFileSystem;
 
     [SetUp]
     public void Setup()
@@ -20,8 +22,9 @@ public class AzureServiceTest
         _blobServiceClientMock = new Mock<BlobServiceClient>();
         _settingsMock = new Mock<IOptions<AzureBlobStorageSettings>>();
         _settingsMock.Setup(s => s.Value).Returns(new AzureBlobStorageSettings { BlobContainerName = "testContainer" });
+        _mockFileSystem = new MockFileSystem();
 
-        _azureService = new AzureService(_blobServiceClientMock.Object, _settingsMock.Object);
+        _azureService = new AzureService(_blobServiceClientMock.Object, _settingsMock.Object, _mockFileSystem);
     }
 
     [Test]

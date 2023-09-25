@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using aia_api.Configuration.Azure;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
@@ -7,17 +8,20 @@ namespace aia_api.Services;
 public class AzureService
 {
     private readonly BlobServiceClient _blobServiceClient;
+    private readonly IFileSystem _fileSystem;
     private readonly string _blobContainerName;
 
-    public AzureService(BlobServiceClient blobClient, IOptions<AzureBlobStorageSettings> settings)
+    public AzureService(BlobServiceClient blobClient, IOptions<AzureBlobStorageSettings> settings, IFileSystem fileSystem)
     {
         _blobContainerName = settings.Value.BlobContainerName;
         _blobServiceClient = blobClient;
+        _fileSystem = fileSystem;
     }
 
     public async Task Pipeline(string path, string blobFileName)
     {
-        await using var fileStream = new FileStream(Path.Combine(path, blobFileName), FileMode.Open, FileAccess.ReadWrite);
+        var fileStream =
+            _fileSystem.FileStream.New(Path.Combine(path, blobFileName), FileMode.Open, FileAccess.ReadWrite);
         await UploadStreamToBlob(fileStream, blobFileName);
     }
 

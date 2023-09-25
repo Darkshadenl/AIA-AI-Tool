@@ -51,8 +51,8 @@ namespace aia_api.Application.FileHandler
 
         private ZipArchive InitializeOutputArchive(string outputPath)
         {
-            if (!Directory.Exists(_settings.Value.OutputFolderPath))
-                Directory.CreateDirectory(_settings.Value.OutputFolderPath);
+            if (!_fileSystem.Directory.Exists(_settings.Value.OutputFolderPath))
+                _fileSystem.Directory.CreateDirectory(_settings.Value.OutputFolderPath);
 
             var fs = _fileSystem.FileStream.New(outputPath, FileMode.Create, FileAccess.Write);
             return new ZipArchive(fs, ZipArchiveMode.Create);

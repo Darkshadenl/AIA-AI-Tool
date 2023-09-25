@@ -29,11 +29,12 @@ public static class DependencyInjectionConfig
         var connectionString = new Uri(aBss.BlobServiceEndpoint + aBss.BlobContainerName);
         var credential = new StorageSharedKeyCredential(aBss.AccountName, aBss.StorageAccountKey);
 
+        services.AddScoped<HttpClient>();
+
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
         services.AddSingleton<IFileSystem, FileSystem>();
 
         services.AddScoped<AzureService>();
-        services.AddScoped<HttpClient>();
         services.AddScoped<GitlabService>();
         services.AddScoped<IFileHandlerFactory, FileHandlerFactory>();
         services.AddScoped<IStorageService, StorageService>();
