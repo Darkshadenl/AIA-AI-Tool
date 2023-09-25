@@ -1,5 +1,6 @@
 using System.IO.Abstractions;
 using System.IO.Compression;
+using aia_api.Application.Helpers;
 using aia_api.Configuration.Azure;
 using Microsoft.Extensions.Options;
 
@@ -34,7 +35,7 @@ namespace aia_api.Application.FileHandler
 
             await ProcessEntries(archive, outputArchive);
 
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+            if (EnvHelper.IsDev())
                 LogExtensionsCount();
 
             outputArchive.Dispose();
