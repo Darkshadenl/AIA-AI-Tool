@@ -1,6 +1,8 @@
-using aia_api.Application.Azure;
+using System.IO.Abstractions;
 using aia_api.Application.FileHandler;
+using aia_api.Application.Helpers.Factories;
 using aia_api.Configuration.Azure;
+using aia_api.Services;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 
@@ -11,28 +13,31 @@ public static class DependencyInjectionConfig
     public static void AddProjectConfigs(this IServiceCollection services, IConfiguration configuration)
     {
         var blobConfig = configuration.GetSection("AzureBlobStorage");
-        services.Configure<AzureBlobStorageSettings>(blobConfig);
         var settings = configuration.GetSection("Settings");
+
+        services.Configure<AzureBlobStorageSettings>(blobConfig);
         services.Configure<Settings>(settings);
     }
 
     public static void AddProjectServices(this IServiceCollection services, IConfiguration configuration)
     {
-        var azureBlobStorageSettings = configuration.GetSection("AzureBlobStorage").Get<AzureBlobStorageSettings>();
+        var aBss = configuration.GetSection("AzureBlobStorage").Get<AzureBlobStorageSettings>();
 
-        if (azureBlobStorageSettings == null)
-            throw new ArgumentNullException(nameof(azureBlobStorageSettings));
+        if (aBss == null)
+            throw new ArgumentNullException(nameof(aBss));
 
-        var blobServiceEndpoint = azureBlobStorageSettings.BlobServiceEndpoint;
-        var blobContainerName = azureBlobStorageSettings.BlobContainerName;
-        var accountName = azureBlobStorageSettings.AccountName;
-        var accountKey = azureBlobStorageSettings.StorageAccountKey;
+        var connectionString = new Uri(aBss.BlobServiceEndpoint + aBss.BlobContainerName);
+        var credential = new StorageSharedKeyCredential(aBss.AccountName, aBss.StorageAccountKey);
 
-        var connectionString = new Uri(blobServiceEndpoint + blobContainerName);
-        var credential = new StorageSharedKeyCredential(accountName, accountKey);
+        services.AddScoped<HttpClient>();
 
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
-        services.AddScoped<AzureClient>();
+        services.AddSingleton<IFileSystem, FileSystem>();
+
+        services.AddScoped<AzureService>();
+        services.AddScoped<GitlabService>();
         services.AddScoped<IFileHandlerFactory, FileHandlerFactory>();
+        services.AddScoped<IStorageService, StorageService>();
+
     }
 }

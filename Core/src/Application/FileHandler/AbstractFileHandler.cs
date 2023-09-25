@@ -9,29 +9,22 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
     protected IUploadedFileHandler Next;
     protected readonly Dictionary<string, int> ExtensionsCount = new();
     private readonly Settings _supportedContentTypes;
-    protected int FileSizeInGb = 1 * 1024 * 1024 * 1024;
 
-    protected AbstractFileHandler(IOptions<Settings> extensionSettings)
+    protected AbstractFileHandler(IOptions<Settings> settings)
     {
-        _supportedContentTypes = extensionSettings.Value;
+        _supportedContentTypes = settings.Value;
     }
 
-    public virtual Task<MemoryStream> Handle(MemoryStream input, string extension)
-    {
-        throw new NotImplementedException();
-    }
+    public abstract Task Handle(string inputPath, string inputContentType);
 
     public void SetNext(IUploadedFileHandler next)
     {
         Next = next;
     }
 
-    protected bool IsValidFile(MemoryStream input, string inputContentType, string contentType)
+    protected bool IsValidFile(string inputContentType, string contentType)
     {
-        if (inputContentType == contentType && input.Length <= FileSizeInGb) return true;
-
-        if (Next == null)
-            throw new Exception("No handler found for this file type.");
+        if (inputContentType == contentType) return true;
 
         return false;
     }

@@ -30,12 +30,15 @@ public class EmptyFileFilterTest
         var expectedMessage = "No file received or file is empty.";
         var memoryStream = new MemoryStream();
         var pipeWriter = PipeWriter.Create(memoryStream);
+        var formCollection = new FormCollection(new Dictionary<string, StringValues>(), new FormFileCollection());
 
         _context.Setup(x => x.HttpContext).Returns(new DefaultHttpContext());
         _context.Setup(x => x.HttpContext.Request).Returns(requestMock.Object);
         _context.Setup(x => x.HttpContext.Response).Returns(responseMock.Object);
         requestMock.SetupGet(x => x.ContentLength).Returns(0);
         responseMock.SetupGet(x => x.BodyWriter).Returns(pipeWriter);
+        requestMock.Setup(x => x.ReadFormAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult<IFormCollection>(formCollection));
 
         // Act
         var result = await new EmptyFileFilter().InvokeAsync(_context.Object, _next.Object);
