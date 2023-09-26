@@ -16,17 +16,13 @@ COPY . .
 
 # Build the project
 WORKDIR /app/Core
-RUN dotnet build -c Release -o /app/build
-
-# Publish the project
-FROM build AS publish
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet build -c Release -o /app/publish
 
 # Final image
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS final
-WORKDIR /final
-COPY --from=publish /app/publish .
-ENV ASPNETCORE_URLS http://*:80
-EXPOSE 80
-ENTRYPOINT ["dotnet", "aia_api.dll"]
+ENV DOTNET_USE_POLLING_FILE_WATCHER 1
+WORKDIR /app
+COPY --from=build /app .
+ENTRYPOINT ["dotnet", "aia_api.dll", "--urls", "http://+:5000"]
+
 

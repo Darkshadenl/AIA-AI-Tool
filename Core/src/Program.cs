@@ -13,6 +13,8 @@ app.MapPost("/api/upload/zip", UploadRouter.ZipHandler())
 
 app.MapPost("/api/upload/repo", UploadRouter.RepoHandler());
 
+app.MapGet("/api/health", () => Results.Ok("OK"));
+
 
 app.Run();
 
