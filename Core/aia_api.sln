@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aia_api", "aia_api.csproj",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InterfacesAia", "..\InterfacesAia\interfacesAia.csproj", "{21ABB763-70C3-447E-8329-B0F7752456FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "..\TestProject\testProject.csproj", "{47096C49-34B4-4061-94E9-0C3459009915}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "..\TestProject\TestProject.csproj", "{47096C49-34B4-4061-94E9-0C3459009915}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -11,7 +11,22 @@ COPY TestProject/TestProject.csproj TestProject/
 # Restore packages
 RUN dotnet restore Core/aia_api.sln
 
+# Copy all other files
+COPY . .
 
+# Build the project
+WORKDIR /app/Core
+RUN dotnet build -c Release -o /app/build
 
-# Keep container running
-CMD ["tail", "-f", "/dev/null"]
+# Publish the project
+FROM build AS publish
+RUN dotnet publish -c Release -o /app/publish
+
+# Final image
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS final
+WORKDIR /final
+COPY --from=publish /app/publish .
+ENV ASPNETCORE_URLS http://*:80
+EXPOSE 80
+ENTRYPOINT ["dotnet", "aia_api.dll"]
+
