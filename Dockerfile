@@ -1,28 +1,25 @@
 # Use SDK image for build
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS dev
 WORKDIR /app
 
-# Copy the entire solution
+# Copy csproj files and restore dependencies
 COPY Core/aia_api.sln Core/
 COPY Core/aia_api.csproj Core/
 COPY InterfacesAia/interfacesAia.csproj InterfacesAia/
 COPY TestProject/TestProject.csproj TestProject/
 
-# Restore packages
-RUN dotnet restore Core/aia_api.sln
+WORKDIR /app/Core
+RUN dotnet restore aia_api.sln
 
 # Copy all other files
+WORKDIR /app
 COPY . .
 
-# Build the project
+# Switch to the Core directory
 WORKDIR /app/Core
-RUN dotnet build -c Release -o /app/publish
 
-# Final image
-FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS final
-ENV DOTNET_USE_POLLING_FILE_WATCHER 1
-WORKDIR /app
-COPY --from=build /app .
-ENTRYPOINT ["dotnet", "aia_api.dll", "--urls", "http://+:5000"]
+# Set environment to Development
+ENV ASPNETCORE_ENVIRONMENT=Development
 
-
+# Run dotnet watch
+ENTRYPOINT dotnet watch run --urls=http://+:5000
