@@ -14,6 +14,7 @@ Temp/
 Core/Temp/
 TempOutput/
 .vs/
+Core/appsettings.Development.local.json
 
 # User-specific files
 *.suo
