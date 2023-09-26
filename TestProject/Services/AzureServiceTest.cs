@@ -23,7 +23,6 @@ public class AzureServiceTest
         _settingsMock = new Mock<IOptions<AzureBlobStorageSettings>>();
         _settingsMock.Setup(s => s.Value).Returns(new AzureBlobStorageSettings { BlobContainerName = "testContainer" });
         _mockFileSystem = new MockFileSystem();
-        Console.WriteLine();
 
         _azureService = new AzureService(_blobServiceClientMock.Object, _settingsMock.Object, _mockFileSystem);
     }
