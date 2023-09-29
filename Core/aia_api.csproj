@@ -6,8 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(RunConfiguration)' == 'https' " />
-  <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
   <ItemGroup>
     <ProjectReference Include="..\InterfacesAia\InterfacesAia.csproj" />
   </ItemGroup>
@@ -15,5 +13,13 @@
     <PackageReference Include="Azure.Storage.Blobs" Version="12.18.0" />
     <PackageReference Include="NGitLab" Version="6.39.1" />
     <PackageReference Include="System.IO.Abstractions" Version="19.2.69" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Result\Output\" />
+    <None Remove="Result\Temp\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Result\Output\" />
+    <Folder Include="Result\Temp\" />
   </ItemGroup>
 </Project>

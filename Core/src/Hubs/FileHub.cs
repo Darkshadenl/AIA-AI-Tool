@@ -3,7 +3,6 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Text;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.IdentityModel.Tokens;
 
 namespace aia_api.src.Hubs
 {
