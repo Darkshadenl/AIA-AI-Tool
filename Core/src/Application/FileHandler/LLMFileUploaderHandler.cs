@@ -11,7 +11,7 @@ public class LLMFileUploaderHandler : AbstractFileHandler
     private readonly IOptions<Settings> _settings;
     private readonly ReplicateSettings _replicateSettings;
 
-    public LLMFileUploaderHandler(IOptions<Settings> settings, IFileSystem fileSystem, ReplicateSettings replicateSettings) : base(settings)
+    public LLMFileUploaderHandler(IOptions<Settings> settings, ReplicateSettings replicateSettings) : base(settings)
     {
         _settings = settings;
         _replicateSettings = replicateSettings;
@@ -23,22 +23,22 @@ public class LLMFileUploaderHandler : AbstractFileHandler
 
         var prediction = new Prediction(
             ModelVersion: _replicateSettings.ModelVersion,
+            ReplicateUrl: _replicateSettings.ReplicateUrl,
             PredictionInput: new PredictionInput(
                 Prompt: _replicateSettings.Prompt,
                 SystemPrompt: _replicateSettings.SystemPrompt,
-                MaxTokens: 64,
-                Temperature: 0.0,
-                TopP: 1.0,
-                TopK: 0,
-                FrequencyPenalty: 0.0,
-                PresencePenalty: 0.0,
-                RepeatPenalty: 0.0
+                MaxTokens: 500,
+                Temperature: 0.8,
+                TopP: 0.95,
+                TopK: 10,
+                FrequencyPenalty: 0,
+                PresencePenalty: 0,
+                RepeatPenalty: 1.1
             ),
             WebhookUrl: _replicateSettings.WebhookUrl,
-            WebhookFilter: new string[] { "completed" }
+            WebhookFilter: _replicateSettings.WebhookFilters
         );
 
-        // Call the next handler in the chain if there is one
         if (Next == null)
         {
 

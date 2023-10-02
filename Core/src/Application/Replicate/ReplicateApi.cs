@@ -14,7 +14,7 @@ public class ReplicateApi
     }
 
 
-    public Task RunPrediction(Prediction prediction)
+    public async Task<Task> RunPrediction(Prediction prediction)
     {
         using HttpClient httpClient = new HttpClient();
 
@@ -22,7 +22,7 @@ public class ReplicateApi
 
         var content = new StringContent(JsonConvert.SerializeObject(prediction), Encoding.UTF8, "application/json");
 
-        // var response = await httpClient.PostAsync("https://api.replicate.com/v1/predictions", content);
+        var response = await httpClient.PostAsync(prediction.ReplicateUrl, content);
         return Task.CompletedTask;
     }
 
