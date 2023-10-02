@@ -4,8 +4,8 @@ WORKDIR /app
 
 # Copy csproj files and restore dependencies
 COPY Core/aia_api.sln Core/
-COPY Core/aia_api.csproj Core/
-COPY InterfacesAia/interfacesAia.csproj InterfacesAia/
+COPY Core/AiaApi.csproj Core/
+COPY InterfacesAia/InterfacesAia.csproj InterfacesAia/
 COPY TestProject/TestProject.csproj TestProject/
 
 WORKDIR /app/Core
