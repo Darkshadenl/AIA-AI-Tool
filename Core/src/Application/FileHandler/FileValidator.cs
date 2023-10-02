@@ -27,7 +27,11 @@ public class FileValidator : AbstractFileHandler
         if (!_contentType.Contains(inputContentType))
             throw new Exception("Invalid file type.");
 
-        await Next.Handle(inputPath, inputContentType);
+
+        if (Next == null)
+            await base.Handle(inputPath, inputContentType);
+        else
+            await Next.Handle(inputPath, inputContentType);
     }
 
 }

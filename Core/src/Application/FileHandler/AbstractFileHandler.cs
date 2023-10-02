@@ -15,7 +15,12 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
         _supportedContentTypes = settings.Value;
     }
 
-    public abstract Task Handle(string inputPath, string inputContentType);
+    public virtual Task Handle(string inputPath, string inputContentType)
+    {
+        Console.WriteLine("No handler found.");
+        Console.WriteLine($"Input path: {inputPath}\n Input content type: {inputContentType}\n");
+        return Task.CompletedTask;
+    }
 
     public void SetNext(IUploadedFileHandler next)
     {

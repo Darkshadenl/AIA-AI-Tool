@@ -31,11 +31,10 @@ public class FileHandlerFactory : IFileHandlerFactory
     {
         var fileValidator = new FileValidator(_extensionSettings);
         var zipHandler = new ZipHandler(_extensionSettings, _fileSystem);
-        var azureUploader = new UploadHandler(_extensionSettings);
+        // var azureUploader = new UploadHandler(_extensionSettings);
 
-        azureUploader.SetClient(_azureService);
+        // azureUploader.SetClient(_azureService);
         fileValidator.SetNext(zipHandler);
-        zipHandler.SetNext(azureUploader);
 
         return fileValidator;
     }

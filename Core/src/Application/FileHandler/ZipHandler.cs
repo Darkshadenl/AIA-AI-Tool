@@ -22,10 +22,10 @@ namespace aia_api.Application.FileHandler
         {
             if (!IsValidFile(inputContentType, ContentType))
             {
-                if (Next == null)
-                    throw new Exception("No next handler found for this file type.");
-
-                await Next.Handle(inputPath,  inputContentType);
+                if (Next != null)
+                    await Next.Handle(inputPath,  inputContentType);
+                else
+                    await base.Handle(inputPath, inputContentType);
                 return;
             }
 
@@ -41,7 +41,10 @@ namespace aia_api.Application.FileHandler
             outputArchive.Dispose();
             archive.Dispose();
 
-            await Next.Handle(inputPath, inputContentType);
+            if (Next == null)
+                await base.Handle(inputPath, inputContentType);
+            else
+                await Next.Handle(inputPath, inputContentType);
         }
 
         private ZipArchive InitializeInputArchive(string path)
