@@ -40,3 +40,5 @@ msbuild.wrn
 # .net core files
 appsettings.json
 appsettings.development.json
+
+Core/appsettings.Development.local.json
