@@ -1,4 +1,4 @@
-namespace aia_api.Configuration.Azure;
+namespace aia_api.Configuration.Records;
 
 public record AzureBlobStorageSettings
 {

@@ -1,4 +1,4 @@
-using aia_api.Configuration.Azure;
+using aia_api.Configuration.Records;
 using aia_api.Services;
 using Microsoft.Extensions.Options;
 

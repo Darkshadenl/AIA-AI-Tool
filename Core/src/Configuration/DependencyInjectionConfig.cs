@@ -1,9 +1,8 @@
-using System.IO.Abstractions;
-using aia_api.Application.FileHandler;
 using aia_api.Application.Helpers.Factories;
-using aia_api.Configuration.Azure;
+using aia_api.Configuration.Records;
 using aia_api.Services;
 using Azure.Storage;
+using System.IO.Abstractions;
 using Azure.Storage.Blobs;
 
 namespace aia_api.Configuration;
@@ -14,9 +13,11 @@ public static class DependencyInjectionConfig
     {
         var blobConfig = configuration.GetSection("AzureBlobStorage");
         var settings = configuration.GetSection("Settings");
+        var replicate = configuration.GetSection("Replicate");
 
         services.Configure<AzureBlobStorageSettings>(blobConfig);
         services.Configure<Settings>(settings);
+        services.Configure<ReplicateSettings>(replicate);
     }
 
     public static void AddProjectServices(this IServiceCollection services, IConfiguration configuration)

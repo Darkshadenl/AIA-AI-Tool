@@ -1,5 +1,5 @@
 using System.IO.Abstractions;
-using aia_api.Configuration.Azure;
+using aia_api.Configuration.Records;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Services;
