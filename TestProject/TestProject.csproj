@@ -23,6 +23,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Core\aia_api.csproj" />
+      <ProjectReference Include="..\Core\AiaApi.csproj" />
     </ItemGroup>
 </Project>
