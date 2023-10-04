@@ -11,6 +11,8 @@ services:
     ports:
       - "5001:5000"
       - "5005:5005"
+      - "8080:80"
+      - "44300:443"
     volumes:
       - ./Core:/app/Core
       - ./TestProject:/app/TestProject
