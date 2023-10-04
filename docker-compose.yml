@@ -3,7 +3,8 @@ services:
   api-dev:
     build:
       context: .
-      dockerfile: Dockerfile.development
+      dockerfile: Dockerfile
+      target: ${DOCKER_TARGET}
     environment:
       - ASPNETCORE_URLS=http://+:5001
       - ASPNETCORE_ENVIRONMENT=Development
