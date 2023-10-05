@@ -1,16 +1,10 @@
 using System.IO.Abstractions;
 using aia_api.Application.FileHandler;
 using aia_api.Configuration.Records;
-using aia_api.Services;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.Helpers.Factories;
-
-public interface IFileHandlerFactory
-{
-    IUploadedFileHandler GetFileHandler();
-}
 
 public class FileHandlerFactory : IFileHandlerFactory
 {

@@ -9,17 +9,19 @@ namespace aia_api.Application.FileHandler;
 public class LLMFileUploaderHandler : AbstractFileHandler
 {
     private readonly IOptions<Settings> _settings;
+    private readonly IFileSystem _fileSystem;
     private readonly ReplicateSettings _replicateSettings;
 
-    public LLMFileUploaderHandler(IOptions<Settings> settings, ReplicateSettings replicateSettings) : base(settings)
+    public LLMFileUploaderHandler(IOptions<Settings> settings, IFileSystem fileSystem, ReplicateSettings replicateSettings) : base(settings)
     {
         _settings = settings;
+        _fileSystem = fileSystem;
         _replicateSettings = replicateSettings;
     }
 
     public override async Task Handle(string inputPath, string inputContentType)
     {
-        var outputPath = Path.Combine(_settings.Value.OutputFolderPath, Path.GetFileName(inputPath));
+        var outputPath = _fileSystem.Path.Combine(_settings.Value.OutputFolderPath, _fileSystem.Path.GetFileName(inputPath));
 
         var prediction = new Prediction(
             ModelVersion: _replicateSettings.ModelVersion,

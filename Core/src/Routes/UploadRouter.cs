@@ -1,6 +1,3 @@
-using aia_api.Application.FileHandler;
-using aia_api.Application.Helpers;
-using aia_api.Application.Helpers.Factories;
 using aia_api.Routes.DTO;
 using aia_api.Services;
 using InterfacesAia;
