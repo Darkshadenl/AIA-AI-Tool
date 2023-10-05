@@ -14,7 +14,7 @@ public class FileValidator : AbstractFileHandler
     public FileValidator(IOptions<Settings> settings) : base(settings)
     { }
 
-    public override async Task Handle(string inputPath, string inputContentType)
+    public override async Task Handle(string inputPath, string inputContentType, Stream inputStream)
     {
         if (!File.Exists(inputPath))
             throw new FileNotFoundException("The specified file does not exist.");
@@ -27,7 +27,7 @@ public class FileValidator : AbstractFileHandler
         if (!_contentType.Contains(inputContentType))
             throw new Exception("Invalid file type.");
 
-        await Next.Handle(inputPath, inputContentType);
+        await Next.Handle(inputPath, inputContentType, inputStream);
     }
 
 }

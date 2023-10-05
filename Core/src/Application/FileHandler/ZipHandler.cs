@@ -1,3 +1,4 @@
+using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
 using aia_api.Application.Helpers;
@@ -18,14 +19,14 @@ namespace aia_api.Application.FileHandler
             _fileSystem = fileSystem;
         }
 
-        public override async Task Handle(string inputPath, string inputContentType)
+        public override async Task Handle(string inputPath, string inputContentType, Stream inputStream)
         {
             if (!IsValidFile(inputContentType, ContentType))
             {
                 if (Next == null)
                     throw new Exception("No next handler found for this file type.");
 
-                await Next.Handle(inputPath,  inputContentType);
+                await Next.Handle(inputPath,  inputContentType, inputStream);
                 return;
             }
 
@@ -41,7 +42,7 @@ namespace aia_api.Application.FileHandler
             outputArchive.Dispose();
             archive.Dispose();
 
-            await Next.Handle(inputPath, inputContentType);
+            await Next.Handle(inputPath, inputContentType, inputStream);
         }
 
         private ZipArchive InitializeInputArchive(string path)

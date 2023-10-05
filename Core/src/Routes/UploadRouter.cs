@@ -1,5 +1,4 @@
-using aia_api.Application.FileHandler;
-using aia_api.Application.Helpers;
+using System;
 using aia_api.Application.Helpers.Factories;
 using aia_api.Routes.DTO;
 using aia_api.Services;
@@ -29,7 +28,7 @@ public class UploadRouter
             {
                 Stream inputStream = compressedFile.OpenReadStream();
                 var path = await storageService.StoreInTemp(inputStream, fileName);
-                await handlerStreet.Handle(path, compressedFile.ContentType);
+                await handlerStreet.Handle(path, compressedFile.ContentType, inputStream);
             }
             catch (Exception e)
             {
@@ -66,7 +65,7 @@ public class UploadRouter
             {
                 var downloadPath = await gitlabApi.DownloadRepository(projectId, apiToken);
                 IUploadedFileHandler handlerStreet = fileHandlerFactory.GetFileHandler();
-                await handlerStreet.Handle(downloadPath, "application/zip");
+                await handlerStreet.Handle(downloadPath, "application/zip", null);
             }
             catch (Exception e)
             {

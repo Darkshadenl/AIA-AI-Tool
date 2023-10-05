@@ -13,13 +13,16 @@
     <PackageReference Include="Azure.Storage.Blobs" Version="12.18.0" />
     <PackageReference Include="NGitLab" Version="6.39.1" />
     <PackageReference Include="System.IO.Abstractions" Version="19.2.69" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.11" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Result\Output\" />
     <None Remove="Result\Temp\" />
+    <None Remove="src\Application\Controllers\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Result\Output\" />
     <Folder Include="Result\Temp\" />
+    <Folder Include="src\Application\Controllers\" />
   </ItemGroup>
 </Project>

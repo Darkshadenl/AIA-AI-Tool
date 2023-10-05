@@ -1,7 +1,9 @@
 using aia_api.Application.EndpointFilter;
 using aia_api.Configuration;
 using aia_api.Routes;
-using aia_api.src.Hubs;
+using Microsoft.AspNetCore.SignalR.Client;
+using aia_api.src.Services;
+using InterfacesAia;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProjectConfigs(builder.Configuration);
@@ -10,12 +12,11 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
-app.MapPost("/api/upload/zip", UploadRouter.ZipHandler())
-    .AddEndpointFilter<EmptyFileFilter>();
+IUploadController uploadController = app.Services.GetRequiredService<IUploadController>();
+
+HubConnection connection = await ServiceBusService.ExecuteAsync();
+connection.On<string, string, string>("UploadZip", uploadController.ZipHandler);
 
 app.MapPost("/api/upload/repo", UploadRouter.RepoHandler());
 
-app.MapHub<FileHub>("/api/upload/zip");
-
 app.Run();
-

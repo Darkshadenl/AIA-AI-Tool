@@ -15,7 +15,7 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
         _supportedContentTypes = settings.Value;
     }
 
-    public abstract Task Handle(string inputPath, string inputContentType);
+    public abstract Task Handle(string inputPath, string inputContentType, Stream inputStream);
 
     public void SetNext(IUploadedFileHandler next)
     {
