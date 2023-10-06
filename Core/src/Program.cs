@@ -20,26 +20,16 @@ app.MapPost("/api/upload/zip", UploadRouter.ZipHandler())
 app.MapPost("/api/upload/repo", UploadRouter.RepoHandler());
 
 
-app.MapGet("/api/replicate-webhook-test", async (ReplicateApi replicateApi, IOptions<Settings> extensionSettings,
-    IOptions<ReplicateSettings> replicateSettings,  IFileSystemStorageService storageService) => {
+app.MapGet("/api/replicate-webhook-test", ReplicateRouter.ReplicateWebhookTest());
 
-    Console.WriteLine("replicate-webhook-test");
-
-    var llm = new LLMFileUploaderHandler(extensionSettings, storageService, replicateSettings, replicateApi);
-    await llm.Handle("test", "test");
-
-    return Results.Ok("replicate-webhook-test");
-});
-
-app.MapPost("/api/replicate-webhook", (HttpContext context, ReplicateResultDTO resultDto) => {
-    if (resultDto.Status == "succeeded")
-    {
-        Console.WriteLine("succeeded");
-    }
-});
+app.MapPost("/api/replicate-webhook", ReplicateRouter.ReplicateWebhook());
 
 app.MapGet("/api/health", () => Results.Ok("OK"));
 
 
 app.Run();
+
+
+
+
 
