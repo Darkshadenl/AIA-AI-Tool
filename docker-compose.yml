@@ -8,5 +8,6 @@ services:
     build:
       context: .
       dockerfile: Core/Dockerfile
+      target: test
     ports:
       - 5264:80
