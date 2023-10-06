@@ -71,12 +71,12 @@ public class ZipHandlerTest
     }
 
     [Test]
-    public void Handle_ThrowsException_WhenNoNextHandler()
+    public void Handle_ShouldNotThrow_WhenNoNextHandler()
     {
         // Arrange
         var zipHandler = new ZipHandler(mockSettings.Object, new MockFileSystem());
 
         // Act & Assert
-        Assert.ThrowsAsync<Exception>(() => zipHandler.Handle("somefile.txt", "text/plain"));
+        Assert.DoesNotThrowAsync(async () => await zipHandler.Handle("somefile.txt", "text/plain"));
     }
 }
