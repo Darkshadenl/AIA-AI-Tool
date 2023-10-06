@@ -4,6 +4,7 @@ using aia_api.Application.Replicate;
 using aia_api.Configuration;
 using aia_api.Configuration.Records;
 using aia_api.Routes;
+using aia_api.Routes.DTO;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
 
@@ -19,19 +20,22 @@ app.MapPost("/api/upload/zip", UploadRouter.ZipHandler())
 app.MapPost("/api/upload/repo", UploadRouter.RepoHandler());
 
 
-app.MapGet("/api/llmHookTest", async (ReplicateApi replicateApi, IOptions<Settings> extensionSettings,
+app.MapGet("/api/replicate-webhook-test", async (ReplicateApi replicateApi, IOptions<Settings> extensionSettings,
     IOptions<ReplicateSettings> replicateSettings,  IFileSystemStorageService storageService) => {
-    Console.WriteLine("llmHookTest");
+
+    Console.WriteLine("replicate-webhook-test");
 
     var llm = new LLMFileUploaderHandler(extensionSettings, storageService, replicateSettings, replicateApi);
     await llm.Handle("test", "test");
 
-    return Results.Ok("llmHookTest");
+    return Results.Ok("replicate-webhook-test");
 });
 
-app.MapPost("/api/llmHook", (HttpContext context) => {
-    System.Console.WriteLine("LLM Hook");
-    Console.WriteLine(context.Request.Body);
+app.MapPost("/api/replicate-webhook", (HttpContext context, ReplicateResultDTO resultDto) => {
+    if (resultDto.Status == "succeeded")
+    {
+        Console.WriteLine("succeeded");
+    }
 });
 
 app.MapGet("/api/health", () => Results.Ok("OK"));
