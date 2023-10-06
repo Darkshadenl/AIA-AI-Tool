@@ -2,6 +2,7 @@ using System.IO.Abstractions.TestingHelpers;
 using System.IO.Compression;
 using aia_api.Application.FileHandler;
 using aia_api.Configuration.Azure;
+using aia_api.Configuration.Records;
 using Microsoft.Extensions.Options;
 using Moq;
 

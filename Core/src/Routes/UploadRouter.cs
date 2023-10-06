@@ -6,7 +6,7 @@ namespace aia_api.Routes;
 
 public class UploadRouter
 {
-    public static Func<IFormFile, HttpContext, IFileHandlerFactory, IStorageService, Task> ZipHandler()
+    public static Func<IFormFile, HttpContext, IFileHandlerFactory, IFileSystemStorageService, Task> ZipHandler()
     {
         string[] supportedContentTypes =  { "application/zip" };
 
@@ -75,4 +75,5 @@ public class UploadRouter
             context.Response.StatusCode = 204;
         };
     }
+
 }

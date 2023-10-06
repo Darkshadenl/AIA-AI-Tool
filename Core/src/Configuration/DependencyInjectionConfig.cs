@@ -3,7 +3,9 @@ using aia_api.Configuration.Records;
 using aia_api.Services;
 using Azure.Storage;
 using System.IO.Abstractions;
+using aia_api.Application.Replicate;
 using Azure.Storage.Blobs;
+using InterfacesAia;
 
 namespace aia_api.Configuration;
 
@@ -13,7 +15,7 @@ public static class DependencyInjectionConfig
     {
         var blobConfig = configuration.GetSection("AzureBlobStorage");
         var settings = configuration.GetSection("Settings");
-        var replicate = configuration.GetSection("Replicate");
+        var replicate = configuration.GetSection("ReplicateSettings");
 
         services.Configure<AzureBlobStorageSettings>(blobConfig);
         services.Configure<Settings>(settings);
@@ -38,7 +40,8 @@ public static class DependencyInjectionConfig
         services.AddScoped<AzureService>();
         services.AddScoped<GitlabService>();
         services.AddScoped<IFileHandlerFactory, FileHandlerFactory>();
-        services.AddScoped<IStorageService, StorageService>();
+        services.AddScoped<IFileSystemStorageService, FileSystemStorageService>();
+        services.AddScoped<ReplicateApi>();
 
     }
 }

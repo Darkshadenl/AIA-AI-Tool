@@ -1,31 +1,33 @@
 using System.Net.Http.Headers;
 using System.Text;
+using aia_api.Configuration.Records;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace aia_api.Application.Replicate;
 
 public class ReplicateApi
 {
-    private readonly string _apiToken;
+    private readonly ReplicateSettings _replicateSettings;
 
-    public ReplicateApi(string apiToken)
+    public ReplicateApi(IOptions<ReplicateSettings> replicateSettings)
     {
-        _apiToken = apiToken;
+        _replicateSettings = replicateSettings.Value;
     }
-
 
     public async Task<Task> RunPrediction(Prediction prediction)
     {
         using HttpClient httpClient = new HttpClient();
 
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", _apiToken);
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token",
+            _replicateSettings.ApiToken);
 
-        var content = new StringContent(JsonConvert.SerializeObject(prediction), Encoding.UTF8, "application/json");
+        var ser = JsonConvert.SerializeObject(prediction);
+        var content = new StringContent(ser, Encoding.UTF8, "application/json");
 
-        var response = await httpClient.PostAsync(prediction.ReplicateUrl, content);
+        var response = await httpClient.PostAsync(_replicateSettings.ReplicateUrl, content);
+        Console.WriteLine($"response statuscode: {response.StatusCode}");
         return Task.CompletedTask;
     }
-
-
 
 }
