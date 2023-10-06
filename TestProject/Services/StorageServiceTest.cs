@@ -1,9 +1,8 @@
-using System.IO.Abstractions;
-using aia_api.Configuration.Azure;
 using aia_api.Services;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.IO.Abstractions.TestingHelpers;
+using aia_api.Configuration.Records;
 
 namespace TestProject.Services;
 
