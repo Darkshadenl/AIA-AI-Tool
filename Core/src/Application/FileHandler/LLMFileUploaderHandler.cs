@@ -47,7 +47,7 @@ public class LLMFileUploaderHandler : AbstractFileHandler
 
         if (Next == null)
         {
-
+            await Task.CompletedTask;
         }
         else
         {
