@@ -9,6 +9,12 @@
     <Import_RootNamespace>SharedFiles</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)..\Core\Dockerfile">
+      <Link>Dockerfile</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\docker-compose.debug.yml">
+      <Link>docker-compose.debug.yml</Link>
+    </Content>
     <Content Include="$(MSBuildThisFileDirectory)..\docker-compose.yml">
       <Link>docker-compose.yml</Link>
     </Content>
@@ -23,6 +29,33 @@
     </Content>
     <Content Include="$(MSBuildThisFileDirectory)..\Dockerfile.test">
       <Link>Dockerfile.test</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\Temp\.DS_Store">
+      <Link>Temp\.DS_Store</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\Temp\30397022_02-10-2023_15-54-15.zip">
+      <Link>Temp\30397022_02-10-2023_15-54-15.zip</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\Temp\30397022_20-09-2023_16-03-55.zip">
+      <Link>Temp\30397022_20-09-2023_16-03-55.zip</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\Temp\30397022_21-09-2023_15-42-32.zip">
+      <Link>Temp\30397022_21-09-2023_15-42-32.zip</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\Temp\joost-main.zip">
+      <Link>Temp\joost-main.zip</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\Temp\Output\30397022_02-10-2023_15-54-15.zip">
+      <Link>Temp\Output\30397022_02-10-2023_15-54-15.zip</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\Temp\Output\30397022_20-09-2023_16-03-55.zip">
+      <Link>Temp\Output\30397022_20-09-2023_16-03-55.zip</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\Temp\Output\30397022_21-09-2023_15-42-32.zip">
+      <Link>Temp\Output\30397022_21-09-2023_15-42-32.zip</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\Temp\Output\joost-main.zip">
+      <Link>Temp\Output\joost-main.zip</Link>
     </Content>
     <Content Include="$(MSBuildThisFileDirectory)README.MD" />
   </ItemGroup>
