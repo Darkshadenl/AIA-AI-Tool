@@ -9,12 +9,18 @@ ENV ASPNETCORE_URLS=http://+:80
 RUN adduser -u 80 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS prebuild
 ARG configuration=Release
 WORKDIR /src
 COPY ["Core/AiaApi.csproj", "Core/"]
 RUN dotnet restore "Core/AiaApi.csproj"
 COPY . .
+
+FROM prebuild AS test
+WORKDIR /src/TestProject
+CMD ["sh", "-c", "dotnet test --logger \"console;verbosity=detailed\""]
+
+FROM prebuild AS build
 WORKDIR "/src/Core"
 RUN dotnet build "AiaApi.csproj" -c $configuration -o /app/build
 
@@ -26,3 +32,4 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "AiaApi.dll"]
+
