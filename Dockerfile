@@ -1,20 +1,21 @@
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
 WORKDIR /app
-EXPOSE 5264
+EXPOSE 80
 
-ENV ASPNETCORE_URLS=http://+:5264
+ENV ASPNETCORE_URLS=http://+:80
 
-# Creates a non-root user with an explicit UID and adds permission to access the /app folder
-# For more info, please refer to https://aka.ms/vscode-docker-dotnet-configure-containers
-RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
-USER appuser
-
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS prebuild
 ARG configuration=Release
 WORKDIR /src
-COPY ["Core/AiaApi.csproj", "Core/"]
+COPY ["./Core/AiaApi.csproj", "Core/"]
 RUN dotnet restore "Core/AiaApi.csproj"
 COPY . .
+
+FROM prebuild AS test
+WORKDIR /src/TestProject
+CMD ["sh", "-c", "dotnet test --logger \"console;verbosity=detailed\""]
+
+FROM prebuild AS build
 WORKDIR "/src/Core"
 RUN dotnet build "AiaApi.csproj" -c $configuration -o /app/build
 
@@ -26,3 +27,4 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "AiaApi.dll"]
+

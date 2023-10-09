@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InterfacesAia", ".\Interfac
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", ".\TestProject\TestProject.csproj", "{47096C49-34B4-4061-94E9-0C3459009915}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SharedFiles", ".\SharedFiles\SharedFiles.shproj", "{4AFB7E10-DBA0-464D-A5CC-D587F6F14285}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

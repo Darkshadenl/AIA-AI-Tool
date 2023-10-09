@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>9EC2B586-810C-4B79-A57A-28C89485F3B2</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>SharedFiles</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)..\docker-compose.debug.yml">
+      <Link>docker-compose.debug.yml</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\docker-compose.yml">
+      <Link>docker-compose.yml</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\Dockerfile">
+      <Link>Dockerfile</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\README.MD">
+      <Link>README.MD</Link>
+    </Content>
+  </ItemGroup>
+</Project>
