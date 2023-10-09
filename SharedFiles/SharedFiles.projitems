@@ -3,27 +3,12 @@
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <HasSharedItems>true</HasSharedItems>
-    <SharedGUID>F1DC46B7-2B21-4FE7-B81B-5B7B8F5AC6CF</SharedGUID>
+    <SharedGUID>9EC2B586-810C-4B79-A57A-28C89485F3B2</SharedGUID>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <Import_RootNamespace>SharedFiles</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="$(MSBuildThisFileDirectory)..\.gitignore">
-      <Link>.gitignore</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\.run\Docker compose final.run.xml">
-      <Link>.run\Docker compose final.run.xml</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\.run\Docker compose publish.run.xml">
-      <Link>.run\Docker compose publish.run.xml</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\.run\Docker compose test.run.xml">
-      <Link>.run\Docker compose test.run.xml</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Core\Dockerfile">
-      <Link>Dockerfile</Link>
-    </Content>
     <Content Include="$(MSBuildThisFileDirectory)..\docker-compose.debug.yml">
       <Link>docker-compose.debug.yml</Link>
     </Content>
@@ -33,42 +18,8 @@
     <Content Include="$(MSBuildThisFileDirectory)..\Dockerfile">
       <Link>Dockerfile</Link>
     </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Dockerfile.development">
-      <Link>Dockerfile.development</Link>
+    <Content Include="$(MSBuildThisFileDirectory)..\README.MD">
+      <Link>README.MD</Link>
     </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Dockerfile.production">
-      <Link>Dockerfile.production</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Dockerfile.test">
-      <Link>Dockerfile.test</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Temp\.DS_Store">
-      <Link>Temp\.DS_Store</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Temp\30397022_02-10-2023_15-54-15.zip">
-      <Link>Temp\30397022_02-10-2023_15-54-15.zip</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Temp\30397022_20-09-2023_16-03-55.zip">
-      <Link>Temp\30397022_20-09-2023_16-03-55.zip</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Temp\30397022_21-09-2023_15-42-32.zip">
-      <Link>Temp\30397022_21-09-2023_15-42-32.zip</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Temp\joost-main.zip">
-      <Link>Temp\joost-main.zip</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Temp\Output\30397022_02-10-2023_15-54-15.zip">
-      <Link>Temp\Output\30397022_02-10-2023_15-54-15.zip</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Temp\Output\30397022_20-09-2023_16-03-55.zip">
-      <Link>Temp\Output\30397022_20-09-2023_16-03-55.zip</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Temp\Output\30397022_21-09-2023_15-42-32.zip">
-      <Link>Temp\Output\30397022_21-09-2023_15-42-32.zip</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\Temp\Output\joost-main.zip">
-      <Link>Temp\Output\joost-main.zip</Link>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)README.MD" />
   </ItemGroup>
 </Project>

@@ -7,7 +7,7 @@ ENV ASPNETCORE_URLS=http://+:80
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS prebuild
 ARG configuration=Release
 WORKDIR /src
-COPY ["Core/AiaApi.csproj", "Core/"]
+COPY ["./Core/AiaApi.csproj", "Core/"]
 RUN dotnet restore "Core/AiaApi.csproj"
 COPY . .
 

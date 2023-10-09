@@ -7,7 +7,7 @@ services:
     image: aiaapi
     build:
       context: .
-      dockerfile: Core/Dockerfile
+      dockerfile: Dockerfile
       args:
         - configuration=Debug
     ports:
