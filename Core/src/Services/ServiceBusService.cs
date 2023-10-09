@@ -10,7 +10,6 @@ namespace aia_api.src.Services
     {
         private readonly IOptions<Settings> _settings;
         private HubConnection _connection;
-        public HubConnection Connection { get; set; }
 
         public ServiceBusService(IOptions<Settings> settings)
         {
