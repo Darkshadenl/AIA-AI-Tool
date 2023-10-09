@@ -1,3 +1,4 @@
+using System.Net;
 using aia_api.Configuration.Records;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
@@ -15,11 +16,18 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
         _supportedContentTypes = settings.Value;
     }
 
-    public virtual Task Handle(string inputPath, string inputContentType)
+    public virtual Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
-        Console.WriteLine("No handler found.");
         Console.WriteLine($"Input path: {inputPath}\n Input content type: {inputContentType}\n");
-        return Task.CompletedTask;
+
+        var result = new HandlerResult
+        {
+            ErrorMessage = "No handler found.",
+            Success = false,
+            StatusCode = HttpStatusCode.NotImplemented
+        };
+
+        return Task.FromResult<IHandlerResult>(result);
     }
 
     public void SetNext(IUploadedFileHandler next)

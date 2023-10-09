@@ -9,14 +9,14 @@ namespace aia_api.Routes;
 
 public class ReplicateRouter
 {
-    public static Func<ReplicateApi, IOptions<Settings>, IOptions<ReplicateSettings>, IFileSystemStorageService, Task<IResult>> ReplicateWebhookTest()
+    [Obsolete("Remove at a later stage after implementing ReplicateWebHook further")]
+    public static Func<ReplicateApi, IOptions<Settings>, IOptions<ReplicateSettings>, Task<IResult>> ReplicateWebhookTest()
     {
-        return async (ReplicateApi replicateApi, IOptions<Settings> extensionSettings,
-            IOptions<ReplicateSettings> replicateSettings,  IFileSystemStorageService storageService) => {
+        return async (replicateApi, extensionSettings, replicateSettings) => {
 
             Console.WriteLine("replicate-webhook-test");
 
-            var llm = new LLMFileUploaderHandler(extensionSettings, storageService, replicateSettings, replicateApi);
+            var llm = new LlmFileUploaderHandler(extensionSettings, replicateSettings, replicateApi);
             await llm.Handle("test", "test");
 
             return Results.Ok("replicate-webhook-test");
@@ -25,7 +25,7 @@ public class ReplicateRouter
 
     public static Func<HttpContext, ReplicateResultDTO, Task> ReplicateWebhook()
     {
-        return async (HttpContext context, ReplicateResultDTO resultDto) => {
+        return async (context, resultDto) => {
             if (resultDto.Status == "succeeded")
             {
                 Console.WriteLine("succeeded");

@@ -1,4 +1,6 @@
+using System.Net;
 using aia_api.Configuration.Records;
+using InterfacesAia;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
@@ -13,24 +15,44 @@ public class FileValidator : AbstractFileHandler
     public FileValidator(IOptions<Settings> settings) : base(settings)
     { }
 
-    public override async Task Handle(string inputPath, string inputContentType)
+    public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
         if (!File.Exists(inputPath))
-            throw new FileNotFoundException("The specified file does not exist.");
+        {
+            return new HandlerResult
+            {
+                ErrorMessage = "The specified file does not exist.",
+                Success = false,
+                StatusCode = HttpStatusCode.BadRequest
+            };
+        }
 
         var fileInfo = new FileInfo(inputPath);
 
         if (fileInfo.Length == 0)
-            throw new Exception("The file is empty.");
+        {
+            return new HandlerResult
+            {
+                ErrorMessage = "The file is empty.",
+                Success = false,
+                StatusCode = HttpStatusCode.BadRequest
+            };
+        }
 
         if (!_contentType.Contains(inputContentType))
-            throw new Exception("Invalid file type.");
-
+        {
+            return new HandlerResult
+            {
+                ErrorMessage = "Invalid file type.",
+                Success = false,
+                StatusCode = HttpStatusCode.BadRequest
+            };
+        }
 
         if (Next == null)
-            await base.Handle(inputPath, inputContentType);
-        else
-            await Next.Handle(inputPath, inputContentType);
+            return await base.Handle(inputPath, inputContentType);
+
+        return await Next.Handle(inputPath, inputContentType);
     }
 
 }

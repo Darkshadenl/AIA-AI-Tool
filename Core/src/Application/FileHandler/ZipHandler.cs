@@ -2,6 +2,7 @@ using System.IO.Abstractions;
 using System.IO.Compression;
 using aia_api.Application.Helpers;
 using aia_api.Configuration.Records;
+using InterfacesAia;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler
@@ -18,15 +19,13 @@ namespace aia_api.Application.FileHandler
             _fileSystem = fileSystem;
         }
 
-        public override async Task Handle(string inputPath, string inputContentType)
+        public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
         {
             if (!IsValidFile(inputContentType, ContentType))
             {
                 if (Next != null)
-                    await Next.Handle(inputPath,  inputContentType);
-                else
-                    await base.Handle(inputPath, inputContentType);
-                return;
+                    return await Next.Handle(inputPath,  inputContentType);
+                return await base.Handle(inputPath, inputContentType);
             }
 
             using ZipArchive archive = InitializeInputArchive(inputPath);
@@ -42,9 +41,8 @@ namespace aia_api.Application.FileHandler
             archive.Dispose();
 
             if (Next == null)
-                await base.Handle(inputPath, inputContentType);
-            else
-                await Next.Handle(inputPath, inputContentType);
+                return await base.Handle(inputPath, inputContentType);
+            return await Next.Handle(inputPath, inputContentType);
         }
 
         private ZipArchive InitializeInputArchive(string path)

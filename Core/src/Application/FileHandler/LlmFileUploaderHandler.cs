@@ -1,5 +1,4 @@
-using System.IO.Abstractions;
-using System.Text;
+using System.Net;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using InterfacesAia;
@@ -7,23 +6,19 @@ using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
 
-public class LLMFileUploaderHandler : AbstractFileHandler
+public class LlmFileUploaderHandler : AbstractFileHandler
 {
-    private readonly Settings _settings;
-    private readonly IFileSystemStorageService _fileSystem;
     private readonly ReplicateApi _replicateApi;
     private readonly ReplicateSettings _replicateSettings;
 
-    public LLMFileUploaderHandler(IOptions<Settings> settings, IFileSystemStorageService fileSystemStorageService,
+    public LlmFileUploaderHandler(IOptions<Settings> settings,
         IOptions<ReplicateSettings> replicateSettings, ReplicateApi replicateApi) : base(settings)
     {
-        _settings = settings.Value;
-        _fileSystem = fileSystemStorageService;
         _replicateApi = replicateApi;
         _replicateSettings = replicateSettings.Value;
     }
 
-    public override async Task Handle(string inputPath, string inputContentType)
+    public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
         var prediction = new Prediction(
             version: _replicateSettings.ModelVersion,
@@ -44,16 +39,16 @@ public class LLMFileUploaderHandler : AbstractFileHandler
 
         await _replicateApi.RunPrediction(prediction);
 
-
         if (Next == null)
         {
-            await Task.CompletedTask;
+            return new HandlerResult
+            {
+                Success = true,
+                StatusCode = HttpStatusCode.Accepted,
+                ErrorMessage = "File uploaded successfully."
+            };
         }
-        else
-        {
-            await Next.Handle(inputPath, inputContentType);
-        }
-
+        return await Next.Handle(inputPath, inputContentType);
     }
 
 }
