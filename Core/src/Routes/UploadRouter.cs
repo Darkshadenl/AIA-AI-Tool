@@ -1,3 +1,4 @@
+using System.Net;
 using aia_api.Routes.DTO;
 using aia_api.Services;
 using InterfacesAia;
@@ -14,8 +15,8 @@ public class UploadRouter
         {
             if (!supportedContentTypes.Contains(compressedFile.ContentType))
             {
-                context.Response.StatusCode = 400;
-                await context.Response.WriteAsync("Invalid file type. Only ZIP files are allowed.");
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
+                Console.WriteLine("Invalid file type. Only ZIP files are allowed.");
                 return;
             }
 
@@ -26,15 +27,18 @@ public class UploadRouter
             {
                 Stream inputStream = compressedFile.OpenReadStream();
                 var path = await storageService.StoreInTemp(inputStream, fileName);
-                await handlerStreet.Handle(path, compressedFile.ContentType);
+                var result = await handlerStreet.Handle(path, compressedFile.ContentType);
+
+                context.Response.StatusCode = (int) result.StatusCode;
+
+                if (!result.Success) // TODO: better logging
+                    Console.WriteLine($"Error: {result.ErrorMessage}");
             }
             catch (Exception e)
             {
                 Console.WriteLine($"Exception: {e.Message}, StackTrace: {e.StackTrace}");
                 context.Response.StatusCode = 400;
-                return;
             }
-            context.Response.StatusCode = 204;
         };
     }
 
