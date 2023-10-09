@@ -20,9 +20,18 @@
         <PackageReference Include="coverlet.collector" Version="3.2.0" />
         <PackageReference Include="System.IO.Abstractions" Version="19.2.69" />
         <PackageReference Include="System.IO.Abstractions.TestingHelpers" Version="19.2.69" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.1.0" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
+        <PackageReference Include="Microsoft.AspNet.SignalR" Version="2.4.3" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Core\aia_api.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Remove="Application\Controller\" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Application\Controller\" />
     </ItemGroup>
 </Project>

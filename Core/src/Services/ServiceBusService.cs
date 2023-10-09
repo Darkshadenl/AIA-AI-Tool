@@ -1,25 +1,34 @@
 ﻿using System;
+using aia_api.Configuration.Azure;
+using InterfacesAia;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Options;
 
 namespace aia_api.src.Services
 {
-	public class ServiceBusService
+	public class ServiceBusService : IServiceBusService
     {
-        private static string _uri = "http://localhost:5195/uploadZip";
+        private readonly IOptions<Settings> _settings;
+        private HubConnection _connection;
+        public HubConnection Connection { get; set; }
 
-        private static HubConnection _connection;
-        public HubConnection Connection { get => _connection; }
-
-        public static async Task<HubConnection> ExecuteAsync()
+        public ServiceBusService(IOptions<Settings> settings)
         {
-            _connection = new HubConnectionBuilder().WithUrl(_uri).Build();
+            _settings = settings;
+        }
+
+        public async Task<HubConnection> ExecuteAsync()
+        {
+            var uri = _settings.Value.ServiceBusUrl;
+            _connection = new HubConnectionBuilder().WithUrl(uri).Build();
+
 
             await _connection.StartAsync();
             Console.WriteLine("Connection state: {0}", _connection.State);
             return _connection;
         }
 
-        public static HubConnection GetConnection() => _connection;
+        public HubConnection GetConnection() => _connection;
     }
 }
 

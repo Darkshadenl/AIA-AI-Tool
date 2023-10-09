@@ -13,8 +13,9 @@ builder.Services.AddSignalR();
 var app = builder.Build();
 
 IUploadController uploadController = app.Services.GetRequiredService<IUploadController>();
+IServiceBusService serviceBusService = app.Services.GetRequiredService<IServiceBusService>();
 
-HubConnection connection = await ServiceBusService.ExecuteAsync();
+HubConnection connection = await serviceBusService.ExecuteAsync();
 connection.On<string, string, string>("UploadZip", uploadController.ZipHandler);
 
 app.MapPost("/api/upload/repo", UploadRouter.RepoHandler());

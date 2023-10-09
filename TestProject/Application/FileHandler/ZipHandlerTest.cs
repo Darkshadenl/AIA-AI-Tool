@@ -49,10 +49,10 @@ public class ZipHandlerTest
         zipHandler.SetNext(nextHandlerMock.Object);
 
         // Act
-        await zipHandler.Handle("somefile.zip", "application/zip");
+        await zipHandler.Handle("somefile.zip", "application/zip", null);
 
         // Assert
-        nextHandlerMock.Verify(x => x.Handle(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        nextHandlerMock.Verify(x => x.Handle(It.IsAny<string>(), It.IsAny<string>(), null), Times.Once);
     }
 
     [Test]
@@ -64,10 +64,10 @@ public class ZipHandlerTest
         zipHandler.SetNext(nextHandlerMock.Object);
 
         // Act
-        await zipHandler.Handle("somefile.txt", "text/plain");
+        await zipHandler.Handle("somefile.txt", "text/plain", null);
 
         // Assert
-        nextHandlerMock.Verify(x => x.Handle("somefile.txt", "text/plain"), Times.Once);
+        nextHandlerMock.Verify(x => x.Handle("somefile.txt", "text/plain", null), Times.Once);
     }
 
     [Test]
@@ -77,6 +77,6 @@ public class ZipHandlerTest
         var zipHandler = new ZipHandler(mockSettings.Object, new MockFileSystem());
 
         // Act & Assert
-        Assert.ThrowsAsync<Exception>(() => zipHandler.Handle("somefile.txt", "text/plain"));
+        Assert.ThrowsAsync<Exception>(() => zipHandler.Handle("somefile.txt", "text/plain", null));
     }
 }

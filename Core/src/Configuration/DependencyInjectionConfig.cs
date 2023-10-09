@@ -3,6 +3,7 @@ using aia_api.Application.Helpers.Factories;
 using aia_api.Configuration.Azure;
 using aia_api.Services;
 using aia_api.src.Application;
+using aia_api.src.Services;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using InterfacesAia;
@@ -37,6 +38,7 @@ public static class DependencyInjectionConfig
 
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
         services.AddSingleton<IFileSystem, FileSystem>();
+        services.AddSingleton<IServiceBusService, ServiceBusService>();
         services.AddSingleton<IUploadController, UploadController>();
 
         services.AddSingleton<AzureService>();
