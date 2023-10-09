@@ -25,7 +25,7 @@ public class UploadHandler : AbstractFileHandler
         _azureService = azureService;
     }
 
-    public override async Task Handle(string inputPath, string inputContentType, Stream inputStream)
+    public override async Task Handle(string inputPath, string inputContentType)
     {
         try
         {

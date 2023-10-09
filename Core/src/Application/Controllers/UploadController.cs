@@ -43,7 +43,7 @@ namespace aia_api.src.Application
                 byte[] fileByteArray = Convert.FromBase64String(fileBase64);
                 Stream inputStream = new MemoryStream(fileByteArray);
                 var path = await _storageService.StoreInTemp(inputStream, fileName);
-                await handlerStreet.Handle(path, contentType, inputStream);
+                await handlerStreet.Handle(path, contentType);
             }
             catch (FormatException)
             {
