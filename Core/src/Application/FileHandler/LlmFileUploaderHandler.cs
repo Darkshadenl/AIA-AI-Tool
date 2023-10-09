@@ -1,4 +1,3 @@
-using System.Net;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using InterfacesAia;
@@ -37,18 +36,14 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             // webhook_events_filter: _replicateSettings.WebhookFilters
         );
 
-        await _replicateApi.RunPrediction(prediction);
+        var response = await _replicateApi.RunPrediction(prediction);
 
-        if (Next == null)
+        return new HandlerResult
         {
-            return new HandlerResult
-            {
-                Success = true,
-                StatusCode = HttpStatusCode.Accepted,
-                ErrorMessage = "File uploaded successfully."
-            };
-        }
-        return await Next.Handle(inputPath, inputContentType);
+            Success = response.IsSuccessStatusCode,
+            StatusCode = response.StatusCode,
+            ErrorMessage = response.ReasonPhrase ?? string.Empty
+        };
     }
 
 }

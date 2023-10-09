@@ -17,20 +17,17 @@ public class ReplicateApi
         _replicateSettings = replicateSettings.Value;
     }
 
-    public async Task<Task> RunPrediction(Prediction prediction)
+    public async Task<HttpResponseMessage> RunPrediction(Prediction prediction)
     {
-        using (_httpClient)
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token",
-                _replicateSettings.ApiToken);
+        using var client = _httpClient;
 
-            var serializeObject = JsonConvert.SerializeObject(prediction);
-            var content = new StringContent(serializeObject, Encoding.UTF8, "application/json");
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token",
+            _replicateSettings.ApiToken);
 
-            var response = await _httpClient.PostAsync(_replicateSettings.ReplicateUrl, content);
-            Console.WriteLine($"response statuscode: {response.StatusCode}");
-        }
-        return Task.CompletedTask;
+        var serializeObject = JsonConvert.SerializeObject(prediction);
+        var content = new StringContent(serializeObject, Encoding.UTF8, "application/json");
+
+        return await _httpClient.PostAsync(_replicateSettings.ReplicateUrl, content);
     }
 
 }

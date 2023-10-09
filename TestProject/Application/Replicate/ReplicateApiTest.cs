@@ -26,7 +26,7 @@ public class ReplicateApiTest
         var replicateSettings = new ReplicateSettings
         {
             ApiToken = "your_specific_value_here",
-            ReplicateUrl = "https://replicate.ai/api/v1/models/your_specific_value_here/predictions",
+            ReplicateUrl = "https://replicate.ai/api/v1/models/predictions",
         };
 
         mockSettings.Setup(m => m.Value).Returns(replicateSettings);
@@ -63,12 +63,10 @@ public class ReplicateApiTest
 
         // Act
         var result = await _replicateApi.RunPrediction(mockPrediction);
-        Console.WriteLine();
 
         // Assert
-        // Here you can assert how your method should behave when it receives a 401 Unauthorized response.
-        // For example, if you log the status code, you can assert that.
-        // Or if you throw a custom exception, you can assert that as well.
+        Assert.That(result is not null);
+        Assert.That(result.IsSuccessStatusCode, Is.False);
     }
 
 

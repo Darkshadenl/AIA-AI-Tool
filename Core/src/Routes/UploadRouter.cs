@@ -31,13 +31,13 @@ public class UploadRouter
 
                 context.Response.StatusCode = (int) result.StatusCode;
 
-                if (!result.Success) // TODO: better logging
+                if (!result.Success)
                     Console.WriteLine($"Error: {result.ErrorMessage}");
             }
             catch (Exception e)
             {
                 Console.WriteLine($"Exception: {e.Message}, StackTrace: {e.StackTrace}");
-                context.Response.StatusCode = 400;
+                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
             }
         };
     }
