@@ -9,6 +9,18 @@
     <Import_RootNamespace>SharedFiles</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)..\.gitignore">
+      <Link>.gitignore</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\.run\Docker compose final.run.xml">
+      <Link>.run\Docker compose final.run.xml</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\.run\Docker compose publish.run.xml">
+      <Link>.run\Docker compose publish.run.xml</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\.run\Docker compose test.run.xml">
+      <Link>.run\Docker compose test.run.xml</Link>
+    </Content>
     <Content Include="$(MSBuildThisFileDirectory)..\Core\Dockerfile">
       <Link>Dockerfile</Link>
     </Content>
