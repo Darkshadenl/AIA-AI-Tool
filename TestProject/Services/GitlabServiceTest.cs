@@ -1,7 +1,6 @@
 using System.Net;
-using aia_api.Configuration.Azure;
 using aia_api.Services;
-using Microsoft.Extensions.Options;
+using InterfacesAia;
 using Moq;
 using Moq.Protected;
 
@@ -28,7 +27,7 @@ public class GitlabServiceTest
 
 
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        var mockStorageService = new Mock<IStorageService>();
+        var mockStorageService = new Mock<IFileSystemStorageService>();
         var service = new GitlabService(httpClient, mockStorageService.Object);
 
         // Act & Assert
@@ -41,7 +40,7 @@ public class GitlabServiceTest
         // Arrange
         var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        var mockStorageService = new Mock<IStorageService>();
+        var mockStorageService = new Mock<IFileSystemStorageService>();
 
         mockHttpMessageHandler
             .Protected()

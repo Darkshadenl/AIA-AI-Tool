@@ -1,5 +1,7 @@
-using aia_api.Configuration.Azure;
+using System.Net;
+using aia_api.Configuration.Records;
 using aia_api.Services;
+using InterfacesAia;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
@@ -20,7 +22,7 @@ public class UploadHandler : AbstractFileHandler
         _azureService = azureService;
     }
 
-    public override async Task Handle(string inputPath, string inputContentType)
+    public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
         try
         {
@@ -36,6 +38,13 @@ public class UploadHandler : AbstractFileHandler
             Console.WriteLine($"An unexpected error occurred: {e.Message}");
             throw;
         }
+
+        return new HandlerResult
+        {
+            StatusCode = HttpStatusCode.Accepted,
+            Success = true,
+            ErrorMessage = "File uploaded successfully."
+        };
     }
 
 }

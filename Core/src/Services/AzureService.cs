@@ -1,5 +1,5 @@
 using System.IO.Abstractions;
-using aia_api.Configuration.Azure;
+using aia_api.Configuration.Records;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
 
