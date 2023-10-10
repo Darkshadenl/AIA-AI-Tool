@@ -19,6 +19,18 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
     public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
+        // retrieve files of upload
+
+        // make a prediction for every file
+        // make a custom prompt for every file
+        // make a custom id for every file
+        // save the id to the database including the file extension
+
+        // send the prediction replicate
+
+
+
+
         var prediction = new Prediction(
             version: _replicateSettings.ModelVersion,
             input: new PredictionInput(

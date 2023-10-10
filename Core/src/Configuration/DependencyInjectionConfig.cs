@@ -4,6 +4,7 @@ using aia_api.Services;
 using Azure.Storage;
 using System.IO.Abstractions;
 using aia_api.Application.Replicate;
+using aia_api.Database;
 using Azure.Storage.Blobs;
 using InterfacesAia;
 
@@ -33,6 +34,7 @@ public static class DependencyInjectionConfig
         var credential = new StorageSharedKeyCredential(aBss.AccountName, aBss.StorageAccountKey);
 
         services.AddScoped<HttpClient>();
+        services.AddScoped<PredictionDbContext>();
 
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
         services.AddSingleton<IFileSystem, FileSystem>();
