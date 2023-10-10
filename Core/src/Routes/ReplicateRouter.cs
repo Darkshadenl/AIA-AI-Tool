@@ -1,3 +1,4 @@
+using System.Text;
 using aia_api.Application.FileHandler;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
@@ -28,6 +29,12 @@ public class ReplicateRouter
         return async (context, resultDto) => {
             if (resultDto.Status == "succeeded")
             {
+                StringBuilder stringBuilder = new StringBuilder();
+                foreach (string s in resultDto.Output) stringBuilder.Append(s);
+                string result = stringBuilder.ToString();
+                
+                Console.WriteLine(result);
+                
                 Console.WriteLine("succeeded");
             }
             context.Response.StatusCode = 204;

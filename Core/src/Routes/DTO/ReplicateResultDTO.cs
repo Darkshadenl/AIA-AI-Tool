@@ -9,7 +9,7 @@ public class ReplicateResultDTO
     public string CompletedAt { get; set; }
     public string Status { get; set; }
     public ReplicateInput ReplicateInput { get; set; }
-    public object Output { get; set; }
+    public string[] Output { get; set; }
     public object Error { get; set; }
     public object Logs { get; set; }
     public object Metrics { get; set; }
