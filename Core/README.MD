@@ -32,6 +32,7 @@ Setting up localtunnel is the easiest:
 npm install -g localtunnel
 ```
 
+Verander hieronder de poort naar de poort waarop de app listened
 ```bash
 lt --port 5000
 ```
