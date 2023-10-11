@@ -2,6 +2,7 @@ using System.IO.Abstractions;
 using aia_api.Application.FileHandler;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
+using aia_api.Database;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
 
@@ -15,15 +16,23 @@ public class FileHandlerFactory : IFileHandlerFactory
     private readonly IOptions<ReplicateSettings> _replicateSettings;
     private readonly IFileSystemStorageService _fileSystemStorageService;
     private readonly ReplicateApi _replicateApi;
+    private readonly PredictionDbContext _dbContext;
 
-    public FileHandlerFactory(IOptions<Settings> extensionSettings, IFileSystem fileSystem,
-        IOptions<ReplicateSettings> replicateSettings, IFileSystemStorageService fileSystemStorageService, ReplicateApi replicateApi)
+    public FileHandlerFactory(
+        IOptions<Settings> extensionSettings,
+        IFileSystem fileSystem,
+        IOptions<ReplicateSettings> replicateSettings,
+        IFileSystemStorageService fileSystemStorageService,
+        ReplicateApi replicateApi,
+        PredictionDbContext dbContext
+        )
     {
         _extensionSettings = extensionSettings;
         _fileSystem = fileSystem;
         _replicateSettings = replicateSettings;
         _fileSystemStorageService = fileSystemStorageService;
         _replicateApi = replicateApi;
+        _dbContext = dbContext;
         _fileHandlerStreet = BuildFileHandlerStreet();
     }
 
@@ -31,7 +40,7 @@ public class FileHandlerFactory : IFileHandlerFactory
     {
         var fileValidator = new FileValidator(_extensionSettings);
         var zipHandler = new ZipHandler(_extensionSettings, _fileSystem);
-        var llm = new LlmFileUploaderHandler(_extensionSettings, _replicateSettings, _replicateApi, _fileSystem);
+        var llm = new LlmFileUploaderHandler(_extensionSettings, _replicateSettings, _replicateApi, _fileSystem, _dbContext);
 
         fileValidator.SetNext(zipHandler);
         zipHandler.SetNext(llm);

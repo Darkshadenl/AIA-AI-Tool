@@ -10,7 +10,7 @@ using aia_api.Database;
 namespace aia_api.Migrations
 {
     [DbContext(typeof(PredictionDbContext))]
-    [Migration("20231010125810_InitialCreate")]
+    [Migration("20231011122159_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -34,7 +34,6 @@ namespace aia_api.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PredictionResponseText")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Prompt")

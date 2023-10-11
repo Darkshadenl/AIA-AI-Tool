@@ -23,7 +23,7 @@ app.MapPost("/api/upload/repo", UploadRouter.RepoHandler());
 
 app.MapGet("/api/replicate-webhook-test", ReplicateRouter.ReplicateWebhookTest());
 
-app.MapPost("/api/replicate-webhook", ReplicateRouter.ReplicateWebhook());
+app.MapPost("/api/replicate-webhook/{id}", ReplicateRouter.ReplicateWebhook());
 
 app.MapGet("/api/health", () => Results.Ok("OK"));
 

@@ -31,7 +31,6 @@ namespace aia_api.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PredictionResponseText")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Prompt")

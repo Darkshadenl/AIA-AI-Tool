@@ -1,5 +1,6 @@
 using System.IO.Abstractions;
 using System.IO.Compression;
+using System.Net;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
@@ -13,14 +14,21 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private readonly IOptions<Settings> _settings;
     private readonly ReplicateApi _replicateApi;
     private readonly IFileSystem _fileSystem;
+    private readonly PredictionDbContext _dbContext;
     private readonly ReplicateSettings _replicateSettings;
 
-    public LlmFileUploaderHandler(IOptions<Settings> settings,
-        IOptions<ReplicateSettings> replicateSettings, ReplicateApi replicateApi, IFileSystem fileSystem) : base(settings)
+    public LlmFileUploaderHandler(
+        IOptions<Settings> settings,
+        IOptions<ReplicateSettings> replicateSettings,
+        ReplicateApi replicateApi,
+        IFileSystem fileSystem,
+        PredictionDbContext dbContext
+        ) : base(settings)
     {
         _settings = settings;
         _replicateApi = replicateApi;
         _fileSystem = fileSystem;
+        _dbContext = dbContext;
         _replicateSettings = replicateSettings.Value;
     }
 
@@ -36,43 +44,24 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         foreach (var file in zipArchive.Entries)
         {
             var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
+
             if (string.IsNullOrEmpty(fileExtension)) continue;
 
-            // make a prediction for every file
-            // make a custom prompt for every file
+            var dbPrediction = await SavePredictionToDatabase(file);
+            var webHookWithId = _replicateSettings.WebhookUrl.Replace("${dbPredictionId}",  dbPrediction.Id.ToString());
+            var prediction = CreatePrediction(dbPrediction, webHookWithId);
 
-
-            // save basedata to the database for id retrieval
-            var dbPrediction = new DbPrediction
-            {
-                FileExtension = fileExtension,
-                FileName = file.FullName,
-
-            };
-
-            // use sqlite id for every file
-
-            // send the prediction replicate
+            Console.WriteLine();
+            // TODO send the prediction replicate
         }
 
-        var prediction = new Prediction(
-            version: _replicateSettings.ModelVersion,
-            input: new PredictionInput(
-                prompt: _replicateSettings.Prompt,
-                // SystemPrompt: _replicateSettings.SystemPrompt,
-                max_tokens: 500,
-                temperature: 0.8,
-                top_p: 0.95,
-                top_k: 10,
-                frequency_penalty: 0,
-                presence_penalty: 0,
-                repeat_penalty: 1.1
-            ),
-            webhook: _replicateSettings.WebhookUrl
-            // webhook_events_filter: _replicateSettings.WebhookFilters
-        );
-
-        var response = await _replicateApi.RunPrediction(prediction);
+        // var response = await _replicateApi.RunPrediction(prediction);
+        var response = new
+        {
+            IsSuccessStatusCode = true,
+            StatusCode = HttpStatusCode.OK,
+            ReasonPhrase = "OK"
+        };
 
         return new HandlerResult
         {
@@ -81,5 +70,42 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             ErrorMessage = response.ReasonPhrase ?? string.Empty
         };
     }
+
+    private async Task<DbPrediction> SavePredictionToDatabase(ZipArchiveEntry file)
+    {
+        var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
+        var customPrompt = _replicateSettings.Prompt.Replace("${code}", "code here");
+
+        var dbPrediction = new DbPrediction
+        {
+            FileExtension = fileExtension,
+            FileName = file.FullName,
+            Prompt = customPrompt
+        };
+
+        await _dbContext.AddAsync(dbPrediction);
+        await _dbContext.SaveChangesAsync();
+
+        return dbPrediction;
+    }
+
+    private Prediction CreatePrediction(DbPrediction dbPrediction, string webHookWithId)
+    {
+        return new Prediction(
+            version: _replicateSettings.ModelVersion,
+            input: new PredictionInput(
+                prompt: dbPrediction.Prompt,
+                max_tokens: 500,
+                temperature: 0.8,
+                top_p: 0.95,
+                top_k: 10,
+                frequency_penalty: 0,
+                presence_penalty: 0,
+                repeat_penalty: 1.1
+            ),
+            webhook: webHookWithId
+        );
+    }
+
 
 }
