@@ -12,7 +12,7 @@ launchSettings.json
 # Project specific
 Temp/
 Core/Temp/
-Results/
+Result/
 TempOutput/
 .vs/
 

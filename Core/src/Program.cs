@@ -2,7 +2,6 @@ using aia_api.Application.EndpointFilter;
 using aia_api.Configuration;
 using aia_api.Routes;
 using Microsoft.AspNetCore.SignalR.Client;
-using aia_api.src.Services;
 using InterfacesAia;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +17,17 @@ IServiceBusService serviceBusService = app.Services.GetRequiredService<IServiceB
 HubConnection connection = await serviceBusService.ExecuteAsync();
 connection.On<string, string, string>("UploadZip", uploadController.ZipHandler);
 
+app.MapPost("/api/upload/zip", UploadRouter.ZipHandler())
+    .AddEndpointFilter<EmptyFileFilter>();
+
 app.MapPost("/api/upload/repo", UploadRouter.RepoHandler());
+
+
+app.MapGet("/api/replicate-webhook-test", ReplicateRouter.ReplicateWebhookTest());
+
+app.MapPost("/api/replicate-webhook", ReplicateRouter.ReplicateWebhook());
+
+app.MapGet("/api/health", () => Results.Ok("OK"));
+
 
 app.Run();

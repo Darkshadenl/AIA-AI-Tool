@@ -1,6 +1,6 @@
-using aia_api.Configuration.Azure;
+using System.Net;
+using aia_api.Configuration.Records;
 using aia_api.Services;
-using aia_api.src.Services;
 using InterfacesAia;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
@@ -14,18 +14,14 @@ public class UploadHandler : AbstractFileHandler
     private AzureService _azureService;
     private const string _uploadSuccessMessage = "File successfully uploaded.";
 
-    public UploadHandler(IOptions<Settings> settings, IServiceBusService serviceBusService) : base(settings)
+    public UploadHandler(IOptions<Settings> settings, IServiceBusService serviceBusService, AzureService azureService) : base(settings)
     {
         _settings = settings;
         _serviceBusService = serviceBusService;
-    }
-
-    public void SetClient(AzureService azureService)
-    {
         _azureService = azureService;
     }
 
-    public override async Task Handle(string inputPath, string inputContentType)
+    public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
         try
         {
@@ -45,6 +41,11 @@ public class UploadHandler : AbstractFileHandler
             Console.WriteLine($"An unexpected error occurred: {e.Message}");
             throw;
         }
+        
+        if (Next == null)
+            return await base.Handle(inputPath, inputContentType);
+
+        return await Next.Handle(inputPath, inputContentType);
     }
 
 }

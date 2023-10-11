@@ -1,6 +1,5 @@
 using aia_api.Application.FileHandler;
 using aia_api.Application.Replicate;
-using aia_api.Configuration.Azure;
 using aia_api.Configuration.Records;
 using aia_api.Routes.DTO;
 using InterfacesAia;

@@ -1,6 +1,6 @@
 using System.IO.Abstractions.TestingHelpers;
 using System.Text;
-using aia_api.Configuration.Azure;
+using aia_api.Configuration.Records;
 using aia_api.Services;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;

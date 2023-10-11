@@ -12,11 +12,7 @@
       "commandName": "Project",
       "applicationUrl": "http://localhost:5264",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "STORAGEACCOUNTKEY": "",
-        "ACCOUNTNAME": "",
-        "BLOBSERVICEENDPOINT": "",
-        "BLOBCONTAINERNAME": ""
+        "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true
     },

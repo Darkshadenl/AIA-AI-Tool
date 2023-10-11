@@ -1,10 +1,12 @@
-using System.IO.Abstractions;
 using aia_api.Application.Helpers.Factories;
-using aia_api.Configuration.Azure;
+using aia_api.Configuration.Records;
 using aia_api.Services;
 using aia_api.src.Application;
 using aia_api.src.Services;
 using Azure.Storage;
+using System.IO.Abstractions;
+using aia_api.Application.FileHandler;
+using aia_api.Application.Replicate;
 using Azure.Storage.Blobs;
 using InterfacesAia;
 
@@ -16,12 +18,14 @@ public static class DependencyInjectionConfig
     {
         var blobConfig = configuration.GetSection("AzureBlobStorage");
         var settings = configuration.GetSection("Settings");
-
+        var replicate = configuration.GetSection("ReplicateSettings");
+        
         if (settings == null)
             throw new ArgumentNullException(nameof(settings));
 
         services.Configure<AzureBlobStorageSettings>(blobConfig);
         services.Configure<Settings>(settings);
+        services.Configure<ReplicateSettings>(replicate);
     }
 
     public static void AddProjectServices(this IServiceCollection services, IConfiguration configuration)
@@ -42,9 +46,10 @@ public static class DependencyInjectionConfig
         services.AddSingleton<IUploadController, UploadController>();
 
         services.AddSingleton<AzureService>();
-        services.AddSingleton <GitlabService>();
+        services.AddSingleton<GitlabService>();
         services.AddSingleton<IFileHandlerFactory, FileHandlerFactory>();
-        services.AddSingleton<IStorageService, StorageService>();
-        
+        services.AddSingleton<IFileSystemStorageService, FileSystemStorageService>();
+        services.AddSingleton<ReplicateApi>();
+
     }
 }

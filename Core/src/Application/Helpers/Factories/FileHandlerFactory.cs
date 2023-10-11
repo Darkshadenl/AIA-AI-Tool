@@ -1,8 +1,8 @@
 using System.IO.Abstractions;
 using aia_api.Application.FileHandler;
-using aia_api.Configuration.Azure;
+using aia_api.Application.Replicate;
+using aia_api.Configuration.Records;
 using aia_api.Services;
-using aia_api.src.Services;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
 
@@ -13,15 +13,22 @@ public class FileHandlerFactory : IFileHandlerFactory
     private readonly IOptions<Settings> _extensionSettings;
     private readonly IUploadedFileHandler _fileHandlerStreet;
     private readonly IServiceBusService _serviceBusService;
-    private readonly AzureService _azureService;
     private readonly IFileSystem _fileSystem;
+    private readonly IOptions<ReplicateSettings> _replicateSettings;
+    private readonly IFileSystemStorageService _fileSystemStorageService;
+    private readonly ReplicateApi _replicateApi;
+    private readonly AzureService _azureService;
 
-    public FileHandlerFactory(IOptions<Settings> extensionSettings, AzureService azureService, IFileSystem fileSystem, IServiceBusService serviceBusService)
+    public FileHandlerFactory(IOptions<Settings> extensionSettings, IFileSystem fileSystem, IServiceBusService serviceBusService, AzureService azureService,
+        IOptions<ReplicateSettings> replicateSettings, IFileSystemStorageService fileSystemStorageService, ReplicateApi replicateApi)
     {
         _extensionSettings = extensionSettings;
-        _azureService = azureService;
         _fileSystem = fileSystem;
-        _serviceBusService = serviceBusService; 
+        _serviceBusService = serviceBusService;
+        _replicateSettings = replicateSettings;
+        _fileSystemStorageService = fileSystemStorageService;
+        _replicateApi = replicateApi;
+        _azureService = azureService;
         _fileHandlerStreet = BuildFileHandlerStreet();
     }
 
@@ -29,11 +36,12 @@ public class FileHandlerFactory : IFileHandlerFactory
     {
         var fileValidator = new FileValidator(_extensionSettings);
         var zipHandler = new ZipHandler(_extensionSettings, _fileSystem);
-        var azureUploader = new UploadHandler(_extensionSettings, _serviceBusService);
+        var azureUploader = new UploadHandler(_extensionSettings, _serviceBusService, _azureService);
+        var llm = new LlmFileUploaderHandler(_extensionSettings, _replicateSettings, _replicateApi);
 
-        azureUploader.SetClient(_azureService);
         fileValidator.SetNext(zipHandler);
         zipHandler.SetNext(azureUploader);
+        azureUploader.SetNext(llm);
 
         return fileValidator;
     }

@@ -1,14 +1,16 @@
+using InterfacesAia;
+
 namespace aia_api.Services;
 
 public class GitlabService
 {
     private readonly HttpClient _httpClient;
-    private readonly IStorageService _storageService;
+    private readonly IFileSystemStorageService _fileSystemStorageService;
 
-    public GitlabService(HttpClient httpClient, IStorageService storageService)
+    public GitlabService(HttpClient httpClient, IFileSystemStorageService fileSystemStorageService)
     {
         _httpClient = httpClient;
-        _storageService = storageService;
+        _fileSystemStorageService = fileSystemStorageService;
     }
 
     /// <summary>
@@ -34,7 +36,7 @@ public class GitlabService
         var date = DateTime.Now.ToString("dd-MM-yyyy HH-mm-ss").Replace(" ", "_");
         var fileName = $"{projectId}_{date}.zip";
 
-        return await _storageService.StoreInTemp(response, fileName);
+        return await _fileSystemStorageService.StoreInTemp(response, fileName);
     }
 
 }

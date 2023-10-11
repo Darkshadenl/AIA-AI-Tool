@@ -1,8 +1,4 @@
-﻿using System;
-using InterfacesAia;
-using aia_api.Application.Helpers.Factories;
-using aia_api.Services;
-using aia_api.src.Services;
+﻿using InterfacesAia;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace aia_api.src.Application
@@ -13,13 +9,13 @@ namespace aia_api.src.Application
         private readonly string[] _supportedContentTypes = { "application/zip" };
         private readonly IServiceBusService _serviceBusService;
         private readonly IFileHandlerFactory _fileHandlerFactory;
-        private readonly IStorageService _storageService;
+        private readonly IFileSystemStorageService _fileSystemStorageService;
 
-        public UploadController(IServiceBusService serviceBusService, IFileHandlerFactory fileHandlerFactory, IStorageService storageService)
+        public UploadController(IServiceBusService serviceBusService, IFileHandlerFactory fileHandlerFactory, IFileSystemStorageService fileSystemStorageService)
 		{
             _serviceBusService = serviceBusService;
             _fileHandlerFactory = fileHandlerFactory;
-            _storageService = storageService;
+            _fileSystemStorageService = fileSystemStorageService;
         }
 
         public async void ZipHandler(string fileName, string contentType, string fileBase64)
@@ -42,7 +38,7 @@ namespace aia_api.src.Application
             {
                 byte[] fileByteArray = Convert.FromBase64String(fileBase64);
                 Stream inputStream = new MemoryStream(fileByteArray);
-                var path = await _storageService.StoreInTemp(inputStream, fileName);
+                var path = await _fileSystemStorageService.StoreInTemp(inputStream, fileName);
                 await handlerStreet.Handle(path, contentType);
             }
             catch (FormatException)
