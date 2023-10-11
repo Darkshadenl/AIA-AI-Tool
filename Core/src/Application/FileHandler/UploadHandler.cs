@@ -11,7 +11,7 @@ public class UploadHandler : AbstractFileHandler
 {
     private readonly IOptions<Settings> _settings;
     private readonly IServiceBusService _serviceBusService;
-    private AzureService _azureService;
+    private readonly AzureService _azureService;
     private const string UploadSuccessMessage = "File successfully uploaded.";
 
     public UploadHandler(IOptions<Settings> settings, IServiceBusService serviceBusService, AzureService azureService) : base(settings)
