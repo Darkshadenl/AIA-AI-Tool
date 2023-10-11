@@ -23,13 +23,13 @@ public class GitlabService
     /// <exception cref="Exception">Thrown if the repository download fails.</exception>
     public async Task<string> DownloadRepository(string projectId, string apiToken)
     {
-        var url = $"/projects/{projectId}/repository/archive.zip";
+        var url = $"/api/v4/projects/{projectId}/repository/archive.zip";
         _gitlabHttpClient.DefaultRequestHeaders.Add("Private-Token", apiToken);
 
         var response = await _gitlabHttpClient.GetAsync(url);
 
         if (!response.IsSuccessStatusCode)
-            throw new Exception("Could not download repository.");
+            throw new Exception($"Could not download repository. Status code: {response.StatusCode}  Reason: {response.ReasonPhrase}");
 
         var date = DateTime.Now.ToString("dd-MM-yyyy HH-mm-ss").Replace(" ", "_");
         var fileName = $"{projectId}_{date}.zip";

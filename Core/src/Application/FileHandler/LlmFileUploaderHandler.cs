@@ -58,7 +58,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             var prediction = _replicateApi.CreatePrediction(dbPrediction, webHookWithId);
 
             // send the prediction replicate
-            responses.Add(await _replicateApi.RunPrediction(prediction));
+            // responses.Add(await _replicateApi.RunPrediction(prediction));
         }
 
         foreach (var re in responses)

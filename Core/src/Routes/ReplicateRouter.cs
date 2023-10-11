@@ -50,8 +50,7 @@ public class ReplicateRouter
                     var mergedText = mergedOutput.ToString().Trim();
                     dbPrediction.PredictionResponseText = mergedText;
                     db.Entry(dbPrediction).State = EntityState.Modified;
-                    var written = db.SaveChanges();
-                    Console.WriteLine(written + " record written to database");
+                    db.SaveChanges();
                 }
                 catch (Exception e)
                 {

@@ -20,7 +20,7 @@ public static class DependencyInjectionConfig
         AddProjectServices(services, configuration);
     }
 
-    public static void AddProjectConfigs(this IServiceCollection services, IConfiguration configuration)
+    private static void AddProjectConfigs(this IServiceCollection services, IConfiguration configuration)
     {
         var blobConfig = configuration.GetSection("AzureBlobStorage");
         var settings = configuration.GetSection("Settings");
@@ -31,7 +31,7 @@ public static class DependencyInjectionConfig
         services.Configure<ReplicateSettings>(replicate);
     }
 
-    public static void ConfigureHttpClients(this IServiceCollection services, IConfiguration configuration)
+    private static void ConfigureHttpClients(this IServiceCollection services, IConfiguration configuration)
     {
         var replicateSettings = configuration.GetSection("ReplicateSettings").Get<ReplicateSettings>();
 
@@ -47,11 +47,11 @@ public static class DependencyInjectionConfig
 
         services.AddHttpClient("gitlabApiV4Client", c =>
         {
-            c.BaseAddress = new Uri("https://gitlab.com/api/v4");
+            c.BaseAddress = new Uri("https://gitlab.com");
         });
     }
 
-    public static void AddProjectServices(this IServiceCollection services, IConfiguration configuration)
+    private static void AddProjectServices(this IServiceCollection services, IConfiguration configuration)
     {
         var aBss = configuration.GetSection("AzureBlobStorage").Get<AzureBlobStorageSettings>();
 
