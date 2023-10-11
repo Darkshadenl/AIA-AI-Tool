@@ -13,5 +13,5 @@ public class DbPrediction
     public string FileName { get; set; }
     public string FileExtension { get; set; }
     public string Prompt { get; set; }
-    public string PredictionResponseText { get; set; }
+    public string? PredictionResponseText { get; set; }
 }

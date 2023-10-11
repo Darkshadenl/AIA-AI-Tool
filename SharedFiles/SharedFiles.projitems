@@ -3,7 +3,7 @@
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <HasSharedItems>true</HasSharedItems>
-    <SharedGUID>9EC2B586-810C-4B79-A57A-28C89485F3B2</SharedGUID>
+    <SharedGUID>55FAA578-2232-49A8-90B8-2C8ACC331200</SharedGUID>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <Import_RootNamespace>SharedFiles</Import_RootNamespace>
@@ -18,11 +18,12 @@
     <Content Include="$(MSBuildThisFileDirectory)..\Dockerfile">
       <Link>Dockerfile</Link>
     </Content>
-    <Content Include="$(MSBuildThisFileDirectory)..\README.MD">
-      <Link>README.MD</Link>
+    <Content Include="$(MSBuildThisFileDirectory)..\gitlab-ci">
+      <Link>gitlab-ci</Link>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)..\gitpod">
+      <Link>gitpod</Link>
     </Content>
     <Content Include="$(MSBuildThisFileDirectory)aia.db" />
-    <Content Include="$(MSBuildThisFileDirectory)aia.db-shm" />
-    <Content Include="$(MSBuildThisFileDirectory)aia.db-wal" />
   </ItemGroup>
 </Project>

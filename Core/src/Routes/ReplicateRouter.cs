@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using aia_api.Application.FileHandler;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
@@ -10,13 +11,13 @@ namespace aia_api.Routes;
 public class ReplicateRouter
 {
     [Obsolete("Remove at a later stage after implementing ReplicateWebHook further")]
-    public static Func<ReplicateApi, IOptions<Settings>, IOptions<ReplicateSettings>, Task<IResult>> ReplicateWebhookTest()
+    public static Func<ReplicateApi, IOptions<Settings>, IOptions<ReplicateSettings>, IFileSystem, Task<IResult>> ReplicateWebhookTest()
     {
-        return async (replicateApi, extensionSettings, replicateSettings) => {
+        return async (replicateApi, extensionSettings, replicateSettings, fs) => {
 
             Console.WriteLine("replicate-webhook-test");
 
-            var llm = new LlmFileUploaderHandler(extensionSettings, replicateSettings, replicateApi);
+            var llm = new LlmFileUploaderHandler(extensionSettings, replicateSettings, replicateApi, fs);
             await llm.Handle("test", "test");
 
             return Results.Ok("replicate-webhook-test");

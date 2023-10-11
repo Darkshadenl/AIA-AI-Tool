@@ -31,7 +31,7 @@ public class FileHandlerFactory : IFileHandlerFactory
     {
         var fileValidator = new FileValidator(_extensionSettings);
         var zipHandler = new ZipHandler(_extensionSettings, _fileSystem);
-        var llm = new LlmFileUploaderHandler(_extensionSettings, _replicateSettings, _replicateApi);
+        var llm = new LlmFileUploaderHandler(_extensionSettings, _replicateSettings, _replicateApi, _fileSystem);
 
         fileValidator.SetNext(zipHandler);
         zipHandler.SetNext(llm);

@@ -1,5 +1,8 @@
+using System.IO.Abstractions;
+using System.IO.Compression;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
+using aia_api.Database;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
 
@@ -7,29 +10,50 @@ namespace aia_api.Application.FileHandler;
 
 public class LlmFileUploaderHandler : AbstractFileHandler
 {
+    private readonly IOptions<Settings> _settings;
     private readonly ReplicateApi _replicateApi;
+    private readonly IFileSystem _fileSystem;
     private readonly ReplicateSettings _replicateSettings;
 
     public LlmFileUploaderHandler(IOptions<Settings> settings,
-        IOptions<ReplicateSettings> replicateSettings, ReplicateApi replicateApi) : base(settings)
+        IOptions<ReplicateSettings> replicateSettings, ReplicateApi replicateApi, IFileSystem fileSystem) : base(settings)
     {
+        _settings = settings;
         _replicateApi = replicateApi;
+        _fileSystem = fileSystem;
         _replicateSettings = replicateSettings.Value;
     }
 
     public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
         // retrieve files of upload
+        var fileName = _fileSystem.Path.GetFileName(inputPath);
+        var outputFilePath = _fileSystem.Path.Combine(_settings.Value.OutputFolderPath, fileName);
 
-        // make a prediction for every file
-        // make a custom prompt for every file
-        // make a custom id for every file
-        // save the id to the database including the file extension
+        await using var fileStream = _fileSystem.FileStream.New(outputFilePath, FileMode.Open, FileAccess.Read);
+        using ZipArchive zipArchive = new(fileStream, ZipArchiveMode.Read);
 
-        // send the prediction replicate
+        foreach (var file in zipArchive.Entries)
+        {
+            var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
+            if (string.IsNullOrEmpty(fileExtension)) continue;
+
+            // make a prediction for every file
+            // make a custom prompt for every file
 
 
+            // save basedata to the database for id retrieval
+            var dbPrediction = new DbPrediction
+            {
+                FileExtension = fileExtension,
+                FileName = file.FullName,
 
+            };
+
+            // use sqlite id for every file
+
+            // send the prediction replicate
+        }
 
         var prediction = new Prediction(
             version: _replicateSettings.ModelVersion,
