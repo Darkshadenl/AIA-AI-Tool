@@ -11,10 +11,12 @@ launchSettings.json
 
 # JetBrains Rider
 .idea
+Core/.idea
 
 # Project specific
 Temp/
 Core/Temp/
+Results/
 TempOutput/
 .vs/
 

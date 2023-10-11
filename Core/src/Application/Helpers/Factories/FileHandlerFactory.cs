@@ -8,11 +8,6 @@ using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.Helpers.Factories;
 
-public interface IFileHandlerFactory
-{
-    IUploadedFileHandler GetFileHandler();
-}
-
 public class FileHandlerFactory : IFileHandlerFactory
 {
     private readonly IOptions<Settings> _extensionSettings;
