@@ -46,6 +46,19 @@ app.MapGet("/api/db-test", (PredictionDbContext dbContext) =>
     Results.Ok("OK");
 });
 
+app.MapDelete("/api/clear-db", (PredictionDbContext dbContext) =>
+{
+    var entitiesToRemove = dbContext.Predictions.ToList();
+
+    foreach (var entity in entitiesToRemove)
+        dbContext.Remove(entity);
+
+    dbContext.SaveChanges();
+
+    return Results.Ok("Database cleared successfully.");
+});
+
+
 
 app.Run();
 

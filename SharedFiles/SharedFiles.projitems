@@ -21,5 +21,8 @@
     <Content Include="$(MSBuildThisFileDirectory)..\README.MD">
       <Link>README.MD</Link>
     </Content>
+    <Content Include="$(MSBuildThisFileDirectory)aia.db" />
+    <Content Include="$(MSBuildThisFileDirectory)aia.db-shm" />
+    <Content Include="$(MSBuildThisFileDirectory)aia.db-wal" />
   </ItemGroup>
 </Project>
