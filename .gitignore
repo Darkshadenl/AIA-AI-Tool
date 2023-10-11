@@ -9,6 +9,9 @@ launchSettings.json
 # Visual Studio Code
 .vscode
 
+# JetBrains Rider
+.idea
+
 # Project specific
 Temp/
 Core/Temp/
