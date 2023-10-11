@@ -55,7 +55,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             // determine if file has a comment
             var dbPrediction = await SavePredictionToDatabase(file);
             var webHookWithId = _replicateSettings.WebhookUrl.Replace("${dbPredictionId}",  dbPrediction.Id.ToString());
-            var prediction = CreatePrediction(dbPrediction, webHookWithId);
+            var prediction = _replicateApi.CreatePrediction(dbPrediction, webHookWithId);
 
             // send the prediction replicate
             responses.Add(await _replicateApi.RunPrediction(prediction));
@@ -97,24 +97,5 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
         return dbPrediction;
     }
-
-    private Prediction CreatePrediction(DbPrediction dbPrediction, string webHookWithId)
-    {
-        return new Prediction(
-            version: _replicateSettings.ModelVersion,
-            input: new PredictionInput(
-                prompt: dbPrediction.Prompt,
-                max_tokens: 500,
-                temperature: 0.8,
-                top_p: 0.95,
-                top_k: 10,
-                frequency_penalty: 0,
-                presence_penalty: 0,
-                repeat_penalty: 1.1
-            ),
-            webhook: webHookWithId
-        );
-    }
-
 
 }

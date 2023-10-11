@@ -10,8 +10,7 @@ using InterfacesAia;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddProjectConfigs(builder.Configuration);
-builder.Services.AddProjectServices(builder.Configuration);
+builder.Services.SetupDI(builder.Configuration);
 
 var app = builder.Build();
 

@@ -3,6 +3,7 @@ using aia_api.Configuration.Records;
 using aia_api.Services;
 using Azure.Storage;
 using System.IO.Abstractions;
+using System.Net.Http.Headers;
 using aia_api.Application.Replicate;
 using aia_api.Database;
 using Azure.Storage.Blobs;
@@ -12,6 +13,13 @@ namespace aia_api.Configuration;
 
 public static class DependencyInjectionConfig
 {
+    public static void SetupDI(this IServiceCollection services, IConfiguration configuration)
+    {
+        AddProjectConfigs(services, configuration);
+        ConfigureHttpClients(services, configuration);
+        AddProjectServices(services, configuration);
+    }
+
     public static void AddProjectConfigs(this IServiceCollection services, IConfiguration configuration)
     {
         var blobConfig = configuration.GetSection("AzureBlobStorage");
@@ -21,6 +29,26 @@ public static class DependencyInjectionConfig
         services.Configure<AzureBlobStorageSettings>(blobConfig);
         services.Configure<Settings>(settings);
         services.Configure<ReplicateSettings>(replicate);
+    }
+
+    public static void ConfigureHttpClients(this IServiceCollection services, IConfiguration configuration)
+    {
+        var replicateSettings = configuration.GetSection("ReplicateSettings").Get<ReplicateSettings>();
+
+        if (replicateSettings == null)
+            throw new ArgumentNullException(nameof(replicateSettings));
+
+        services.AddHttpClient("replicateClient", c =>
+        {
+            c.BaseAddress = new Uri("https://api.replicate.com");
+            c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token",
+                replicateSettings.ApiToken);
+        });
+
+        services.AddHttpClient("gitlabApiV4Client", c =>
+        {
+            c.BaseAddress = new Uri("https://gitlab.com/api/v4");
+        });
     }
 
     public static void AddProjectServices(this IServiceCollection services, IConfiguration configuration)
@@ -33,9 +61,7 @@ public static class DependencyInjectionConfig
         var connectionString = new Uri(aBss.BlobServiceEndpoint + aBss.BlobContainerName);
         var credential = new StorageSharedKeyCredential(aBss.AccountName, aBss.StorageAccountKey);
 
-        services.AddScoped<HttpClient>();
         services.AddScoped<PredictionDbContext>();
-
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
         services.AddSingleton<IFileSystem, FileSystem>();
 
