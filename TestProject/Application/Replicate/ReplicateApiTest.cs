@@ -46,7 +46,8 @@ public class ReplicateApiTest
                 presence_penalty: 0,
                 repeat_penalty: 1.1
             ),
-            webhook: "hook"
+            webhook: "hook",
+            webhook_events_filter: new[] { "completed" }
         );
 
         _mockHttpMessageHandler

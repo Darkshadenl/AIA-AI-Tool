@@ -24,20 +24,52 @@ public class ReplicateRouter
         };
     }
 
-    public static Func<HttpContext, ReplicateResultDTO, Task> ReplicateWebhook()
+    public static Func<HttpContext, IFileSystemStorageService, IOptions<Settings>, ReplicateResultDTO, Task> ReplicateWebhook()
     {
-        return async (context, resultDto) => {
+        return async (context, fileSystemStorageService, settings, resultDto) => {
             if (resultDto.Status == "succeeded")
             {
-                StringBuilder stringBuilder = new StringBuilder();
-                foreach (string s in resultDto.Output) stringBuilder.Append(s);
-                string result = stringBuilder.ToString();
+                string fileExtension = ReceiveFileType(settings.Value.AllowedFiles, resultDto.Output);
+                int codeStartIndex = Array.IndexOf(resultDto.Output, "```");
+                if (fileExtension == "" || codeStartIndex <= -1) return;
                 
+                string result = CombineTokens(resultDto.Output, codeStartIndex);
                 Console.WriteLine(result);
+                
+                GenerateFile(fileExtension, result, fileSystemStorageService);
                 
                 Console.WriteLine("succeeded");
             }
             context.Response.StatusCode = 204;
         };
+    }
+
+    private static string ReceiveFileType(string[] allowedFiles, string[] resultOutput)
+    {
+        foreach (var allowedFile in allowedFiles)
+        {
+            int fileExtensionIndex = Array.IndexOf(resultOutput, allowedFile.Substring(1));
+            if (fileExtensionIndex >= 0) return resultOutput[fileExtensionIndex];
+        }
+        
+        return "";
+    }
+
+    private static string CombineTokens(string[] tokens, int startIndex)
+    {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = startIndex + 1; i < tokens.Length - 1; i++)
+        {
+            stringBuilder.Append(tokens[i]);
+        }
+
+        return stringBuilder.ToString();
+    }
+
+    private static void GenerateFile(string fileExtension, string content, IFileSystemStorageService fileSystemStorageService)
+    {
+        byte[] byteArray = Encoding.UTF8.GetBytes(content);
+        var memoryStream = new MemoryStream(byteArray);
+        fileSystemStorageService.StoreInTemp(memoryStream, "test." + fileExtension);
     }
 }

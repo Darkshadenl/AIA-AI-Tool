@@ -25,15 +25,15 @@ public class LlmFileUploaderHandler : AbstractFileHandler
                 prompt: _replicateSettings.Prompt,
                 // SystemPrompt: _replicateSettings.SystemPrompt,
                 max_tokens: 500,
-                temperature: 0.8,
+                temperature: 0.2,
                 top_p: 0.95,
                 top_k: 10,
                 frequency_penalty: 0,
                 presence_penalty: 0,
                 repeat_penalty: 1.1
             ),
-            webhook: _replicateSettings.WebhookUrl
-            // webhook_events_filter: _replicateSettings.WebhookFilters
+            webhook: _replicateSettings.WebhookUrl,
+            webhook_events_filter: _replicateSettings.WebhookFilters
         );
 
         var response = await _replicateApi.RunPrediction(prediction);
