@@ -12,7 +12,7 @@ public class UploadHandler : AbstractFileHandler
     private readonly IOptions<Settings> _settings;
     private readonly IServiceBusService _serviceBusService;
     private AzureService _azureService;
-    private const string _uploadSuccessMessage = "File successfully uploaded.";
+    private const string UploadSuccessMessage = "File successfully uploaded.";
 
     public UploadHandler(IOptions<Settings> settings, IServiceBusService serviceBusService, AzureService azureService) : base(settings)
     {
@@ -28,9 +28,9 @@ public class UploadHandler : AbstractFileHandler
             await _azureService.Pipeline(_settings.Value.OutputFolderPath, Path.GetFileName(inputPath));
 
             HubConnection connection = _serviceBusService.GetConnection();
-            await connection.InvokeAsync("UploadSuccess", _uploadSuccessMessage);
+            await connection.InvokeAsync("UploadSuccess", UploadSuccessMessage);
 
-            Console.WriteLine(_uploadSuccessMessage);
+            Console.WriteLine(UploadSuccessMessage);
         }
         catch (IOException e)
         {
