@@ -1,21 +1,24 @@
-﻿namespace aia_api.Routes.DTO;
+﻿using aia_api.Application.Replicate;
+
+namespace aia_api.Routes.DTO;
 
 public class ReplicateResultDTO
 {
-    public string Id { get; set; }
-    public string Version { get; set; }
-    public string CreatedAt { get; set; }
-    public string StartedAt { get; set; }
-    public string CompletedAt { get; set; }
-    public string Status { get; set; }
-    public ReplicateInput ReplicateInput { get; set; }
-    public object Output { get; set; }
-    public object Error { get; set; }
-    public object Logs { get; set; }
-    public object Metrics { get; set; }
+    public string id { get; set; }
+    public string version { get; set; }
+    public PredictionInput input { get; set; }
+    public string logs { get; set; }
+    public string[] output { get; set; }
+
+    public string error { get; set; }
+    public string status { get; set; }
+    public string created_at { get; set; }
+    public string started_at { get; set; }
+    public string completed_at { get; set; }
+    public Metrics metrics { get; set; }
 }
 
-public class ReplicateInput
+public class Metrics
 {
-    public string Text { get; set; }
+    public double PredictTime { get; set; }
 }

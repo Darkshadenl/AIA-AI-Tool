@@ -16,12 +16,12 @@ builder.Services.AddProjectServices(builder.Configuration);
 var app = builder.Build();
 
 var api = app.MapGroup("/api");
+var db = app.MapGroup("/db");
 
 api.MapPost("/upload/zip", UploadRouter.ZipHandler())
     .AddEndpointFilter<EmptyFileFilter>();
 
 api.MapPost("/upload/repo", UploadRouter.RepoHandler());
-
 
 api.MapGet("/replicate-webhook-test", ReplicateRouter.ReplicateWebhookTest());
 
@@ -29,26 +29,7 @@ api.MapPost("/replicate-webhook/{id}", ReplicateRouter.ReplicateWebhook());
 
 api.MapGet("/health", () => Results.Ok("OK"));
 
-api.MapGet("/db-test", (PredictionDbContext dbContext) =>
-{
-    var prediction = new DbPrediction
-    {
-        FileExtension = ".ts",
-        FileName = "test.ts",
-        Prompt = "Show me 5 cat jokes",
-        PredictionResponseText = "This is a cat joke"
-    };
-
-    dbContext.Add(prediction);
-
-    dbContext.SaveChanges();
-
-    Console.WriteLine(prediction.Id);
-
-    Results.Ok("OK");
-});
-
-api.MapDelete("/clear-db", (PredictionDbContext dbContext) =>
+db.MapDelete("/clear-db", (PredictionDbContext dbContext) =>
 {
     var entitiesToRemove = dbContext.Predictions.ToList();
 

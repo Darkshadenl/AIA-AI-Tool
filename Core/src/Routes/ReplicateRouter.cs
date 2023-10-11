@@ -1,10 +1,13 @@
 using System.IO.Abstractions;
+using System.Net;
+using System.Text;
 using aia_api.Application.FileHandler;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
 using aia_api.Routes.DTO;
 using InterfacesAia;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Routes;
@@ -28,15 +31,36 @@ public class ReplicateRouter
         };
     }
 
-    public static Func<int, HttpContext, ReplicateResultDTO, Task> ReplicateWebhook()
+    public static Func<int, HttpContext, ReplicateResultDTO, PredictionDbContext, Task> ReplicateWebhook()
     {
-        return async (id, context, resultDto) => {
-            if (resultDto.Status == "succeeded")
+        return (id, context, resultDto, db) => {
+            if (resultDto.status == "succeeded")
             {
-                Console.WriteLine("succeeded");
-                Console.WriteLine("id: " + id);
+                Console.WriteLine("Incoming LLM data for id: " + id);
+
+                var dbPrediction = db.Predictions
+                    .First(p => p.Id == id);
+
+                var mergedOutput = new StringBuilder();
+                foreach (var element in resultDto.output)
+                    mergedOutput.Append(element);
+
+                try
+                {
+                    var mergedText = mergedOutput.ToString().Trim();
+                    dbPrediction.PredictionResponseText = mergedText;
+                    db.Entry(dbPrediction).State = EntityState.Modified;
+                    var written = db.SaveChanges();
+                    Console.WriteLine(written + "records written to database");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
             }
-            context.Response.StatusCode = 204;
+            context.Response.StatusCode = (int) HttpStatusCode.NoContent;
+            return Task.CompletedTask;
         };
     }
 }

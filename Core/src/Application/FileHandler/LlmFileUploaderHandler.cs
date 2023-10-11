@@ -41,21 +41,30 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         await using var fileStream = _fileSystem.FileStream.New(outputFilePath, FileMode.Open, FileAccess.Read);
         using ZipArchive zipArchive = new(fileStream, ZipArchiveMode.Read);
 
+        var maxNumber = 2;
+        var number = 0;
+
+        var responses = new List<HttpResponseMessage>();
+
         foreach (var file in zipArchive.Entries)
         {
+            if (number++ > maxNumber) break;
             var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
-
             if (string.IsNullOrEmpty(fileExtension)) continue;
 
+            // determine if file has a comment
             var dbPrediction = await SavePredictionToDatabase(file);
             var webHookWithId = _replicateSettings.WebhookUrl.Replace("${dbPredictionId}",  dbPrediction.Id.ToString());
             var prediction = CreatePrediction(dbPrediction, webHookWithId);
 
-            Console.WriteLine();
-            // TODO send the prediction replicate
+            // send the prediction replicate
+            responses.Add(await _replicateApi.RunPrediction(prediction));
         }
 
-        // var response = await _replicateApi.RunPrediction(prediction);
+        foreach (var re in responses)
+            if (re.IsSuccessStatusCode != true)
+                Console.WriteLine(re);
+
         var response = new
         {
             IsSuccessStatusCode = true,
