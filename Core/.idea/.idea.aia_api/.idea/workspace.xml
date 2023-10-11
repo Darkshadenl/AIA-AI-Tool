@@ -66,7 +66,7 @@
     ]
   }
 }</component>
-  <component name="RunManager">
+  <component name="RunManager" selected=".NET Launch Settings Profile.aia_api">
     <configuration name="aia_api" type="LaunchSettings" factoryName=".NET Launch Settings Profile">
       <option name="LAUNCH_PROFILE_PROJECT_FILE_PATH" value="$PROJECT_DIR$/aia_api.csproj" />
       <option name="LAUNCH_PROFILE_TFM" value="net7.0" />
