@@ -16,7 +16,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private readonly IFileSystem _fileSystem;
     private readonly PredictionDbContext _dbContext;
     private readonly ReplicateSettings _replicateSettings;
-    private List<string> _errors = new();
+    private readonly List<string> _errors = new();
 
     public LlmFileUploaderHandler(
         IOptions<Settings> settings,
