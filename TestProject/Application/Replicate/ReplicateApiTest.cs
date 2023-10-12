@@ -25,8 +25,6 @@ public class ReplicateApiTest
         var replicateSettings = new ReplicateSettings
         {
             ApiToken = "your_specific_value_here",
-            ReplicateBaseUrl = "https://api.replicate.com",
-            ReplicatePredictionsPath = "/v1/predictions"
         };
 
         mockSettings.Setup(m => m.Value).Returns(replicateSettings);
