@@ -16,6 +16,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private readonly IFileSystem _fileSystem;
     private readonly PredictionDbContext _dbContext;
     private readonly ReplicateSettings _replicateSettings;
+    private List<string> _errors = new();
 
     public LlmFileUploaderHandler(
         IOptions<Settings> settings,
@@ -34,59 +35,24 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
     public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
-        // retrieve files of upload
         var fileName = _fileSystem.Path.GetFileName(inputPath);
         var outputFilePath = _fileSystem.Path.Combine(_settings.Value.OutputFolderPath, fileName);
+        var zipArchive = GetZipArchive(outputFilePath);
 
-        await using var fileStream = _fileSystem.FileStream.New(outputFilePath, FileMode.Open, FileAccess.Read);
-        using ZipArchive zipArchive = new(fileStream, ZipArchiveMode.Read);
+        var responses = await ProcessFiles(zipArchive);
+        return CreateHandlerResult(responses);
+    }
 
-        var maxNumber = 2;
-        var number = 0;
-
-        var responses = new List<HttpResponseMessage>();
-
-        foreach (var file in zipArchive.Entries)
-        {
-            if (number++ > maxNumber) break;    // TODO remove if you want to analyse all files
-
-            var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
-            if (string.IsNullOrEmpty(fileExtension)) continue;
-
-            // determine if file has a comment
-            var dbPrediction = await SavePredictionToDatabase(file);
-            var webHookWithId = _replicateSettings.WebhookUrl.Replace("${dbPredictionId}",  dbPrediction.Id.ToString());
-            var prediction = _replicateApi.CreatePrediction(dbPrediction, webHookWithId);
-
-            // send the prediction replicate
-            responses.Add(await _replicateApi.SendPrediction(prediction));
-        }
-
-        foreach (var response in responses)
-        {
-            if (response.IsSuccessStatusCode) continue;
-
-            Console.WriteLine(response);
-            return new HandlerResult
-            {
-                Success = response.IsSuccessStatusCode,
-                StatusCode = response.StatusCode,
-                ErrorMessage = response.ReasonPhrase ?? string.Empty
-            };
-        }
-
-        return new HandlerResult
-        {
-            Success = true,
-            StatusCode = HttpStatusCode.OK,
-            ErrorMessage = "OK"
-        };
+    private ZipArchive GetZipArchive(string outputFilePath)
+    {
+        var fileStream = _fileSystem.FileStream.New(outputFilePath, FileMode.Open, FileAccess.Read);
+        return new ZipArchive(fileStream, ZipArchiveMode.Read);
     }
 
     private async Task<DbPrediction> SavePredictionToDatabase(ZipArchiveEntry file)
     {
         var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
-        var customPrompt = _replicateSettings.Prompt.Replace("${code}", "code here");
+        var customPrompt = _replicateSettings.Prompt.Replace("${code}", "code here");   // TODO change 'code here'
 
         var dbPrediction = new DbPrediction
         {
@@ -99,6 +65,59 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         await _dbContext.SaveChangesAsync();
 
         return dbPrediction;
+    }
+
+    private async Task<List<HttpResponseMessage>> ProcessFiles(ZipArchive zipArchive)
+    {
+        var maxNumber = 2;  // TODO remove at some point
+        var number = 0; // TODO remove at some point
+        var responses = new List<HttpResponseMessage>();
+
+        foreach (var file in zipArchive.Entries)
+        {
+            if (number++ > maxNumber) break; // TODO remove at some point
+
+            var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
+            if (string.IsNullOrEmpty(fileExtension)) continue;
+
+            var response = await ProcessFile(file);
+            responses.Add(response);
+        }
+
+        return responses;
+    }
+
+    private async Task<HttpResponseMessage> ProcessFile(ZipArchiveEntry file)
+    {
+        var dbPrediction = await SavePredictionToDatabase(file);
+        var webHookWithId = _replicateSettings.WebhookUrl.Replace("${dbPredictionId}", dbPrediction.Id.ToString());
+        var prediction = _replicateApi.CreatePrediction(dbPrediction, webHookWithId);
+        var response = await _replicateApi.SendPrediction(prediction);
+
+        if (!response.IsSuccessStatusCode)
+            _errors.Add($"File: {file.FullName}, Error: {response.ReasonPhrase}");
+
+        return response;
+    }
+
+    private HandlerResult CreateHandlerResult(List<HttpResponseMessage> responses)
+    {
+        if (_errors.Count > 0)
+        {
+            return new HandlerResult
+            {
+                Success = false,
+                StatusCode = HttpStatusCode.BadRequest,
+                ErrorMessage = string.Join("; ", _errors)
+            };
+        }
+
+        return new HandlerResult
+        {
+            Success = true,
+            StatusCode = HttpStatusCode.OK,
+            ErrorMessage = "OK"
+        };
     }
 
 }
