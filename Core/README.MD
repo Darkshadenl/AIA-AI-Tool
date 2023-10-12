@@ -23,16 +23,27 @@ Setup appsettings (use appsettings.example.json and fill in the blanks).
 AzureBlobStorage isn't being used right now, but it's there for future use.
 In the settings section, the path should be absolute.
 
+## Database
+
+The database is setup using Entity Framework Core. To setup the database, run the following commands:
+
+Tool which is needed to run the commands below:
+```bash
+dotnet tool install --global dotnet-ef
+```
+
+Update database with migrations:
+```bash
+dotnet ef database update
+```
+
+
 ## Running the application
 
 If you want the webbook to work, you need to setup a tunneling service like Ngrok or localtunnel.
 Setting up localtunnel is the easiest:
 
-```bash
-npm install -g localtunnel
-```
-
 Verander hieronder de poort naar de poort waarop de app listened
 ```bash
-lt --port 5000
+npx localtunnel --port 5000
 ```
