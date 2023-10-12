@@ -40,7 +40,7 @@ public static class DependencyInjectionConfig
 
         services.AddHttpClient("replicateClient", c =>
         {
-            c.BaseAddress = new Uri("https://api.replicate.com");
+            c.BaseAddress = new Uri(replicateSettings.ReplicateBaseUrl);
             c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token",
                 replicateSettings.ApiToken);
         });

@@ -22,8 +22,8 @@ public class ReplicateApi
     {
         var serializeObject = JsonConvert.SerializeObject(prediction);
         var content = new StringContent(serializeObject, Encoding.UTF8, "application/json");
-
-        return await _replicateHttpClient.PostAsync("/v1/predictions", content);
+        var response = await _replicateHttpClient.PostAsync(_replicateSettings.ReplicatePredictionsPath, content);
+        return response;
     }
 
     public Prediction CreatePrediction(DbPrediction dbPrediction, string webHookWithId)
