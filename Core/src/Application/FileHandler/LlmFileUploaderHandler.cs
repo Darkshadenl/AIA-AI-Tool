@@ -48,7 +48,8 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
         foreach (var file in zipArchive.Entries)
         {
-            if (number++ > maxNumber) break;
+            if (number++ > maxNumber) break;    // TODO remove if you want to analyse all files
+
             var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
             if (string.IsNullOrEmpty(fileExtension)) continue;
 
@@ -58,25 +59,27 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             var prediction = _replicateApi.CreatePrediction(dbPrediction, webHookWithId);
 
             // send the prediction replicate
-            // responses.Add(await _replicateApi.RunPrediction(prediction));
+            responses.Add(await _replicateApi.SendPrediction(prediction));
         }
 
-        foreach (var re in responses)
-            if (re.IsSuccessStatusCode != true)
-                Console.WriteLine(re);
-
-        var response = new
+        foreach (var response in responses)
         {
-            IsSuccessStatusCode = true,
-            StatusCode = HttpStatusCode.OK,
-            ReasonPhrase = "OK"
-        };
+            if (response.IsSuccessStatusCode) continue;
+
+            Console.WriteLine(response);
+            return new HandlerResult
+            {
+                Success = response.IsSuccessStatusCode,
+                StatusCode = response.StatusCode,
+                ErrorMessage = response.ReasonPhrase ?? string.Empty
+            };
+        }
 
         return new HandlerResult
         {
-            Success = response.IsSuccessStatusCode,
-            StatusCode = response.StatusCode,
-            ErrorMessage = response.ReasonPhrase ?? string.Empty
+            Success = true,
+            StatusCode = HttpStatusCode.OK,
+            ErrorMessage = "OK"
         };
     }
 

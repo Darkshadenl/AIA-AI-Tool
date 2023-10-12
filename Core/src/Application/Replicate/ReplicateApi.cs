@@ -18,7 +18,7 @@ public class ReplicateApi
         _replicateHttpClient = httpClientFactory.CreateClient("replicateClient");
     }
 
-    public async Task<HttpResponseMessage> RunPrediction(Prediction prediction)
+    public async Task<HttpResponseMessage> SendPrediction(Prediction prediction)
     {
         var serializeObject = JsonConvert.SerializeObject(prediction);
         var content = new StringContent(serializeObject, Encoding.UTF8, "application/json");
