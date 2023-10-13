@@ -60,13 +60,9 @@ public class LlmFileUploaderHandlerTest
         var clientFactory = new Mock<IHttpClientFactory>();
         clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
-
         var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var dbContextOptions = CreateDbContextOptions();
-        var dbContext = new Mock<PredictionDbContext>(settings, dbContextOptions);
-        var fileSystem = new FileSystem();
-
-        var handler = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi.Object, fileSystem, dbContext.Object);
+        var dbContext = new Mock<PredictionDbContext>(settings, CreateDbContextOptions());
+        var handler = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi.Object, new FileSystem(), dbContext.Object);
 
         // Act
         var result = await handler.Handle(inputPath, inputContentType);
