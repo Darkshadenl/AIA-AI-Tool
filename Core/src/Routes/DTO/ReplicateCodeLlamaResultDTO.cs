@@ -2,11 +2,11 @@
 
 namespace aia_api.Routes.DTO;
 
-public class ReplicateResultDTO
+public class ReplicateCodeLlamaResultDTO
 {
     public string id { get; set; }
     public string version { get; set; }
-    public PredictionInputDTO InputDto { get; set; }
+    public CodeLLamaPredictionInputDto InputDto { get; set; }
     public string logs { get; set; }
     public string[] output { get; set; }
 

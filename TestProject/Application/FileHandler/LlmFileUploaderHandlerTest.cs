@@ -18,11 +18,13 @@ public class LlmFileUploaderHandlerTest
         var inputPath = "inputPath";
         var inputContentType = "inputContentType";
         var settings = Options.Create(new Settings { OutputFolderPath = "outputFolderPath" });
-        var fileSystem = new Mock<IFileSystem>();
-        var replicateApi = new Mock<ReplicateApi>();
-        var dbContext = new Mock<PredictionDbContext>();
         var replicateSettings = Options.Create(new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
-        var handler = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi.Object, fileSystem.Object, dbContext.Object);
+        var fileSystem = new Mock<IFileSystem>();
+        var httpClientFactory = new Mock<IHttpClientFactory>();
+        var dbContext = new Mock<PredictionDbContext>();
+
+        var replicateApi = new ReplicateApi(httpClientFactory.Object, replicateSettings);
+        var handler = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi, fileSystem.Object, dbContext.Object);
 
         // Act
         var result = await handler.Handle(inputPath, inputContentType);

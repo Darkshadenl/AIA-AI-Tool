@@ -31,7 +31,7 @@ public class ReplicateRouter
         };
     }
 
-    public static Func<int, HttpContext, ReplicateResultDTO, PredictionDbContext, Task> ReplicateWebhook()
+    public static Func<int, HttpContext, ReplicateCodeLlamaResultDTO, PredictionDbContext, Task> ReplicateWebhook()
     {
         return (id, context, resultDto, db) => {
             if (resultDto.status == "succeeded")
