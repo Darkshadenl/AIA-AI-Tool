@@ -31,7 +31,7 @@ public class ReplicateApiTest
 
         var httpResponse = new HttpResponseMessage(HttpStatusCode.Unauthorized);
 
-        var mockPrediction = new PredictionDTO(
+        var mockPrediction = new ReplicatePredictionDto(
             version: "version",
             input: new CodeLLamaPredictionInputDto(
                 prompt: "prompt",

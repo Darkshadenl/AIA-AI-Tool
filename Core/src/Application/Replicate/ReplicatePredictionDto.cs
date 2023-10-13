@@ -2,12 +2,12 @@ using InterfacesAia;
 
 namespace aia_api.Application.Replicate;
 
-public record PredictionDTO(
+public record ReplicatePredictionDto(
  string version,
  IPredictionInputDto input,
  string webhook
  // string[]? webhook_events_filter
- );
+ ) : IReplicatePredictionDto;
 
 public record CodeLLamaPredictionInputDto(
     string prompt,

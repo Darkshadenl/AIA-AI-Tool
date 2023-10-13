@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using InterfacesAia;
 
 namespace aia_api.Database;
 
-public class DbPrediction
+public class DbPrediction : IDbPrediction
 {
     [Key]
     [Required]

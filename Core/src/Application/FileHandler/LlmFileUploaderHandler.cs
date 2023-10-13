@@ -21,13 +21,13 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     public LlmFileUploaderHandler(
         IOptions<Settings> settings,
         IOptions<ReplicateSettings> replicateSettings,
-        ReplicateApi replicateApi,
+        ILlmApi replicateApi,
         IFileSystem fileSystem,
         PredictionDbContext dbContext
         ) : base(settings)
     {
         _settings = settings;
-        _replicateApi = replicateApi;
+        _replicateApi = (ReplicateApi) replicateApi;
         _fileSystem = fileSystem;
         _dbContext = dbContext;
         _replicateSettings = replicateSettings.Value;

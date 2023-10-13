@@ -1,13 +1,13 @@
-using System.Net.Http.Headers;
 using System.Text;
 using aia_api.Configuration.Records;
 using aia_api.Database;
+using InterfacesAia;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace aia_api.Application.Replicate;
 
-public class ReplicateApi
+public class ReplicateApi : ILlmApi
 {
     private readonly ReplicateSettings _replicateSettings;
     private readonly HttpClient _replicateHttpClient;
@@ -18,17 +18,17 @@ public class ReplicateApi
         _replicateHttpClient = httpClientFactory.CreateClient("replicateClient");
     }
 
-    public async Task<HttpResponseMessage> SendPrediction(PredictionDTO predictionDto)
+    public async Task<HttpResponseMessage> SendPrediction(IReplicatePredictionDto replicatePredictionDto)
     {
-        var serializeObject = JsonConvert.SerializeObject(predictionDto);
+        var serializeObject = JsonConvert.SerializeObject(replicatePredictionDto);
         var content = new StringContent(serializeObject, Encoding.UTF8, "application/json");
-        var response = await _replicateHttpClient.PostAsync("/v1/predictions", content);
+        HttpResponseMessage response = await _replicateHttpClient.PostAsync("/v1/predictions", content);
         return response;
     }
 
-    public PredictionDTO CreateCodeLlamaPrediction(DbPrediction dbPrediction, string webHookWithId)
+    public ReplicatePredictionDto CreateCodeLlamaPrediction(DbPrediction dbPrediction, string webHookWithId)
     {
-        return new PredictionDTO(
+        return new ReplicatePredictionDto(
             version: _replicateSettings.ModelVersion,
             input: new CodeLLamaPredictionInputDto(
                 prompt: dbPrediction.Prompt,
