@@ -6,7 +6,7 @@ public class ReplicateResultDTO
 {
     public string id { get; set; }
     public string version { get; set; }
-    public PredictionInput input { get; set; }
+    public PredictionInputDTO InputDto { get; set; }
     public string logs { get; set; }
     public string[] output { get; set; }
 

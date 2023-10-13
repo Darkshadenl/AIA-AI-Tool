@@ -18,19 +18,19 @@ public class ReplicateApi
         _replicateHttpClient = httpClientFactory.CreateClient("replicateClient");
     }
 
-    public async Task<HttpResponseMessage> SendPrediction(Prediction prediction)
+    public async Task<HttpResponseMessage> SendPrediction(PredictionDTO predictionDto)
     {
-        var serializeObject = JsonConvert.SerializeObject(prediction);
+        var serializeObject = JsonConvert.SerializeObject(predictionDto);
         var content = new StringContent(serializeObject, Encoding.UTF8, "application/json");
         var response = await _replicateHttpClient.PostAsync("/v1/predictions", content);
         return response;
     }
 
-    public Prediction CreatePrediction(DbPrediction dbPrediction, string webHookWithId)
+    public PredictionDTO CreateCodeLlamaPrediction(DbPrediction dbPrediction, string webHookWithId)
     {
-        return new Prediction(
+        return new PredictionDTO(
             version: _replicateSettings.ModelVersion,
-            input: new PredictionInput(
+            InputDto: new CodeLLamaPredictionInputDto(
                 prompt: dbPrediction.Prompt,
                 max_tokens: 500,
                 temperature: 0.8,

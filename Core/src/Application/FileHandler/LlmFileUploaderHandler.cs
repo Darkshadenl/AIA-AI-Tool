@@ -91,7 +91,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     {
         var dbPrediction = await SavePredictionToDatabase(file);
         var webHookWithId = _replicateSettings.WebhookUrl.Replace("${dbPredictionId}", dbPrediction.Id.ToString());
-        var prediction = _replicateApi.CreatePrediction(dbPrediction, webHookWithId);
+        var prediction = _replicateApi.CreateCodeLlamaPrediction(dbPrediction, webHookWithId);
         var response = await _replicateApi.SendPrediction(prediction);
 
         if (!response.IsSuccessStatusCode)
