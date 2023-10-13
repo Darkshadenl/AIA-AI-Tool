@@ -4,7 +4,7 @@ namespace aia_api.Application.Replicate;
 
 public record PredictionDTO(
  string version,
- IPredictionInputDto InputDto,
+ IPredictionInputDto input,
  string webhook
  // string[]? webhook_events_filter
  );

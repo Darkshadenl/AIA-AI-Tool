@@ -30,7 +30,7 @@ public class ReplicateApi
     {
         return new PredictionDTO(
             version: _replicateSettings.ModelVersion,
-            InputDto: new CodeLLamaPredictionInputDto(
+            input: new CodeLLamaPredictionInputDto(
                 prompt: dbPrediction.Prompt,
                 max_tokens: 500,
                 temperature: 0.8,

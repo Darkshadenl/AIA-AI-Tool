@@ -33,7 +33,7 @@ public class ReplicateApiTest
 
         var mockPrediction = new PredictionDTO(
             version: "version",
-            InputDto: new CodeLLamaPredictionInputDto(
+            input: new CodeLLamaPredictionInputDto(
                 prompt: "prompt",
                 max_tokens: 500,
                 temperature: 0.8,
