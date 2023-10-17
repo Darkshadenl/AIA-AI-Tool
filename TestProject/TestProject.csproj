@@ -27,7 +27,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Core\AiaApi.csproj" />
-      <ProjectReference Include="..\Core\aia_api.csproj" />
     </ItemGroup>
     <ItemGroup>
       <None Remove="Application\Controller\" />
