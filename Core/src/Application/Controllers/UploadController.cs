@@ -26,7 +26,7 @@ namespace aia_api.Application.Controllers
 
         public async void ReceiveFileChunk(string fileName, string contentType, byte[] chunk, int index, int totalChunks)
         {
-            Console.WriteLine("Chunk {0} omgezet naar ByteArray", index);
+            Console.WriteLine("Chunk {0} received", index);
             await _memoryStream.WriteAsync(chunk, 0, chunk.Length);
             
             if (index == totalChunks - 1) ZipHandler(fileName, contentType);
