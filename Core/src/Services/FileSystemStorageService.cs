@@ -33,6 +33,7 @@ public class FileSystemStorageService : IFileSystemStorageService
             _fileSystem.Directory.CreateDirectory(directoryPath);
 
         await using var fileStream = _fileStreamFactory.New(fullPath, FileMode.Create);
+        input.Seek(0, SeekOrigin.Begin);
         await input.CopyToAsync(fileStream);
         return fullPath;
     }

@@ -25,6 +25,7 @@
     <None Remove="src\Application\Controllers\" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Result\Output\" />
     <Folder Include="src\Application\Controllers\" />
   </ItemGroup>
 </Project>

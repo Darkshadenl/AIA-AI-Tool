@@ -1,32 +1,50 @@
-﻿using InterfacesAia;
+﻿using aia_api.Configuration.Records;
+using InterfacesAia;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Options;
 
-namespace aia_api.src.Application
+namespace aia_api.Application.Controllers
 {
 
     public class UploadController : IUploadController
     {
-        private readonly string[] _supportedContentTypes = { "application/zip" };
+        private readonly IOptions<Settings> _settings;
         private readonly IServiceBusService _serviceBusService;
         private readonly IFileHandlerFactory _fileHandlerFactory;
         private readonly IFileSystemStorageService _fileSystemStorageService;
+        private readonly MemoryStream _memoryStream;
 
-        public UploadController(IServiceBusService serviceBusService, IFileHandlerFactory fileHandlerFactory, IFileSystemStorageService fileSystemStorageService)
-		{
+        public UploadController(IOptions<Settings> settings, IServiceBusService serviceBusService, 
+            IFileHandlerFactory fileHandlerFactory, IFileSystemStorageService fileSystemStorageService)
+        {
+            _settings = settings;
             _serviceBusService = serviceBusService;
             _fileHandlerFactory = fileHandlerFactory;
             _fileSystemStorageService = fileSystemStorageService;
+            _memoryStream = new MemoryStream();
         }
 
-        public async void ZipHandler(string fileName, string contentType, string fileBase64)
+        public async void ReceiveFileChunk(string fileName, string contentType, byte[] chunk, int index, int totalChunks)
+        {
+            Console.WriteLine("Chunk {0} omgezet naar ByteArray", index);
+            await _memoryStream.WriteAsync(chunk, 0, chunk.Length);
+            
+            if (index == totalChunks - 1) ZipHandler(fileName, contentType);
+        }
+
+        public async void ZipHandler(string fileName, string contentType)
         {
             HubConnection connection = _serviceBusService.GetConnection();
 
             if (ParamIsEmpty(fileName, "File name is empty.").Result) return;
             if (ParamIsEmpty(contentType, "Content type of file is empty.").Result) return;
-            if (ParamIsEmpty(fileBase64, "No file received or file is empty.").Result) return;
+            if (_memoryStream.Length <= 0)
+            {
+                await InvokeErrorMessage(connection, "No file received or file is empty.");
+                return;
+            }
 
-            if (!_supportedContentTypes.Contains(contentType))
+            if (!_settings.Value.SupportedContentTypes.Contains(contentType))
             {
                 await InvokeErrorMessage(connection, "Invalid file type. Only ZIP files are allowed.");
                 return;
@@ -36,14 +54,8 @@ namespace aia_api.src.Application
 
             try
             {
-                byte[] fileByteArray = Convert.FromBase64String(fileBase64);
-                Stream inputStream = new MemoryStream(fileByteArray);
-                var path = await _fileSystemStorageService.StoreInTemp(inputStream, fileName);
+                var path = await _fileSystemStorageService.StoreInTemp(_memoryStream, fileName);
                 await handlerStreet.Handle(path, contentType);
-            }
-            catch (FormatException)
-            {
-                await InvokeErrorMessage(connection, "File is could not be parsed to Base64.");
             }
             catch (Exception e)
             {

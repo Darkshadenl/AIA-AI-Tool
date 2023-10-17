@@ -15,7 +15,7 @@ IUploadController uploadController = app.Services.GetRequiredService<IUploadCont
 IServiceBusService serviceBusService = app.Services.GetRequiredService<IServiceBusService>();
 
 HubConnection connection = await serviceBusService.ExecuteAsync();
-connection.On<string, string, string>("UploadZip", uploadController.ZipHandler);
+connection.On<string, string, byte[], int, int>("UploadChunk", uploadController.ReceiveFileChunk);
 
 app.MapPost("/api/upload/zip", UploadRouter.ZipHandler())
     .AddEndpointFilter<EmptyFileFilter>();
