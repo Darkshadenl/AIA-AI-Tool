@@ -33,14 +33,19 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         _replicateSettings = replicateSettings.Value;
     }
 
+    /// <summary>
+    /// This handle method expects a zip-file at the outputPath with the name of the file in the inputPath.
+    /// If it does not exist, it will throw an exception.
+    /// </summary>
+    /// <throws>FileNotFoundException  if zip-file cannot be found</throws>
     public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
         var fileName = _fileSystem.Path.GetFileName(inputPath);
         var outputFilePath = _fileSystem.Path.Combine(_settings.Value.OutputFolderPath, fileName);
         var zipArchive = GetZipArchive(outputFilePath);
 
-        var responses = await ProcessFiles(zipArchive);
-        return CreateHandlerResult(responses);
+        await ProcessFiles(zipArchive);
+        return CreateHandlerResult();
     }
 
     private ZipArchive GetZipArchive(string outputFilePath)
@@ -52,8 +57,8 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private async Task<DbPrediction> SavePredictionToDatabase(ZipArchiveEntry file)
     {
         var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
-        var customPrompt = _replicateSettings.Prompt.Replace("${code}", "code here");   // TODO change 'code here'
-
+        // var customPrompt = _replicateSettings.Prompt.Replace("${code}", "code here");   // TODO change 'code here'
+        var customPrompt = " Generate a simpel addition for me.";
         var dbPrediction = new DbPrediction
         {
             FileExtension = fileExtension,
@@ -67,11 +72,10 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         return dbPrediction;
     }
 
-    private async Task<List<HttpResponseMessage>> ProcessFiles(ZipArchive zipArchive)
+    private async Task ProcessFiles(ZipArchive zipArchive)
     {
         var maxNumber = 2;  // TODO remove at some point
         var number = 0; // TODO remove at some point
-        var responses = new List<HttpResponseMessage>();
 
         foreach (var file in zipArchive.Entries)
         {
@@ -79,15 +83,11 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
             var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
             if (string.IsNullOrEmpty(fileExtension)) continue;
-
-            var response = await ProcessFile(file);
-            responses.Add(response);
+            await ProcessFile(file);
         }
-
-        return responses;
     }
 
-    private async Task<HttpResponseMessage> ProcessFile(ZipArchiveEntry file)
+    private async Task ProcessFile(ZipArchiveEntry file)
     {
         var dbPrediction = await SavePredictionToDatabase(file);
         var webHookWithId = _replicateSettings.WebhookUrl.Replace("${dbPredictionId}", dbPrediction.Id.ToString());
@@ -96,11 +96,9 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
         if (!response.IsSuccessStatusCode)
             _errors.Add($"File: {file.FullName}, Error: {response.ReasonPhrase}");
-
-        return response;
     }
 
-    private HandlerResult CreateHandlerResult(List<HttpResponseMessage> responses)
+    private HandlerResult CreateHandlerResult()
     {
         if (_errors.Count > 0)
         {

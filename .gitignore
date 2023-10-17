@@ -44,3 +44,7 @@ appsettings.development.json
 Core/appsettings.Development.local.json
 
 SharedFiles/aia.db-shm
+
+SharedFiles/aia.db
+
+SharedFiles/aia.db-wal

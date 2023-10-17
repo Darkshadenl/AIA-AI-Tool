@@ -1,16 +1,10 @@
 using aia_api.Application.EndpointFilter;
-using aia_api.Application.FileHandler;
-using aia_api.Application.Replicate;
 using aia_api.Configuration;
-using aia_api.Configuration.Records;
 using aia_api.Database;
 using aia_api.Routes;
-using aia_api.Routes.DTO;
-using InterfacesAia;
-using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.SetupDI(builder.Configuration);
+builder.Services.SetupDi(builder.Configuration);
 
 var app = builder.Build();
 

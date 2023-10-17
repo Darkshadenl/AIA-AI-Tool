@@ -8,12 +8,13 @@ using aia_api.Application.Replicate;
 using aia_api.Database;
 using Azure.Storage.Blobs;
 using InterfacesAia;
+using Microsoft.EntityFrameworkCore;
 
 namespace aia_api.Configuration;
 
 public static class DependencyInjectionConfig
 {
-    public static void SetupDI(this IServiceCollection services, IConfiguration configuration)
+    public static void SetupDi(this IServiceCollection services, IConfiguration configuration)
     {
         AddProjectConfigs(services, configuration);
         ConfigureHttpClients(services, configuration);
@@ -61,9 +62,12 @@ public static class DependencyInjectionConfig
         var connectionString = new Uri(aBss.BlobServiceEndpoint + aBss.BlobContainerName);
         var credential = new StorageSharedKeyCredential(aBss.AccountName, aBss.StorageAccountKey);
 
-        services.AddScoped<PredictionDbContext>();
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
         services.AddSingleton<IFileSystem, FileSystem>();
+
+        var cs = configuration.GetConnectionString("DefaultConnection");
+        services.AddDbContext<PredictionDbContext>(options =>
+            options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<AzureService>();
         services.AddScoped<GitlabService>();
