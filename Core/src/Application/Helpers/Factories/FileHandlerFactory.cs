@@ -12,23 +12,17 @@ public class FileHandlerFactory : IFileHandlerFactory
 {
     private readonly IOptions<Settings> _extensionSettings;
     private readonly IUploadedFileHandler _fileHandlerStreet;
-    private readonly IServiceBusService _serviceBusService;
     private readonly IFileSystem _fileSystem;
     private readonly IOptions<ReplicateSettings> _replicateSettings;
-    private readonly IFileSystemStorageService _fileSystemStorageService;
     private readonly ReplicateApi _replicateApi;
-    private readonly AzureService _azureService;
 
-    public FileHandlerFactory(IOptions<Settings> extensionSettings, IFileSystem fileSystem, IServiceBusService serviceBusService, AzureService azureService,
-        IOptions<ReplicateSettings> replicateSettings, IFileSystemStorageService fileSystemStorageService, ReplicateApi replicateApi)
+    public FileHandlerFactory(IOptions<Settings> extensionSettings, IFileSystem fileSystem,
+        IOptions<ReplicateSettings> replicateSettings, ReplicateApi replicateApi)
     {
         _extensionSettings = extensionSettings;
         _fileSystem = fileSystem;
-        _serviceBusService = serviceBusService;
         _replicateSettings = replicateSettings;
-        _fileSystemStorageService = fileSystemStorageService;
         _replicateApi = replicateApi;
-        _azureService = azureService;
         _fileHandlerStreet = BuildFileHandlerStreet();
     }
 
