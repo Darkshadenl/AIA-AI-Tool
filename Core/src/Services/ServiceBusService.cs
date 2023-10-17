@@ -20,9 +20,15 @@ namespace aia_api.src.Services
             var uri = _settings.Value.ServiceBusUrl;
             _connection = new HubConnectionBuilder().WithUrl(uri).Build();
 
-
-            await _connection.StartAsync();
-            Console.WriteLine("Connection state: {0}", _connection.State);
+            try
+            {
+                await _connection.StartAsync();
+                Console.WriteLine("Connection state: {0}", _connection.State);
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine(e.Message);
+            }
             return _connection;
         }
 
