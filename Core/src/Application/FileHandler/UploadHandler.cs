@@ -10,14 +10,12 @@ namespace aia_api.Application.FileHandler;
 public class UploadHandler : AbstractFileHandler
 {
     private readonly IOptions<Settings> _settings;
-    private readonly IServiceBusService _serviceBusService;
     private readonly AzureService _azureService;
-    private const string UploadSuccessMessage = "File successfully uploaded.";
+    private const string UploadSuccessMessage = "File successfully uploaded to Azure.";
 
-    public UploadHandler(IOptions<Settings> settings, IServiceBusService serviceBusService, AzureService azureService) : base(settings)
+    public UploadHandler(IOptions<Settings> settings, AzureService azureService) : base(settings)
     {
         _settings = settings;
-        _serviceBusService = serviceBusService;
         _azureService = azureService;
     }
 
@@ -26,10 +24,6 @@ public class UploadHandler : AbstractFileHandler
         try
         {
             await _azureService.Pipeline(_settings.Value.OutputFolderPath, Path.GetFileName(inputPath));
-
-            HubConnection connection = _serviceBusService.GetConnection();
-            await connection.InvokeAsync("UploadSuccess", UploadSuccessMessage);
-
             Console.WriteLine(UploadSuccessMessage);
         }
         catch (IOException e)

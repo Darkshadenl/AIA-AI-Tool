@@ -8,6 +8,7 @@ namespace aia_api.Application.Controllers
 
     public class UploadController : IUploadController
     {
+        private const string UploadSuccessMessage = "File successfully uploaded.";
         private readonly IOptions<Settings> _settings;
         private readonly IServiceBusService _serviceBusService;
         private readonly IFileHandlerFactory _fileHandlerFactory;
@@ -36,8 +37,8 @@ namespace aia_api.Application.Controllers
         {
             HubConnection connection = _serviceBusService.GetConnection();
 
-            if (ParamIsEmpty(fileName, "File name is empty.").Result) return;
-            if (ParamIsEmpty(contentType, "Content type of file is empty.").Result) return;
+            if (ParamIsEmpty(connection, fileName, "File name is empty.").Result) return;
+            if (ParamIsEmpty(connection, contentType, "Content type of file is empty.").Result) return;
             if (_memoryStream.Length <= 0)
             {
                 await InvokeErrorMessage(connection, "No file received or file is empty.");
@@ -55,7 +56,8 @@ namespace aia_api.Application.Controllers
             try
             {
                 var path = await _fileSystemStorageService.StoreInTemp(_memoryStream, fileName);
-                await handlerStreet.Handle(path, contentType);
+                var result = await handlerStreet.Handle(path, contentType);
+                await InvokeHandleResult(connection, result);
             }
             catch (Exception e)
             {
@@ -64,9 +66,22 @@ namespace aia_api.Application.Controllers
             }
         }
 
-        private async Task<bool> ParamIsEmpty(string param, string errorMessage)
+        private static async Task InvokeHandleResult(HubConnection connection, IHandlerResult result)
         {
-            HubConnection connection = _serviceBusService.GetConnection();
+            if (result.Success)
+            {
+                await connection.InvokeAsync("UploadSuccess", UploadSuccessMessage);
+                Console.WriteLine(UploadSuccessMessage);
+            }
+            else
+            {
+                await InvokeErrorMessage(connection, result.ErrorMessage);
+                Console.WriteLine(result.ErrorMessage);
+            }
+        }
+
+        private static async Task<bool> ParamIsEmpty(HubConnection connection, string param, string errorMessage)
+        {
             if (string.IsNullOrEmpty(param))
             {
                 await InvokeErrorMessage(connection, errorMessage);

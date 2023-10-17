@@ -36,12 +36,10 @@ public class FileHandlerFactory : IFileHandlerFactory
     {
         var fileValidator = new FileValidator(_extensionSettings);
         var zipHandler = new ZipHandler(_extensionSettings, _fileSystem);
-        var azureUploader = new UploadHandler(_extensionSettings, _serviceBusService, _azureService);
         var llm = new LlmFileUploaderHandler(_extensionSettings, _replicateSettings, _replicateApi);
 
         fileValidator.SetNext(zipHandler);
-        zipHandler.SetNext(azureUploader);
-        azureUploader.SetNext(llm);
+        zipHandler.SetNext(llm);
 
         return fileValidator;
     }
