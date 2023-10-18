@@ -13,7 +13,7 @@ namespace aia_api.Application.Controllers
         private readonly IServiceBusService _serviceBusService;
         private readonly IFileHandlerFactory _fileHandlerFactory;
         private readonly IFileSystemStorageService _fileSystemStorageService;
-        private readonly MemoryStream _memoryStream;
+        private MemoryStream _memoryStream;
 
         public UploadController(IOptions<Settings> settings, IServiceBusService serviceBusService, 
             IFileHandlerFactory fileHandlerFactory, IFileSystemStorageService fileSystemStorageService)
@@ -58,6 +58,7 @@ namespace aia_api.Application.Controllers
                 var path = await _fileSystemStorageService.StoreInTemp(_memoryStream, fileName);
                 var result = await handlerStreet.Handle(path, contentType);
                 await InvokeHandleResult(connection, result);
+                _memoryStream = new MemoryStream();
             }
             catch (Exception e)
             {
