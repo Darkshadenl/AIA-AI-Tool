@@ -67,17 +67,18 @@ public static class DependencyInjectionConfig
         var connectionString = new Uri(aBss.BlobServiceEndpoint + aBss.BlobContainerName);
         var credential = new StorageSharedKeyCredential(aBss.AccountName, aBss.StorageAccountKey);
 
+        services.AddDbContext<PredictionDbContext>(options =>
+            options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
+
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
-        services.AddScoped<IFileSystemStorageService, FileSystemStorageService>();
+        services.AddSingleton<IFileSystemStorageService, FileSystemStorageService>();
         services.AddSingleton<IFileSystem, FileSystem>();
         services.AddSingleton<IServiceBusService, ServiceBusService>();
-        services.AddSingleton<PredictionDatabaseService>();
+        services.AddSingleton<IPredictionDatabaseService, PredictionDatabaseService>();
         services.AddScoped<AzureService>();
         services.AddScoped<GitlabService>();
 
         var cs = configuration.GetConnectionString("DefaultConnection");
-        services.AddDbContext<PredictionDbContext>(options =>
-            options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddSingleton<IFileHandlerFactory, FileHandlerFactory>();
         services.AddSingleton<IUploadController, UploadController>();

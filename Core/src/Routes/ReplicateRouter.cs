@@ -15,13 +15,13 @@ namespace aia_api.Routes;
 public class ReplicateRouter
 {
     [Obsolete("Remove at a later stage after implementing ReplicateWebHook further")]
-    public static Func<ReplicateApi, IOptions<Settings>, IOptions<ReplicateSettings>, IFileSystem, PredictionDbContext, Task<IResult>> ReplicateWebhookTest()
+    public static Func<ReplicateApi, IOptions<Settings>, IOptions<ReplicateSettings>, IFileSystem, IPredictionDatabaseService, Task<IResult>> ReplicateWebhookTest()
     {
-        return async (replicateApi, settings, replicateSettings, fs, dbContext) => {
+        return async (replicateApi, settings, replicateSettings, fs, predictionDatabaseService) => {
 
             Console.WriteLine("replicate-webhook-test");
 
-            var llm = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi, fs, dbContext);
+            var llm = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi, fs, predictionDatabaseService);
 
             var inputPath = settings.Value.TempFolderPath + "/joost-main.zip";
 

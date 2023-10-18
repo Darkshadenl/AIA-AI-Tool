@@ -2,5 +2,5 @@ namespace InterfacesAia;
 
 public interface IPredictionDatabaseService
 {
-    static abstract Task<IDbPrediction> CreatePrediction(IDbPrediction prediction);
+    Task<IDbPrediction> CreatePrediction(IDbPrediction prediction);
 }

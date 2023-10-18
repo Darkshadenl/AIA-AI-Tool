@@ -4,6 +4,7 @@ using System.Net;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
+using aia_api.Services;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
 
@@ -14,7 +15,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private readonly IOptions<Settings> _settings;
     private readonly ReplicateApi _replicateApi;
     private readonly IFileSystem _fileSystem;
-    private readonly PredictionDbContext _dbContext;
+    private readonly IPredictionDatabaseService _predictionDatabaseService;
     private readonly ReplicateSettings _replicateSettings;
     private readonly List<string> _errors = new();
 
@@ -23,13 +24,13 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         IOptions<ReplicateSettings> replicateSettings,
         ILlmApi replicateApi,
         IFileSystem fileSystem,
-        PredictionDbContext dbContext
+        IPredictionDatabaseService predictionDatabaseService
         ) : base(settings)
     {
         _settings = settings;
         _replicateApi = (ReplicateApi) replicateApi;
         _fileSystem = fileSystem;
-        _dbContext = dbContext;
+        _predictionDatabaseService = predictionDatabaseService;
         _replicateSettings = replicateSettings.Value;
     }
 
@@ -54,7 +55,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         return new ZipArchive(fileStream, ZipArchiveMode.Read);
     }
 
-    private async Task<DbPrediction> SavePredictionToDatabase(ZipArchiveEntry file)
+    private async Task<IDbPrediction> SavePredictionToDatabase(ZipArchiveEntry file)
     {
         var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
         // var customPrompt = _replicateSettings.Prompt.Replace("${code}", "code here");   // TODO change 'code here'
@@ -67,10 +68,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             Prompt = customPrompt
         };
 
-        await _dbContext.AddAsync(dbPrediction);
-        await _dbContext.SaveChangesAsync();
-
-        return dbPrediction;
+        return await _predictionDatabaseService.CreatePrediction(dbPrediction);
     }
 
     private async Task ProcessFiles(ZipArchive zipArchive)

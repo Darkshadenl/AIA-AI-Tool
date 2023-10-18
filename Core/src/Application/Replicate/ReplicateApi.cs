@@ -1,6 +1,5 @@
 using System.Text;
 using aia_api.Configuration.Records;
-using aia_api.Database;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -26,7 +25,7 @@ public class ReplicateApi : ILlmApi
         return response;
     }
 
-    public ReplicatePredictionDto CreateCodeLlamaPrediction(DbPrediction dbPrediction, string webHookWithId)
+    public ReplicatePredictionDto CreateCodeLlamaPrediction(IDbPrediction dbPrediction, string webHookWithId)
     {
         return new ReplicatePredictionDto(
             version: _replicateSettings.ModelVersion,

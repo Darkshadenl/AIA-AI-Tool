@@ -16,21 +16,21 @@ public class FileHandlerFactory : IFileHandlerFactory
     private readonly IFileSystem _fileSystem;
     private readonly IOptions<ReplicateSettings> _replicateSettings;
     private readonly ReplicateApi _replicateApi;
-    private readonly PredictionDbContext _dbContext;
+    private readonly IPredictionDatabaseService _predictionDatabaseService;
 
     public FileHandlerFactory(
         IOptions<Settings> extensionSettings,
         IFileSystem fileSystem,
         IOptions<ReplicateSettings> replicateSettings,
         ReplicateApi replicateApi,
-        PredictionDbContext dbContext
+        IPredictionDatabaseService predictionDatabaseService
         )
     {
         _extensionSettings = extensionSettings;
         _fileSystem = fileSystem;
         _replicateSettings = replicateSettings;
         _replicateApi = replicateApi;
-        _dbContext = dbContext;
+        _predictionDatabaseService = predictionDatabaseService;
         _fileHandlerStreet = BuildFileHandlerStreet();
     }
 
@@ -38,7 +38,7 @@ public class FileHandlerFactory : IFileHandlerFactory
     {
         var fileValidator = new FileValidator(_extensionSettings);
         var zipHandler = new ZipHandler(_extensionSettings, _fileSystem);
-        var llm = new LlmFileUploaderHandler(_extensionSettings, _replicateSettings, _replicateApi, _fileSystem, _dbContext);
+        var llm = new LlmFileUploaderHandler(_extensionSettings, _replicateSettings, _replicateApi, _fileSystem, _predictionDatabaseService);
 
         fileValidator.SetNext(zipHandler);
         zipHandler.SetNext(llm);

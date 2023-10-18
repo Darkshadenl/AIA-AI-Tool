@@ -9,7 +9,7 @@ public class DbPrediction : IDbPrediction
     [Key]
     [Required]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; private set; }
+    public int Id { get; set; }
 
     public string FileName { get; set; }
     public string FileExtension { get; set; }
