@@ -1,6 +1,8 @@
 using aia_api.Application.Helpers.Factories;
 using aia_api.Configuration.Records;
 using aia_api.Services;
+using aia_api.Application.Controllers;
+using aia_api.src.Services;
 using Azure.Storage;
 using System.IO.Abstractions;
 using aia_api.Application.Replicate;
@@ -16,6 +18,9 @@ public static class DependencyInjectionConfig
         var blobConfig = configuration.GetSection("AzureBlobStorage");
         var settings = configuration.GetSection("Settings");
         var replicate = configuration.GetSection("ReplicateSettings");
+        
+        if (settings == null)
+            throw new ArgumentNullException(nameof(settings));
 
         services.Configure<AzureBlobStorageSettings>(blobConfig);
         services.Configure<Settings>(settings);
@@ -32,16 +37,18 @@ public static class DependencyInjectionConfig
         var connectionString = new Uri(aBss.BlobServiceEndpoint + aBss.BlobContainerName);
         var credential = new StorageSharedKeyCredential(aBss.AccountName, aBss.StorageAccountKey);
 
-        services.AddScoped<HttpClient>();
+        services.AddHttpClient();
 
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
         services.AddSingleton<IFileSystem, FileSystem>();
+        services.AddSingleton<IServiceBusService, ServiceBusService>();
+        services.AddSingleton<IUploadController, UploadController>();
 
-        services.AddScoped<AzureService>();
-        services.AddScoped<GitlabService>();
-        services.AddScoped<IFileHandlerFactory, FileHandlerFactory>();
-        services.AddScoped<IFileSystemStorageService, FileSystemStorageService>();
-        services.AddScoped<ReplicateApi>();
+        services.AddSingleton<AzureService>();
+        services.AddSingleton<GitlabService>();
+        services.AddSingleton<IFileHandlerFactory, FileHandlerFactory>();
+        services.AddSingleton<IFileSystemStorageService, FileSystemStorageService>();
+        services.AddSingleton<ReplicateApi>();
 
     }
 }
