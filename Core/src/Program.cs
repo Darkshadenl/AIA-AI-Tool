@@ -14,7 +14,9 @@ var app = builder.Build();
 IUploadController uploadController = app.Services.GetRequiredService<IUploadController>();
 IServiceBusService serviceBusService = app.Services.GetRequiredService<IServiceBusService>();
 HubConnection connection = await serviceBusService.ExecuteAsync();
+
 connection.On<string, string, byte[], int, int>("UploadChunk", uploadController.ReceiveFileChunk);
+
 var api = app.MapGroup("/api");
 var db = app.MapGroup("/db");
 

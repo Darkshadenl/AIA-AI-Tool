@@ -22,7 +22,6 @@ public class FileHandlerFactory : IFileHandlerFactory
         IOptions<Settings> extensionSettings,
         IFileSystem fileSystem,
         IOptions<ReplicateSettings> replicateSettings,
-        IFileSystemStorageService fileSystemStorageService,
         ReplicateApi replicateApi,
         PredictionDbContext dbContext
         )

@@ -23,6 +23,12 @@ Setup appsettings (use appsettings.example.json and fill in the blanks).
 AzureBlobStorage isn't being used right now, but it's there for future use.
 In the settings section, the path should be absolute.
 
+Format of ConnectionStrings.DefaultConnection:
+```bash
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source={path to db file};"
+```
+
 ## Database
 
 The database is setup using Entity Framework Core. To setup the database, run the following commands:

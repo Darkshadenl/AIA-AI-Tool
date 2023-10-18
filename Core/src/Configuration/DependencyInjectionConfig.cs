@@ -28,7 +28,7 @@ public static class DependencyInjectionConfig
         var blobConfig = configuration.GetSection("AzureBlobStorage");
         var settings = configuration.GetSection("Settings");
         var replicate = configuration.GetSection("ReplicateSettings");
-        
+
         if (settings == null)
             throw new ArgumentNullException(nameof(settings));
 
@@ -68,19 +68,20 @@ public static class DependencyInjectionConfig
         var credential = new StorageSharedKeyCredential(aBss.AccountName, aBss.StorageAccountKey);
 
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
+        services.AddScoped<IFileSystemStorageService, FileSystemStorageService>();
         services.AddSingleton<IFileSystem, FileSystem>();
         services.AddSingleton<IServiceBusService, ServiceBusService>();
-        services.AddSingleton<IUploadController, UploadController>();
+        services.AddSingleton<PredictionDatabaseService>();
+        services.AddScoped<AzureService>();
+        services.AddScoped<GitlabService>();
 
         var cs = configuration.GetConnectionString("DefaultConnection");
         services.AddDbContext<PredictionDbContext>(options =>
             options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
 
-        services.AddScoped<AzureService>();
-        services.AddScoped<GitlabService>();
-        services.AddScoped<IFileHandlerFactory, FileHandlerFactory>();
-        services.AddScoped<IFileSystemStorageService, FileSystemStorageService>();
-        services.AddScoped<ReplicateApi>();
+        services.AddSingleton<IFileHandlerFactory, FileHandlerFactory>();
+        services.AddSingleton<IUploadController, UploadController>();
+        services.AddSingleton<ReplicateApi>();
 
     }
 }

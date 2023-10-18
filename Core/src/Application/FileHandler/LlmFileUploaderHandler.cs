@@ -59,6 +59,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
         // var customPrompt = _replicateSettings.Prompt.Replace("${code}", "code here");   // TODO change 'code here'
         var customPrompt = " Generate a simpel addition for me.";
+
         var dbPrediction = new DbPrediction
         {
             FileExtension = fileExtension,
