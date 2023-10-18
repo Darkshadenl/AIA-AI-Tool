@@ -18,7 +18,7 @@ public class ZipHandlerTest
         mockSettings.Setup(s => s.Value).Returns(new Settings
         {
             OutputFolderPath = "some/temp/path",
-            AllowedFiles = new []{ ".zip "}
+            AllowedFileTypes = new []{ ".zip "}
         });
     }
 

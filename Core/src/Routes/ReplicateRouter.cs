@@ -1,5 +1,7 @@
 using System.IO.Abstractions;
+using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using aia_api.Application.FileHandler;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
@@ -32,64 +34,70 @@ public class ReplicateRouter
 
     public static Func<int, HttpContext, IFileSystemStorageService, IOptions<Settings>, ReplicateCodeLlamaResultDTO, PredictionDbContext, Task> ReplicateWebhook()
     {
-        return async (id, context, fileSystemStorageService, settings, resultDto, db) => {
-            if (resultDto.Status == "succeeded")
+        return (id, context, fileSystemStorageService, settings, resultDto, db) => {
+            if (resultDto.status == "succeeded")
             {
                 Console.WriteLine("Incoming LLM data for id: " + id);
                 
                 var dbPrediction = db.Predictions
                     .First(p => p.Id == id);
                 
-                string fileExtension = ReceiveFileType(settings.Value.AllowedFiles, resultDto.Output);
-                int codeStartIndex = Array.IndexOf(resultDto.Output, "```");
-                if (fileExtension == "" || codeStartIndex <= -1) return;
+                int codeStartIndex = Array.IndexOf(resultDto.output, "```");
+                if (codeStartIndex <= -1) throw new IndexOutOfRangeException();
                 
-                var result = CombineTokens(resultDto.Output);
+                var result = CombineTokens(resultDto.output);
                 
-                try
+                string fileName = GetFileName(result);
+                string fileExtension = GetFileExtension(fileName);
+                result = result.Replace(fileName, "");
+                
+                if (settings.Value.AllowedFileTypes.Contains(fileExtension))
                 {
-                    dbPrediction.PredictionResponseText = result;
-                    db.Entry(dbPrediction).State = EntityState.Modified;
-                    db.SaveChanges();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
-                }
+                    try
+                    {
+                        dbPrediction.PredictionResponseText = result;
+                        db.Entry(dbPrediction).State = EntityState.Modified;
+                        db.SaveChanges();
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        throw;
+                    }
                 
-                GenerateFile(fileExtension, result, fileSystemStorageService);
+                    GenerateFile(fileName, result, fileSystemStorageService);
                 
-                Console.WriteLine("succeeded");
+                    Console.WriteLine("succeeded");
+                }
             }
             context.Response.StatusCode = (int) HttpStatusCode.NoContent;
             return Task.CompletedTask;
         };
     }
 
-    private static string ReceiveFileType(string[] allowedFiles, string[] resultOutput)
+    private static string CombineTokens(string[] tokens)
     {
-        foreach (var allowedFile in allowedFiles)
-        {
-            int fileExtensionIndex = Array.IndexOf(resultOutput, allowedFile.Substring(1));
-            if (fileExtensionIndex >= 0) return resultOutput[fileExtensionIndex];
-        }
-        
-        return "";
+        var stringBuilder = new StringBuilder();
+        foreach (string token in tokens)
+            stringBuilder.Append(token);
+        return stringBuilder.ToString().Trim();
+
     }
 
-    private static string CombineTokens(string[] resultOutput)
-    {
-        var mergedOutput = new StringBuilder();
-        foreach (var element in resultOutput)
-            mergedOutput.Append(element);
-        return mergedOutput.ToString().Trim();
-    }
-
-    private static void GenerateFile(string fileExtension, string content, IFileSystemStorageService fileSystemStorageService)
+    private static void GenerateFile(string fileName, string content, IFileSystemStorageService fileSystemStorageService)
     {
         byte[] byteArray = Encoding.UTF8.GetBytes(content);
         var memoryStream = new MemoryStream(byteArray);
-        fileSystemStorageService.StoreInTemp(memoryStream, "test." + fileExtension);
+        fileSystemStorageService.StoreInTemp(memoryStream, fileName);
+    }
+
+    private static string GetFileName(string result)
+    {
+        return Regex.Match(result, @"\w+\.\w+$", RegexOptions.Multiline).Value;
+    }
+
+    private static string GetFileExtension(string fileName)
+    {
+        return Regex.Match(fileName, @"\.\w+$", RegexOptions.Multiline).Value;
     }
 }

@@ -59,7 +59,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     {
         var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
         // var customPrompt = _replicateSettings.Prompt.Replace("${code}", "code here");   // TODO change 'code here'
-        var customPrompt = " Generate a simpel addition for me.";
+        var customPrompt = "FileName: Calculate.js\\\\n\\\\n```\\\\n// Calculates the sum of two numbers\\\\nfunction calculateSum(number1, number2) {\\\\n    return number1 + number2;\\\\n}\\\\ncalculateSum(5, 5);\\\\n```";
 
         var dbPrediction = new DbPrediction
         {
