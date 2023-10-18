@@ -27,8 +27,11 @@ public class GitlabServiceTest
 
 
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+        httpClient.BaseAddress = new Uri("https://gitlab.com");
+        var httpClientFactory = new Mock<IHttpClientFactory>();
+        httpClientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var mockStorageService = new Mock<IFileSystemStorageService>();
-        var service = new GitlabService(httpClient, mockStorageService.Object);
+        var service = new GitlabService(httpClientFactory.Object, mockStorageService.Object);
 
         // Act & Assert
         Assert.ThrowsAsync<Exception>(() => service.DownloadRepository("some_project_id", "some_api_token"));
@@ -40,6 +43,9 @@ public class GitlabServiceTest
         // Arrange
         var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
         var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+        httpClient.BaseAddress = new Uri("https://gitlab.com");
+        var httpClientFactory = new Mock<IHttpClientFactory>();
+        httpClientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
         var mockStorageService = new Mock<IFileSystemStorageService>();
 
         mockHttpMessageHandler
@@ -55,7 +61,7 @@ public class GitlabServiceTest
                 Content = new StringContent("fake_zip_data")
             });
 
-        var service = new GitlabService(httpClient, mockStorageService.Object);
+        var service = new GitlabService(httpClientFactory.Object, mockStorageService.Object);
 
         // Act
         await service.DownloadRepository("some_project_id", "some_api_token");

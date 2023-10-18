@@ -10,7 +10,6 @@ namespace TestProject.Application.Replicate;
 public class ReplicateApiTest
 {
     private Mock<HttpMessageHandler> _mockHttpMessageHandler;
-    private ReplicateApi _replicateApi;
 
     [SetUp]
     public void SetUp()
@@ -26,17 +25,15 @@ public class ReplicateApiTest
         var replicateSettings = new ReplicateSettings
         {
             ApiToken = "your_specific_value_here",
-            ReplicateUrl = "https://replicate.ai/api/v1/models/predictions",
         };
 
         mockSettings.Setup(m => m.Value).Returns(replicateSettings);
 
-
         var httpResponse = new HttpResponseMessage(HttpStatusCode.Unauthorized);
 
-        var mockPrediction = new Prediction(
+        var mockPrediction = new ReplicatePredictionDto(
             version: "version",
-            input: new PredictionInput(
+            input: new CodeLLamaPredictionInputDto(
                 prompt: "prompt",
                 max_tokens: 500,
                 temperature: 0.8,
@@ -59,10 +56,13 @@ public class ReplicateApiTest
             .ReturnsAsync(httpResponse);
 
         var httpClient = new HttpClient(_mockHttpMessageHandler.Object);
-        _replicateApi = new ReplicateApi(mockSettings.Object, httpClient);
+        httpClient.BaseAddress = new Uri("https://api.replicate.com");
+        var httpClientFactory = new Mock<IHttpClientFactory>();
+        httpClientFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(httpClient);
+        var replicateApi = new ReplicateApi(httpClientFactory.Object, mockSettings.Object);
 
         // Act
-        var result = await _replicateApi.RunPrediction(mockPrediction);
+        var result = await replicateApi.SendPrediction(mockPrediction);
 
         // Assert
         Assert.That(result is not null);

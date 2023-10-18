@@ -1,33 +1,48 @@
 using aia_api.Application.EndpointFilter;
 using aia_api.Configuration;
+using aia_api.Database;
 using aia_api.Routes;
 using Microsoft.AspNetCore.SignalR.Client;
 using InterfacesAia;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddProjectConfigs(builder.Configuration);
-builder.Services.AddProjectServices(builder.Configuration);
+builder.Services.SetupDi(builder.Configuration);
 builder.Services.AddSignalR();
 
 var app = builder.Build();
 
 IUploadController uploadController = app.Services.GetRequiredService<IUploadController>();
 IServiceBusService serviceBusService = app.Services.GetRequiredService<IServiceBusService>();
-
 HubConnection connection = await serviceBusService.ExecuteAsync();
+
 connection.On<string, string, byte[], int, int>("UploadChunk", uploadController.ReceiveFileChunk);
 
-app.MapPost("/api/upload/zip", UploadRouter.ZipHandler())
+var api = app.MapGroup("/api");
+var db = app.MapGroup("/db");
+
+api.MapPost("/upload/zip", UploadRouter.ZipHandler())
     .AddEndpointFilter<EmptyFileFilter>();
 
-app.MapPost("/api/upload/repo", UploadRouter.RepoHandler());
+api.MapPost("/upload/repo", UploadRouter.RepoHandler());
 
+api.MapGet("/replicate-webhook-test", ReplicateRouter.ReplicateWebhookTest());
 
-app.MapGet("/api/replicate-webhook-test", ReplicateRouter.ReplicateWebhookTest());
+api.MapPost("/replicate-webhook/{id}", ReplicateRouter.ReplicateWebhook());
 
-app.MapPost("/api/replicate-webhook", ReplicateRouter.ReplicateWebhook());
+api.MapGet("/health", () => Results.Ok("OK"));
 
-app.MapGet("/api/health", () => Results.Ok("OK"));
+db.MapDelete("/clear-db", (PredictionDbContext dbContext) =>
+{
+    var entitiesToRemove = dbContext.Predictions.ToList();
+
+    foreach (var entity in entitiesToRemove)
+        dbContext.Remove(entity);
+
+    dbContext.SaveChanges();
+
+    return Results.Ok("Database cleared successfully.");
+});
+
 
 
 app.Run();

@@ -41,3 +41,9 @@ msbuild.wrn
 # .net core files
 appsettings.json
 appsettings.development.json
+
+SharedFiles/aia.db
+
+SharedFiles/aia.db-shm
+
+SharedFiles/aia.db-wal
