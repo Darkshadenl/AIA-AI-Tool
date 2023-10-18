@@ -3,6 +3,7 @@ using aia_api.Application.FileHandler;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
+using aia_api.Services;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
 
@@ -14,7 +15,6 @@ public class FileHandlerFactory : IFileHandlerFactory
     private readonly IUploadedFileHandler _fileHandlerStreet;
     private readonly IFileSystem _fileSystem;
     private readonly IOptions<ReplicateSettings> _replicateSettings;
-    private readonly IFileSystemStorageService _fileSystemStorageService;
     private readonly ReplicateApi _replicateApi;
     private readonly PredictionDbContext _dbContext;
 
@@ -30,7 +30,6 @@ public class FileHandlerFactory : IFileHandlerFactory
         _extensionSettings = extensionSettings;
         _fileSystem = fileSystem;
         _replicateSettings = replicateSettings;
-        _fileSystemStorageService = fileSystemStorageService;
         _replicateApi = replicateApi;
         _dbContext = dbContext;
         _fileHandlerStreet = BuildFileHandlerStreet();

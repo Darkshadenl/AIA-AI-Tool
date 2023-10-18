@@ -1,6 +1,8 @@
 using aia_api.Application.Helpers.Factories;
 using aia_api.Configuration.Records;
 using aia_api.Services;
+using aia_api.Application.Controllers;
+using aia_api.src.Services;
 using Azure.Storage;
 using System.IO.Abstractions;
 using System.Net.Http.Headers;
@@ -26,6 +28,9 @@ public static class DependencyInjectionConfig
         var blobConfig = configuration.GetSection("AzureBlobStorage");
         var settings = configuration.GetSection("Settings");
         var replicate = configuration.GetSection("ReplicateSettings");
+        
+        if (settings == null)
+            throw new ArgumentNullException(nameof(settings));
 
         services.Configure<AzureBlobStorageSettings>(blobConfig);
         services.Configure<Settings>(settings);
@@ -64,6 +69,8 @@ public static class DependencyInjectionConfig
 
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
         services.AddSingleton<IFileSystem, FileSystem>();
+        services.AddSingleton<IServiceBusService, ServiceBusService>();
+        services.AddSingleton<IUploadController, UploadController>();
 
         var cs = configuration.GetConnectionString("DefaultConnection");
         services.AddDbContext<PredictionDbContext>(options =>
