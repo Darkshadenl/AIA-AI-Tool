@@ -2,6 +2,7 @@ using System.Net;
 using aia_api.Configuration.Records;
 using aia_api.Services;
 using InterfacesAia;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
@@ -9,16 +10,12 @@ namespace aia_api.Application.FileHandler;
 public class UploadHandler : AbstractFileHandler
 {
     private readonly IOptions<Settings> _settings;
-    private AzureService _azureService;
-    private const string UploadSuccessMessage = "File successfully uploaded.";
+    private readonly AzureService _azureService;
+    private const string UploadSuccessMessage = "File successfully uploaded to Azure.";
 
-    public UploadHandler(IOptions<Settings> settings) : base(settings)
+    public UploadHandler(IOptions<Settings> settings, AzureService azureService) : base(settings)
     {
         _settings = settings;
-    }
-
-    public void SetClient(AzureService azureService)
-    {
         _azureService = azureService;
     }
 
@@ -38,13 +35,11 @@ public class UploadHandler : AbstractFileHandler
             Console.WriteLine($"An unexpected error occurred: {e.Message}");
             throw;
         }
+        
+        if (Next == null)
+            return await base.Handle(inputPath, inputContentType);
 
-        return new HandlerResult
-        {
-            StatusCode = HttpStatusCode.Accepted,
-            Success = true,
-            ErrorMessage = "File uploaded successfully."
-        };
+        return await Next.Handle(inputPath, inputContentType);
     }
 
 }

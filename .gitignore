@@ -12,6 +12,7 @@ launchSettings.json
 # Project specific
 Temp/
 Core/Temp/
+Result/
 TempOutput/
 .vs/
 
@@ -40,5 +41,3 @@ msbuild.wrn
 # .net core files
 appsettings.json
 appsettings.development.json
-
-Core/appsettings.Development.local.json

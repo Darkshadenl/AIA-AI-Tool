@@ -19,8 +19,6 @@ public class ReplicateApi
 
     public async Task<HttpResponseMessage> RunPrediction(Prediction prediction)
     {
-        using var client = _httpClient;
-
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token",
             _replicateSettings.ApiToken);
 
