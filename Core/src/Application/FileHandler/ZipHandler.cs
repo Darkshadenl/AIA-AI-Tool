@@ -30,7 +30,7 @@ namespace aia_api.Application.FileHandler
 
             using ZipArchive archive = InitializeInputArchive(inputPath);
             using ZipArchive outputArchive =
-                InitializeOutputArchive(Path.Combine(_settings.Value.OutputFolderPath, Path.GetFileName(inputPath)));
+                InitializeOutputArchive(_fileSystem.Path.Combine(_settings.Value.OutputFolderPath, _fileSystem.Path.GetFileName(inputPath)));
 
             await ProcessEntries(archive, outputArchive);
 
@@ -64,9 +64,8 @@ namespace aia_api.Application.FileHandler
         {
             foreach (var entry in archive.Entries)
             {
-                if (string.IsNullOrEmpty(GetExtension(entry))) continue;
-
                 var extension = GetExtension(entry);
+                if (string.IsNullOrEmpty(extension)) continue;
 
                 CountExtension(extension);
 
@@ -78,7 +77,7 @@ namespace aia_api.Application.FileHandler
         }
 
         private string GetExtension(ZipArchiveEntry entry) =>
-            Path.GetExtension(entry.FullName);
+            _fileSystem.Path.GetExtension(entry.FullName);
 
         private async Task CopyEntryToNewArchive(ZipArchiveEntry entry, ZipArchive outputArchive)
         {

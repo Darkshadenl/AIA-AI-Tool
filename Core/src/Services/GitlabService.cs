@@ -4,12 +4,12 @@ namespace aia_api.Services;
 
 public class GitlabService
 {
-    private readonly HttpClient _httpClient;
+    private readonly HttpClient _gitlabHttpClient;
     private readonly IFileSystemStorageService _fileSystemStorageService;
 
-    public GitlabService(HttpClient httpClient, IFileSystemStorageService fileSystemStorageService)
+    public GitlabService(IHttpClientFactory httpClientFactory, IFileSystemStorageService fileSystemStorageService)
     {
-        _httpClient = httpClient;
+        _gitlabHttpClient = httpClientFactory.CreateClient("gitlabApiV4Client");
         _fileSystemStorageService = fileSystemStorageService;
     }
 
@@ -23,15 +23,13 @@ public class GitlabService
     /// <exception cref="Exception">Thrown if the repository download fails.</exception>
     public async Task<string> DownloadRepository(string projectId, string apiToken)
     {
-        var url = $"https://gitlab.com/api/v4/projects/{projectId}/repository/archive.zip";
+        var url = $"/api/v4/projects/{projectId}/repository/archive.zip";
+        _gitlabHttpClient.DefaultRequestHeaders.Add("Private-Token", apiToken);
 
-        using var downloadClient = _httpClient;
-        downloadClient.DefaultRequestHeaders.Add("Private-Token", apiToken);
-
-        using var response = await downloadClient.GetAsync(url);
+        var response = await _gitlabHttpClient.GetAsync(url);
 
         if (!response.IsSuccessStatusCode)
-            throw new Exception("Could not download repository.");
+            throw new Exception($"Could not download repository. Status code: {response.StatusCode}  Reason: {response.ReasonPhrase}");
 
         var date = DateTime.Now.ToString("dd-MM-yyyy HH-mm-ss").Replace(" ", "_");
         var fileName = $"{projectId}_{date}.zip";
