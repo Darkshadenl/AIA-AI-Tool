@@ -58,14 +58,17 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private async Task<IDbPrediction> SavePredictionToDatabase(ZipArchiveEntry file)
     {
         var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
-        // var customPrompt = _replicateSettings.Prompt.Replace("${code}", "code here");   // TODO change 'code here'
-        var customPrompt = "FileName: Calculate.js\\\\n\\\\n```\\\\n// Calculates the sum of two numbers\\\\nfunction calculateSum(number1, number2) {\\\\n    return number1 + number2;\\\\n}\\\\ncalculateSum(5, 5);\\\\n```";
-
+        
+        using var reader = new StreamReader(file.Open());
+        string inputCode = await reader.ReadToEndAsync();
+        var customPrompt = _replicateSettings.Prompt.Replace("${code}", inputCode);
+        
         var dbPrediction = new DbPrediction
         {
             FileExtension = fileExtension,
             FileName = file.FullName,
-            Prompt = customPrompt
+            Prompt = customPrompt,
+            InputCode = inputCode
         };
 
         return await _predictionDatabaseService.CreatePrediction(dbPrediction);
