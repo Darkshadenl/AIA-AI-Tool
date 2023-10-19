@@ -3,7 +3,7 @@
 import { error } from '@sveltejs/kit';
 import { HubConnectionBuilder, HttpTransportType, HubConnection } from '@microsoft/signalr';
 
-const API_URL = "http://localhost:5195/uploadZip";
+const API_URL = process.env.API_URL || "http://localhost:5000/uploadZip";
 
 export class SignalRService {
   /** @type {SignalRService} */
