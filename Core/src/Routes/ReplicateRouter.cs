@@ -1,13 +1,14 @@
 using System.IO.Abstractions;
 using System.Net;
 using System.Text;
-using System.Text.RegularExpressions;
 using aia_api.Application.FileHandler;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
 using aia_api.Routes.DTO;
 using InterfacesAia;
+using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -32,9 +33,10 @@ public class ReplicateRouter
         };
     }
 
-    public static Func<int, HttpContext, IFileSystemStorageService, IOptions<Settings>, ReplicateCodeLlamaResultDTO, PredictionDbContext, Task> ReplicateWebhook()
+    public static Func<int, HttpContext, IFileSystemStorageService, IOptions<Settings>, ReplicateCodeLlamaResultDTO, 
+        PredictionDbContext, IServiceBusService, Task> ReplicateWebhook()
     {
-        return (id, context, fileSystemStorageService, settings, resultDto, db) => {
+        return (id, context, fileSystemStorageService, settings, resultDto, db, serviceBusService) => {
             if (resultDto.status == "succeeded")
             {
                 Console.WriteLine("Incoming LLM data for id: " + id);
@@ -42,16 +44,17 @@ public class ReplicateRouter
                 var dbPrediction = db.Predictions
                     .First(p => p.Id == id);
                 
-                int codeStartIndex = Array.IndexOf(resultDto.output, "```");
-                if (codeStartIndex <= -1) throw new IndexOutOfRangeException();
-                
-                var result = CombineTokens(resultDto.output);
-                
-                string fileName = GetFileName(result);
-                string fileExtension = GetFileExtension(fileName);
-                result = result.Replace(fileName, "");
-                
-                if (settings.Value.AllowedFileTypes.Contains(fileExtension))
+                // string result = CombineTokens(resultDto.output);
+                string result = """
+                                // Calculates the sum of two numbers
+                                function calculateSum(number1, number2) {
+                                    return number1 + number2;
+                                }
+                                
+                                calculateSum(5, 5);
+                                """;
+
+                if (settings.Value.AllowedFileTypes.Contains(dbPrediction.FileExtension))
                 {
                     try
                     {
@@ -65,7 +68,7 @@ public class ReplicateRouter
                         throw;
                     }
                 
-                    GenerateFile(fileName, result, fileSystemStorageService);
+                    SendLlmResponseToFrontend(dbPrediction.FileName, result, serviceBusService);
                 
                     Console.WriteLine("succeeded");
                 }
@@ -84,20 +87,18 @@ public class ReplicateRouter
 
     }
 
-    private static void GenerateFile(string fileName, string content, IFileSystemStorageService fileSystemStorageService)
+    private static async void SendLlmResponseToFrontend(string fileName, string content, IServiceBusService serviceBusService)
     {
-        byte[] byteArray = Encoding.UTF8.GetBytes(content);
-        var memoryStream = new MemoryStream(byteArray);
-        fileSystemStorageService.StoreInTemp(memoryStream, fileName);
-    }
+        HubConnection connection = serviceBusService.GetConnection();
+        if (connection.State != HubConnectionState.Connected) return;
 
-    private static string GetFileName(string result)
-    {
-        return Regex.Match(result, @"\w+\.\w+$", RegexOptions.Multiline).Value;
-    }
+        string contentType;
+        if (!new FileExtensionContentTypeProvider().TryGetContentType(fileName, out contentType))
+        {
+            contentType = "";
+            Console.WriteLine("Could not find content type of file {0}.", fileName);
+        }
 
-    private static string GetFileExtension(string fileName)
-    {
-        return Regex.Match(fileName, @"\.\w+$", RegexOptions.Multiline).Value;
+        await connection.InvokeAsync("ReturnLLMResponse", fileName, contentType, content);
     }
 }
