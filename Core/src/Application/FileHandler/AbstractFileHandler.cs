@@ -52,7 +52,7 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
 
     protected bool IsSupportedExtension(string extension)
     {
-        var extensions = _supportedContentTypes.AllowedFiles;
+        var extensions = _supportedContentTypes.AllowedFileTypes;
         return extensions.Contains(extension);
     }
 
