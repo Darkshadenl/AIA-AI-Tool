@@ -3,7 +3,7 @@
 import { error } from '@sveltejs/kit';
 import { HubConnectionBuilder, HttpTransportType, HubConnection } from '@microsoft/signalr';
 
-const API_URL = process.env.API_URL || "http://localhost:5000/uploadZip";
+const API_URL = "http://localhost:5195/uploadZip";
 
 export class SignalRService {
   /** @type {SignalRService} */
@@ -40,6 +40,8 @@ export class SignalRService {
                   .withAutomaticReconnect([5000, 5000, 5000, 5000, 5000])
                   .build();
 
+    this.RegisterGetLLMResponseCallback();
+
     await this.connection.start().catch(err => console.log(err.toString()));
   }
 
@@ -63,5 +65,14 @@ export class SignalRService {
     
     console.log(`Chunk ${index} send to API`);
     return this.connection.invoke('UploadChunk', fileName, contentType, chunk, index, totalChunks);
+  }
+
+  RegisterGetLLMResponseCallback() {
+    if (!this.connection) throw error(500, "No connection found");
+
+    this.connection.on("ReturnLLMResponse", async (fileName, contentType, fileContent) => {
+      console.log(`File ${fileName} with content type ${contentType} received.`);
+      console.log(fileContent);
+    });
   }
 }
