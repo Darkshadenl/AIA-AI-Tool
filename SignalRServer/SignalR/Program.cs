@@ -1,6 +1,8 @@
 ﻿using SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = true;
