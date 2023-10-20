@@ -61,7 +61,7 @@ public class LlmFileUploaderHandlerTest
 
         var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
         var dbContext = new Mock<PredictionDbContext>(CreateDbContextOptions());
-        var handler = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi.Object, new FileSystem(), dbContext.Object);
+        var handler = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi.Object, new FileSystem(), (InterfacesAia.IPredictionDatabaseService) dbContext.Object);
 
         // Act
         var result = await handler.Handle(inputPath, inputContentType);
@@ -111,7 +111,7 @@ public class LlmFileUploaderHandlerTest
 
         var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
         var dbContext = new Mock<PredictionDbContext>(CreateDbContextOptions());
-        var handler = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi.Object, new FileSystem(), dbContext.Object);
+        var handler = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi.Object, new FileSystem(), (InterfacesAia.IPredictionDatabaseService)dbContext.Object);
 
         // Act
         var result = await handler.Handle(inputPath, inputContentType);
@@ -162,7 +162,7 @@ public class LlmFileUploaderHandlerTest
         var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
         var dbContext = new PredictionDbContext(CreateDbContextOptions());
 
-        var handler = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi.Object, new FileSystem(), dbContext);
+        var handler = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi.Object, new FileSystem(), (InterfacesAia.IPredictionDatabaseService)dbContext);
 
         // Act
         await handler.Handle(inputPath, inputContentType);
@@ -210,7 +210,7 @@ public class LlmFileUploaderHandlerTest
         var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
         var dbContext = new PredictionDbContext(CreateDbContextOptions());
 
-        var handler = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi.Object, new FileSystem(), dbContext);
+        var handler = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi.Object, new FileSystem(), (InterfacesAia.IPredictionDatabaseService)dbContext);
 
         // Act
         await handler.Handle(inputPath, inputContentType);

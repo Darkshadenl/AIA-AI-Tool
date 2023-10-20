@@ -1,6 +1,7 @@
 using System.IO.Abstractions;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using aia_api.Application.FileHandler;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualBasic.CompilerServices;
 
 namespace aia_api.Routes;
 
@@ -33,10 +35,10 @@ public class ReplicateRouter
         };
     }
 
-    public static Func<int, HttpContext, IFileSystemStorageService, IOptions<Settings>, ReplicateCodeLlamaResultDTO, 
+    public static Func<int, HttpContext, IOptions<Settings>, ReplicateCodeLlamaResultDTO, 
         PredictionDbContext, IServiceBusService, Task> ReplicateWebhook()
     {
-        return (id, context, fileSystemStorageService, settings, resultDto, db, serviceBusService) => {
+        return (id, context, settings, resultDto, db, serviceBusService) => {
             if (resultDto.status == "succeeded")
             {
                 Console.WriteLine("Incoming LLM data for id: " + id);
@@ -44,21 +46,15 @@ public class ReplicateRouter
                 var dbPrediction = db.Predictions
                     .First(p => p.Id == id);
                 
-                // string result = CombineTokens(resultDto.output);
-                string result = """
-                                // Calculates the sum of two numbers
-                                function calculateSum(number1, number2) {
-                                    return number1 + number2;
-                                }
-                                
-                                calculateSum(5, 5);
-                                """;
+                string result = CombineTokens(resultDto.output);
+                string[] codeLines = dbPrediction.InputCode.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                string resultWithComments = AddCommentsToCode(codeLines, result);
 
                 if (settings.Value.AllowedFileTypes.Contains(dbPrediction.FileExtension))
                 {
                     try
                     {
-                        dbPrediction.PredictionResponseText = result;
+                        dbPrediction.PredictionResponseText = resultWithComments;
                         db.Entry(dbPrediction).State = EntityState.Modified;
                         db.SaveChanges();
                     }
@@ -78,6 +74,36 @@ public class ReplicateRouter
         };
     }
 
+    private static string AddCommentsToCode(string[] lines, string llmResponse)
+    {
+        string[] comments = GetComments(llmResponse);
+
+        foreach (string comment in comments)
+        {
+            int lineNumber = GetLineNumber(comment);
+            if (lineNumber >= 0 && lineNumber < lines.Length)
+            {
+                string inlineComment = comment.Replace($"{lineNumber} - ", "//");
+                lines[lineNumber] = inlineComment + "\n" + lines[lineNumber];
+            }
+        }
+        
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private static string[] GetComments(string comments)
+    {
+         return comments.Split("line ");
+    }
+
+    private static int GetLineNumber(string comment)
+    {
+        string match = Regex.Match(comment, @"^\d+", RegexOptions.Multiline).Value;
+        if (int.TryParse(match, out int lineNumber))
+            return lineNumber;
+        return -1;
+    }
+
     private static string CombineTokens(string[] tokens)
     {
         var stringBuilder = new StringBuilder();
@@ -92,8 +118,7 @@ public class ReplicateRouter
         HubConnection connection = serviceBusService.GetConnection();
         if (connection.State != HubConnectionState.Connected) return;
 
-        string contentType;
-        if (!new FileExtensionContentTypeProvider().TryGetContentType(fileName, out contentType))
+        if (!new FileExtensionContentTypeProvider().TryGetContentType(fileName, out string contentType))
         {
             contentType = "";
             Console.WriteLine("Could not find content type of file {0}.", fileName);
