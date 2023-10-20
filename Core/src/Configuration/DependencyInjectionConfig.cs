@@ -82,6 +82,7 @@ public static class DependencyInjectionConfig
 
         services.AddSingleton<IFileHandlerFactory, FileHandlerFactory>();
         services.AddSingleton<IUploadController, UploadController>();
+        services.AddSingleton<LlmResponseController>();
         services.AddSingleton<ReplicateApi>();
 
     }
