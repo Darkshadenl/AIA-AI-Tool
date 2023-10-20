@@ -20,12 +20,13 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private readonly List<string> _errors = new();
 
     public LlmFileUploaderHandler(
+        ILogger<LlmFileUploaderHandler> logger,
         IOptions<Settings> settings,
         IOptions<ReplicateSettings> replicateSettings,
         ILlmApi replicateApi,
         IFileSystem fileSystem,
         IPredictionDatabaseService predictionDatabaseService
-        ) : base(settings)
+        ) : base(logger, settings)
     {
         _settings = settings;
         _replicateApi = (ReplicateApi) replicateApi;

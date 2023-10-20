@@ -2,6 +2,7 @@ using System.IO.Abstractions.TestingHelpers;
 using System.IO.Compression;
 using aia_api.Application.FileHandler;
 using aia_api.Configuration.Records;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -9,17 +10,19 @@ namespace TestProject.Application.FileHandler;
 
 public class ZipHandlerTest
 {
-    private Mock<IOptions<Settings>> mockSettings;
+    private Mock<IOptions<Settings>> _settingsMock;
+    private Mock<ILogger<ZipHandler>> _loggerMock;
 
     [SetUp]
     public void SetUp()
     {
-        mockSettings = new Mock<IOptions<Settings>>();
-        mockSettings.Setup(s => s.Value).Returns(new Settings
+        _settingsMock = new Mock<IOptions<Settings>>();
+        _settingsMock.Setup(s => s.Value).Returns(new Settings
         {
             OutputFolderPath = "some/temp/path",
             AllowedFileTypes = new []{ ".zip "}
         });
+        _loggerMock = new Mock<ILogger<ZipHandler>>();
     }
 
     [Test]
@@ -43,9 +46,10 @@ public class ZipHandlerTest
         }
 
         mockFs.AddFile("somefile.zip", new MockFileData(zipData));
-
-        var zipHandler = new ZipHandler(mockSettings.Object, mockFs);
-        var nextHandlerMock = new Mock<AbstractFileHandler>(mockSettings.Object);
+        
+        var abstractFileHandlerLoggerMock = new Mock<ILogger<AbstractFileHandler>>();
+        var zipHandler = new ZipHandler(_loggerMock.Object, _settingsMock.Object, mockFs);
+        var nextHandlerMock = new Mock<AbstractFileHandler>(abstractFileHandlerLoggerMock.Object, _settingsMock.Object);
         zipHandler.SetNext(nextHandlerMock.Object);
 
         // Act
@@ -59,8 +63,9 @@ public class ZipHandlerTest
     public async Task Handle_ForwardsToNextHandler_WhenNotZip()
     {
         // Arrange
-        var zipHandler = new ZipHandler(mockSettings.Object, new MockFileSystem());
-        var nextHandlerMock = new Mock<AbstractFileHandler>(mockSettings.Object);
+        var abstractFileHandlerLoggerMock = new Mock<ILogger<AbstractFileHandler>>();
+        var zipHandler = new ZipHandler(_loggerMock.Object, _settingsMock.Object, new MockFileSystem());
+        var nextHandlerMock = new Mock<AbstractFileHandler>(abstractFileHandlerLoggerMock.Object, _settingsMock.Object);
         zipHandler.SetNext(nextHandlerMock.Object);
 
         // Act
@@ -74,7 +79,7 @@ public class ZipHandlerTest
     public void Handle_ShouldNotThrow_WhenNoNextHandler()
     {
         // Arrange
-        var zipHandler = new ZipHandler(mockSettings.Object, new MockFileSystem());
+        var zipHandler = new ZipHandler(_loggerMock.Object, _settingsMock.Object, new MockFileSystem());
 
         // Act & Assert
         Assert.DoesNotThrowAsync(async () => await zipHandler.Handle("somefile.txt", "text/plain"));

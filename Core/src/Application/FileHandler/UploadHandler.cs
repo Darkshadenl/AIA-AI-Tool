@@ -9,12 +9,13 @@ namespace aia_api.Application.FileHandler;
 
 public class UploadHandler : AbstractFileHandler
 {
+    private readonly ILogger<UploadHandler> _logger;
     private readonly IOptions<Settings> _settings;
     private readonly AzureService _azureService;
-    private const string UploadSuccessMessage = "File successfully uploaded to Azure.";
 
-    public UploadHandler(IOptions<Settings> settings, AzureService azureService) : base(settings)
+    public UploadHandler(ILogger<UploadHandler> logger, IOptions<Settings> settings, AzureService azureService) : base(logger, settings)
     {
+        _logger = logger;
         _settings = settings;
         _azureService = azureService;
     }
@@ -24,15 +25,15 @@ public class UploadHandler : AbstractFileHandler
         try
         {
             await _azureService.Pipeline(_settings.Value.OutputFolderPath, Path.GetFileName(inputPath));
-            Console.WriteLine(UploadSuccessMessage);
+            _logger.LogInformation("File successfully uploaded to Azure.");
         }
         catch (IOException e)
         {
-            Console.WriteLine($"Something went wrong while reading or writing: {e.Message}");
+            _logger.LogCritical("Something went wrong while reading or writing: {message}, {stackTrace}", e.Message, e.StackTrace);
         }
         catch (Exception e)
         {
-            Console.WriteLine($"An unexpected error occurred: {e.Message}");
+            _logger.LogCritical("An unexpected error occurred: {message}, {stackTrace}", e.Message, e.StackTrace);
             throw;
         }
         

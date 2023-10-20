@@ -9,14 +9,14 @@ namespace aia_api.Routes;
 
 public class UploadRouter
 {
-    public static Func<IOptions<Settings>, IFormFile, HttpContext, IFileHandlerFactory, IFileSystemStorageService, Task> ZipHandler()
+    public static Func<ILogger<UploadRouter>, IOptions<Settings>, IFormFile, HttpContext, IFileHandlerFactory, IFileSystemStorageService, Task> ZipHandler()
     {
-        return async (settings, compressedFile, context, fileHandlerFactory, storageService) =>
+        return async (logger, settings, compressedFile, context, fileHandlerFactory, storageService) =>
         {
             if (!settings.Value.SupportedContentTypes.Contains(compressedFile.ContentType))
             {
                 context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
-                Console.WriteLine("Invalid file type. Only ZIP files are allowed.");
+                logger.LogError("Invalid file type. Only ZIP files are allowed.");
                 return;
             }
 
@@ -32,33 +32,33 @@ public class UploadRouter
                 context.Response.StatusCode = (int) result.StatusCode;
 
                 if (!result.Success)
-                    Console.WriteLine($"Error: {result.ErrorMessage}");
+                    logger.LogError("Error: {errorMessage}", result.ErrorMessage);
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Exception: {e.Message}, StackTrace: {e.StackTrace}");
                 context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
+                logger.LogCritical("Exception: {message}, StackTrace: {stackTrace}", e.Message, e.StackTrace);
             }
         };
     }
 
-    public static  Func<UploadRepoDTO, HttpContext, GitlabService, IFileHandlerFactory, Task> RepoHandler()
+    public static  Func<ILogger<UploadRouter>, UploadRepoDTO, HttpContext, GitlabService, IFileHandlerFactory, Task> RepoHandler()
     {
-        return async (dto, context, gitlabApi, fileHandlerFactory) =>
+        return async (logger, dto, context, gitlabApi, fileHandlerFactory) =>
         {
             var projectId = dto.projectId;
             var apiToken = dto.apiToken;
 
             if (projectId.Length == 0 || string.IsNullOrWhiteSpace(projectId))
             {
-                Console.WriteLine("Invalid project id. Provide a valid projectid.");
+                logger.LogError("Invalid project id. Provide a valid project id.");
                 context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
                 return;
             }
 
             if (apiToken.Length == 0 || string.IsNullOrWhiteSpace(apiToken))
             {
-                Console.WriteLine("Invalid api token. Configure api token.");
+                logger.LogError("Invalid api token. Configure api token.");
                 context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
                 return;
             }
@@ -72,12 +72,12 @@ public class UploadRouter
                 context.Response.StatusCode = (int) result.StatusCode;
 
                 if (!result.Success)
-                    Console.WriteLine($"Error: {result.ErrorMessage}");
+                    logger.LogError("Error: {errorMessage}", result.ErrorMessage);
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Exception: {e.Message}, StackTrace: {e.StackTrace}");
                 context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;
+                logger.LogCritical("Exception: {message}, StackTrace: {stackTrace}", e.Message, e.StackTrace);
                 return;
             }
 

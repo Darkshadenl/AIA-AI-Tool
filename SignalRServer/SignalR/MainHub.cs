@@ -6,6 +6,13 @@ namespace SignalR
 {
 	public class MainHub : Hub<IMainHub>
 	{
+        private readonly ILogger<MainHub> _logger;
+
+        public MainHub(ILogger<MainHub> logger)
+        {
+            _logger = logger;
+        }
+        
         public async Task UploadChunk(string fileName, string contentType, string chunkAsBase64, int index, int totalChunks)
         {
             if (await SendErrorIfEmpty(chunkAsBase64)) return;
@@ -14,12 +21,12 @@ namespace SignalR
             {
                 byte[] chunk = Convert.FromBase64String(chunkAsBase64);
                 await Clients.Others.UploadChunk(fileName, contentType, chunk, index, totalChunks);
-                Console.WriteLine("Chunk {0} of file {1} send to clients", index, fileName);
+                _logger.LogInformation("Chunk {index} of file {fileName} send to clients", index, fileName);
             }
             catch (FormatException e)
             {
                 await Clients.Caller.ReceiveError("The file is not converted to base64 correctly.");
-                Console.WriteLine("Error: {0}, stacktrace: {1}", e.Message, e.StackTrace);
+                _logger.LogCritical("Error: {message}, stacktrace: {stackTrace}", e.Message, e.StackTrace);
             }
         }
 
@@ -28,20 +35,19 @@ namespace SignalR
             if (await SendErrorIfEmpty(fileContent)) return;
 
             await Clients.Others.ReturnLLMResponse(fileName, contentType, fileContent);
-            Console.WriteLine("File {0} with content type {1} send to clients", fileName, contentType);
-
+            _logger.LogInformation("Chunk {fileName} of file {contentType} send to clients", fileName, contentType);
         }
 
         public async Task UploadSuccess(string successMessage)
         {
             await Clients.Others.UploadSuccess(successMessage);
-            Console.WriteLine("Success message send: {0}", successMessage);
+            _logger.LogInformation("Success message send: {message}", successMessage);
         }
 
         public async Task ReturnError(string errorMessage)
         {
             await Clients.Others.ReceiveError(errorMessage);
-            Console.WriteLine("Received error: {0}", errorMessage);
+            _logger.LogInformation("Received error: {message}", errorMessage);
         }
 
         private async Task<bool> SendErrorIfEmpty(string base64)

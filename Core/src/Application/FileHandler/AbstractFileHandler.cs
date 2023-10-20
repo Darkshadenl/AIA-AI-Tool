@@ -9,16 +9,19 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
 {
     protected IUploadedFileHandler Next;
     protected readonly Dictionary<string, int> ExtensionsCount = new();
+    private readonly ILogger<AbstractFileHandler> _logger;
     private readonly Settings _supportedContentTypes;
 
-    protected AbstractFileHandler(IOptions<Settings> settings)
+    protected AbstractFileHandler(ILogger<AbstractFileHandler> logger, IOptions<Settings> settings)
     {
+        _logger = logger;
         _supportedContentTypes = settings.Value;
     }
 
     public virtual Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
-        Console.WriteLine($"Input path: {inputPath}\n Input content type: {inputContentType}\n");
+        _logger.LogInformation("Input path: {path}", inputPath);
+        _logger.LogInformation("Input content type: {contentType}", inputContentType);
 
         var result = new HandlerResult
         {
@@ -59,6 +62,6 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
     protected void LogExtensionsCount()
     {
         foreach (var (key, value) in ExtensionsCount)
-            Console.WriteLine($"{key}: {value}");
+            _logger.LogInformation("{extension}: {amount}", key, value);
     }
 }

@@ -8,16 +8,17 @@ namespace aia_api.Application.Controllers
 
     public class UploadController : IUploadController
     {
-        private const string UploadSuccessMessage = "File successfully uploaded.";
+        private readonly ILogger<UploadController> _logger;
         private readonly IOptions<Settings> _settings;
         private readonly IServiceBusService _serviceBusService;
         private readonly IFileHandlerFactory _fileHandlerFactory;
         private readonly IFileSystemStorageService _fileSystemStorageService;
         private MemoryStream _memoryStream;
 
-        public UploadController(IOptions<Settings> settings, IServiceBusService serviceBusService, 
+        public UploadController(ILogger<UploadController> logger, IOptions<Settings> settings, IServiceBusService serviceBusService, 
             IFileHandlerFactory fileHandlerFactory, IFileSystemStorageService fileSystemStorageService)
         {
+            _logger = logger;
             _settings = settings;
             _serviceBusService = serviceBusService;
             _fileHandlerFactory = fileHandlerFactory;
@@ -27,7 +28,7 @@ namespace aia_api.Application.Controllers
 
         public async void ReceiveFileChunk(string fileName, string contentType, byte[] chunk, int index, int totalChunks)
         {
-            Console.WriteLine("Chunk {0} received", index);
+            _logger.LogInformation("Chunk {index} received", index);
             await _memoryStream.WriteAsync(chunk, 0, chunk.Length);
             
             if (index == totalChunks - 1) ZipHandler(fileName, contentType);
@@ -63,25 +64,23 @@ namespace aia_api.Application.Controllers
             catch (Exception e)
             {
                 await InvokeErrorMessage(connection, "Something went wrong.");
-                Console.WriteLine($"Exception: {e.Message}, StackTrace: {e.StackTrace}");
             }
         }
 
-        private static async Task InvokeHandleResult(HubConnection connection, IHandlerResult result)
+        private async Task InvokeHandleResult(HubConnection connection, IHandlerResult result)
         {
             if (result.Success)
             {
-                await connection.InvokeAsync("UploadSuccess", UploadSuccessMessage);
-                Console.WriteLine(UploadSuccessMessage);
+                await connection.InvokeAsync("UploadSuccess", "File successfully uploaded.");
+                _logger.LogInformation("File successfully uploaded.");
             }
             else
             {
                 await InvokeErrorMessage(connection, result.ErrorMessage);
-                Console.WriteLine(result.ErrorMessage);
             }
         }
 
-        private static async Task<bool> ParamIsEmpty(HubConnection connection, string param, string errorMessage)
+        private async Task<bool> ParamIsEmpty(HubConnection connection, string param, string errorMessage)
         {
             if (string.IsNullOrEmpty(param))
             {
@@ -91,10 +90,10 @@ namespace aia_api.Application.Controllers
             return false;
         }
 
-        private static async Task InvokeErrorMessage(HubConnection connection, string errorMessage)
+        private async Task InvokeErrorMessage(HubConnection connection, string errorMessage)
         {
             await connection.InvokeAsync("ReturnError", errorMessage);
-            Console.WriteLine(errorMessage);
+            _logger.LogError("Error: {error}", errorMessage);
         }
     }
 }

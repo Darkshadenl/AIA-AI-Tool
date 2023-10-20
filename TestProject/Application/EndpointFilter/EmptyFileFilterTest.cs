@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
 using aia_api.Application.EndpointFilter;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Moq;
 
@@ -11,12 +12,14 @@ namespace TestProject.Application.EndpointFilter;
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public class EmptyFileFilterTest
 {
+    private Mock<ILogger<EmptyFileFilter>> _logger;
     private Mock<EndpointFilterInvocationContext> _context;
     private Mock<EndpointFilterDelegate> _next;
 
     [SetUp]
     public void Setup()
     {
+        _logger = new Mock<ILogger<EmptyFileFilter>>();
         _context = new Mock<EndpointFilterInvocationContext>();
         _next = new Mock<EndpointFilterDelegate>();
     }
@@ -41,7 +44,7 @@ public class EmptyFileFilterTest
             .Returns(Task.FromResult<IFormCollection>(formCollection));
 
         // Act
-        var result = await new EmptyFileFilter().InvokeAsync(_context.Object, _next.Object);
+        var result = await new EmptyFileFilter(_logger.Object).InvokeAsync(_context.Object, _next.Object);
 
         // Assert
         memoryStream.Position = 0;
@@ -76,7 +79,7 @@ public class EmptyFileFilterTest
             .Returns(Task.FromResult<IFormCollection>(formCollection));
 
         // Act
-        var result = await new EmptyFileFilter().InvokeAsync(_context.Object, _next.Object);
+        var result = await new EmptyFileFilter(_logger.Object).InvokeAsync(_context.Object, _next.Object);
 
         // Assert
         memoryStream.Position = 0;
@@ -115,7 +118,7 @@ public class EmptyFileFilterTest
             .Returns(Task.FromResult<IFormCollection>(formCollection));
 
         // Act
-        var result = await new EmptyFileFilter().InvokeAsync(_context.Object, nextMock.Object);
+        var result = await new EmptyFileFilter(_logger.Object).InvokeAsync(_context.Object, nextMock.Object);
 
         // Assert
         Assert.Multiple(() =>
@@ -138,7 +141,7 @@ public class EmptyFileFilterTest
         requestMock.SetupGet(x => x.ContentLength).Throws<Exception>();
 
         // Act
-        var result = await new EmptyFileFilter().InvokeAsync(_context.Object, _next.Object);
+        var result = await new EmptyFileFilter(_logger.Object).InvokeAsync(_context.Object, _next.Object);
 
         // Assert
         Assert.Multiple(() =>

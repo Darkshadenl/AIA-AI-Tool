@@ -13,7 +13,7 @@ namespace aia_api.Application.FileHandler
         private readonly IFileSystem _fileSystem;
         private const string ContentType = "application/zip";
 
-        public ZipHandler(IOptions<Settings> settings, IFileSystem fileSystem) : base(settings)
+        public ZipHandler(ILogger<ZipHandler> logger, IOptions<Settings> settings, IFileSystem fileSystem) : base(logger, settings)
         {
             _settings = settings;
             _fileSystem = fileSystem;

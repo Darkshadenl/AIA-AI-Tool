@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.SignalR.Client;
 using InterfacesAia;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 builder.Services.SetupDi(builder.Configuration);
 builder.Services.AddSignalR();
 

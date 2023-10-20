@@ -19,6 +19,9 @@ public class FileHandlerFactory : IFileHandlerFactory
     private readonly IPredictionDatabaseService _predictionDatabaseService;
 
     public FileHandlerFactory(
+        ILogger<FileValidator> fileValidatorLogger,
+        ILogger<ZipHandler> zipHandlerLogger,
+        ILogger<LlmFileUploaderHandler> llmFileUploaderHandlerLogger,
         IOptions<Settings> extensionSettings,
         IFileSystem fileSystem,
         IOptions<ReplicateSettings> replicateSettings,
@@ -31,14 +34,17 @@ public class FileHandlerFactory : IFileHandlerFactory
         _replicateSettings = replicateSettings;
         _replicateApi = replicateApi;
         _predictionDatabaseService = predictionDatabaseService;
-        _fileHandlerStreet = BuildFileHandlerStreet();
+        _fileHandlerStreet = BuildFileHandlerStreet(fileValidatorLogger, zipHandlerLogger, llmFileUploaderHandlerLogger);
     }
 
-    private IUploadedFileHandler BuildFileHandlerStreet()
+    private IUploadedFileHandler BuildFileHandlerStreet(ILogger<FileValidator> fileValidatorLogger,
+                                                        ILogger<ZipHandler> zipHandlerLogger,
+                                                        ILogger<LlmFileUploaderHandler> llmFileUploaderHandlerLogger)
     {
-        var fileValidator = new FileValidator(_extensionSettings);
-        var zipHandler = new ZipHandler(_extensionSettings, _fileSystem);
-        var llm = new LlmFileUploaderHandler(_extensionSettings, _replicateSettings, _replicateApi, _fileSystem, _predictionDatabaseService);
+        var fileValidator = new FileValidator(fileValidatorLogger, _extensionSettings);
+        var zipHandler = new ZipHandler(zipHandlerLogger, _extensionSettings, _fileSystem);
+        var llm = new LlmFileUploaderHandler(llmFileUploaderHandlerLogger, _extensionSettings, _replicateSettings, 
+                                             _replicateApi, _fileSystem, _predictionDatabaseService);
 
         fileValidator.SetNext(zipHandler);
         zipHandler.SetNext(llm);

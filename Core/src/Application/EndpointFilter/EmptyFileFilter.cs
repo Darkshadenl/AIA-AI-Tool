@@ -2,6 +2,13 @@ namespace aia_api.Application.EndpointFilter;
 
 public class EmptyFileFilter : IEndpointFilter
 {
+    private readonly ILogger<EmptyFileFilter> _logger;
+
+    public EmptyFileFilter(ILogger<EmptyFileFilter> logger)
+    {
+        _logger = logger;
+    }
+    
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         try
@@ -16,7 +23,7 @@ public class EmptyFileFilter : IEndpointFilter
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogCritical("Error: {message}, {stackTrace}", e.Message, e.StackTrace);
             context.HttpContext.Response.StatusCode = 400;
             return null;
         }
