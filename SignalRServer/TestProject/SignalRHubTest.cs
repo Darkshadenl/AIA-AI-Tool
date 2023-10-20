@@ -1,6 +1,7 @@
 using Moq;
 using SignalR;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 
 namespace TestProject;
 
@@ -24,7 +25,8 @@ public class SignalRHubTest
         _mockClientsMock.Setup(_ => _.Others).Returns(_mainHubMock.Object);
         _mockClientsMock.Setup(_ => _.Caller).Returns(_mainHubMock.Object);
 
-        _hub = new MainHub()
+        var loggerMock = new Mock<ILogger<MainHub>>();
+        _hub = new MainHub(loggerMock.Object)
         {
             Clients = _mockClientsMock.Object,
         };
