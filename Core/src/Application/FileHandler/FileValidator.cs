@@ -12,7 +12,7 @@ public class FileValidator : AbstractFileHandler
 {
     private readonly string[] _contentType = { "application/zip" };
 
-    public FileValidator(IOptions<Settings> settings) : base(settings)
+    public FileValidator(ILogger<FileValidator> logger, IOptions<Settings> settings) : base(logger, settings)
     { }
 
     public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)

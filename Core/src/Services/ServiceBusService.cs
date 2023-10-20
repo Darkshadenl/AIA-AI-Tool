@@ -7,11 +7,13 @@ namespace aia_api.src.Services
 {
 	public class ServiceBusService : IServiceBusService
     {
+        private readonly ILogger<ServiceBusService> _logger;
         private readonly IOptions<Settings> _settings;
         private HubConnection _connection;
 
-        public ServiceBusService(IOptions<Settings> settings)
+        public ServiceBusService(ILogger<ServiceBusService> logger, IOptions<Settings> settings)
         {
+            _logger = logger;
             _settings = settings;
         }
 
@@ -23,11 +25,11 @@ namespace aia_api.src.Services
             try
             {
                 await _connection.StartAsync();
-                Console.WriteLine("Connection state: {0}", _connection.State);
+                _logger.LogInformation("Connection state: {state}", _connection.State);
             }
             catch (HttpRequestException e)
             {
-                Console.WriteLine(e.Message);
+                _logger.LogCritical("Error: {message}, {stackTrace}", e.Message, e.StackTrace);
             }
             return _connection;
         }

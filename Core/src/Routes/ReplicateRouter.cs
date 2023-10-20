@@ -12,20 +12,19 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace aia_api.Routes;
 
 public class ReplicateRouter
 {
     [Obsolete("Remove at a later stage after implementing ReplicateWebHook further")]
-    public static Func<ReplicateApi, IOptions<Settings>, IOptions<ReplicateSettings>, IFileSystem, IPredictionDatabaseService, Task<IResult>> ReplicateWebhookTest()
+    public static Func<ReplicateApi, ILogger<ReplicateRouter>, ILogger<LlmFileUploaderHandler>, IOptions<Settings>, 
+        IOptions<ReplicateSettings>, IFileSystem, IPredictionDatabaseService, Task<IResult>> ReplicateWebhookTest()
     {
-        return async (replicateApi, settings, replicateSettings, fs, predictionDatabaseService) => {
+        return async (replicateApi, logger, llmLogger, settings, replicateSettings, fs, predictionDatabaseService) => {
+            logger.LogInformation("replicate-webhook-test");
 
-            Console.WriteLine("replicate-webhook-test");
-
-            var llm = new LlmFileUploaderHandler(settings, replicateSettings, replicateApi, fs, predictionDatabaseService);
+            var llm = new LlmFileUploaderHandler(llmLogger, settings, replicateSettings, replicateApi, fs, predictionDatabaseService);
 
             var inputPath = settings.Value.TempFolderPath + "/joost-main.zip";
 
@@ -35,13 +34,13 @@ public class ReplicateRouter
         };
     }
 
-    public static Func<int, HttpContext, IOptions<Settings>, ReplicateCodeLlamaResultDTO, 
+    public static Func<int, HttpContext, ILogger<ReplicateRouter>, IOptions<Settings>, ReplicateCodeLlamaResultDTO, 
         PredictionDbContext, IServiceBusService, Task> ReplicateWebhook()
     {
-        return (id, context, settings, resultDto, db, serviceBusService) => {
+        return (id, context, logger, settings, resultDto, db, serviceBusService) => {
             if (resultDto.status == "succeeded")
             {
-                Console.WriteLine("Incoming LLM data for id: " + id);
+                logger.LogInformation("Incoming LLM data for id: {id}", id);
                 
                 var dbPrediction = db.Predictions
                     .First(p => p.Id == id);
@@ -60,13 +59,12 @@ public class ReplicateRouter
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e);
+                        logger.LogCritical("Error: {message}, {stackTrace}", e.Message, e.StackTrace);
                         throw;
                     }
                 
-                    SendLlmResponseToFrontend(dbPrediction.FileName, result, serviceBusService);
-                
-                    Console.WriteLine("succeeded");
+                    SendLlmResponseToFrontend(logger, dbPrediction.FileName, result, serviceBusService);
+                    logger.LogInformation("Llm response successfully processed");
                 }
             }
             context.Response.StatusCode = (int) HttpStatusCode.NoContent;
@@ -113,7 +111,7 @@ public class ReplicateRouter
 
     }
 
-    private static async void SendLlmResponseToFrontend(string fileName, string content, IServiceBusService serviceBusService)
+    private static async void SendLlmResponseToFrontend(ILogger<ReplicateRouter> logger, string fileName, string content, IServiceBusService serviceBusService)
     {
         HubConnection connection = serviceBusService.GetConnection();
         if (connection.State != HubConnectionState.Connected) return;
@@ -121,9 +119,10 @@ public class ReplicateRouter
         if (!new FileExtensionContentTypeProvider().TryGetContentType(fileName, out string contentType))
         {
             contentType = "";
-            Console.WriteLine("Could not find content type of file {0}.", fileName);
+            logger.LogDebug("Could not find content type of file {fileName}", fileName);
         }
 
         await connection.InvokeAsync("ReturnLLMResponse", fileName, contentType, content);
+        logger.LogInformation("File {fileName} send to clients", fileName);
     }
 }
