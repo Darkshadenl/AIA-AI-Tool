@@ -8,16 +8,13 @@ namespace SignalR
 	{
         public async Task UploadChunk(string fileName, string contentType, string chunkAsBase64, int index, int totalChunks)
         {
-            if (string.IsNullOrEmpty(chunkAsBase64))
-            {
-                await Clients.Caller.ReceiveError("No file received or file is empty.");
-                return;
-            }
+            if (await SendErrorIfEmpty(chunkAsBase64)) return;
 
             try
             {
                 byte[] chunk = Convert.FromBase64String(chunkAsBase64);
                 await Clients.Others.UploadChunk(fileName, contentType, chunk, index, totalChunks);
+                Console.WriteLine("Chunk {0} of file {1} send to clients", index, fileName);
             }
             catch (FormatException e)
             {
@@ -26,8 +23,36 @@ namespace SignalR
             }
         }
 
-        public async Task UploadSuccess(string successMessage) => await Clients.Others.UploadSuccess(successMessage);
-        public async Task ReturnError(string errorMessage) => await Clients.Others.ReceiveError(errorMessage);
+        public async Task ReturnLLMResponse(string fileName, string contentType, string fileContent)
+        {
+            if (await SendErrorIfEmpty(fileContent)) return;
+
+            await Clients.Others.ReturnLLMResponse(fileName, contentType, fileContent);
+            Console.WriteLine("File {0} with content type {1} send to clients", fileName, contentType);
+
+        }
+
+        public async Task UploadSuccess(string successMessage)
+        {
+            await Clients.Others.UploadSuccess(successMessage);
+            Console.WriteLine("Success message send: {0}", successMessage);
+        }
+
+        public async Task ReturnError(string errorMessage)
+        {
+            await Clients.Others.ReceiveError(errorMessage);
+            Console.WriteLine("Received error: {0}", errorMessage);
+        }
+
+        private async Task<bool> SendErrorIfEmpty(string base64)
+        {
+            if (string.IsNullOrEmpty(base64))
+            {
+                await Clients.Caller.ReceiveError("No file received or file is empty.");
+                return true;
+            }
+            return false;
+        }
     }
 }
 
