@@ -17,7 +17,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private readonly IFileSystem _fileSystem;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
     private readonly ReplicateSettings _replicateSettings;
-    private readonly List<string> _errors = new();
+    private List<string> _errors;
 
     public LlmFileUploaderHandler(
         ILogger<LlmFileUploaderHandler> logger,
@@ -42,6 +42,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     /// <throws>FileNotFoundException  if zip-file cannot be found</throws>
     public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
+        _errors = new();
         var fileName = _fileSystem.Path.GetFileName(inputPath);
         var outputFilePath = _fileSystem.Path.Combine(_settings.Value.OutputFolderPath, fileName);
         var zipArchive = GetZipArchive(outputFilePath);
