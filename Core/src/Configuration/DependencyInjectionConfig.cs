@@ -6,6 +6,7 @@ using aia_api.src.Services;
 using Azure.Storage;
 using System.IO.Abstractions;
 using System.Net.Http.Headers;
+using aia_api.Application.Helpers;
 using aia_api.Application.Replicate;
 using aia_api.Database;
 using Azure.Storage.Blobs;
@@ -70,6 +71,7 @@ public static class DependencyInjectionConfig
         services.AddDbContext<PredictionDbContext>(options =>
             options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
 
+        services.AddSingleton<CommentChecker>();
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
         services.AddSingleton<IFileSystemStorageService, FileSystemStorageService>();
         services.AddSingleton<IFileSystem, FileSystem>();

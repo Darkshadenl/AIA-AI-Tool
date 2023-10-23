@@ -1,6 +1,7 @@
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
+using System.Text.RegularExpressions;
 using aia_api.Application.Helpers;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
@@ -13,10 +14,12 @@ namespace aia_api.Application.FileHandler;
 
 public class LlmFileUploaderHandler : AbstractFileHandler
 {
-    private readonly IOptions<Settings> _settings;
+    private readonly ILogger<LlmFileUploaderHandler> _logger;
+    private readonly Settings _settings;
     private readonly ReplicateApi _replicateApi;
     private readonly IFileSystem _fileSystem;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
+    private readonly CommentChecker _commentChecker;
     private readonly ReplicateSettings _replicateSettings;
     private readonly List<string> _errors = new();
 
@@ -26,13 +29,16 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         IOptions<ReplicateSettings> replicateSettings,
         ILlmApi replicateApi,
         IFileSystem fileSystem,
-        IPredictionDatabaseService predictionDatabaseService
+        IPredictionDatabaseService predictionDatabaseService,
+        CommentChecker commentChecker
         ) : base(logger, settings)
     {
-        _settings = settings;
+        _logger = logger;
+        _settings = settings.Value;
         _replicateApi = (ReplicateApi) replicateApi;
         _fileSystem = fileSystem;
         _predictionDatabaseService = predictionDatabaseService;
+        _commentChecker = commentChecker;
         _replicateSettings = replicateSettings.Value;
     }
 
@@ -44,7 +50,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
         var fileName = _fileSystem.Path.GetFileName(inputPath);
-        var outputFilePath = _fileSystem.Path.Combine(_settings.Value.OutputFolderPath, fileName);
+        var outputFilePath = _fileSystem.Path.Combine(_settings.OutputFolderPath, fileName);
         var zipArchive = GetZipArchive(outputFilePath);
 
         await ProcessFiles(zipArchive);
@@ -78,19 +84,20 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
     private async Task ProcessFiles(ZipArchive zipArchive)
     {
-        // var maxNumber = 2;
-        // var number = 0;
+        var maxNumber = 5;
+        var number = 0;
+        _logger.LogInformation("Processing {maxNumber} of {Count} files...", maxNumber, zipArchive.Entries.Count);
 
         foreach (var file in zipArchive.Entries)
         {
-            // if (number++ > maxNumber) break; 
+            // if (number++ > maxNumber) break;
 
             var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
             if (string.IsNullOrEmpty(fileExtension)) continue;
+            if (_commentChecker.CheckForComments(file, fileExtension)) continue;
             await ProcessFile(file);
         }
     }
-
     private async Task ProcessFile(ZipArchiveEntry file)
     {
         var dbPrediction = await SavePredictionToDatabase(file);

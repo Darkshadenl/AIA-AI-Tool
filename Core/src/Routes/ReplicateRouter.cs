@@ -3,6 +3,7 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using aia_api.Application.FileHandler;
+using aia_api.Application.Helpers;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
@@ -18,13 +19,13 @@ namespace aia_api.Routes;
 public class ReplicateRouter
 {
     [Obsolete("Remove at a later stage after implementing ReplicateWebHook further")]
-    public static Func<ReplicateApi, ILogger<ReplicateRouter>, ILogger<LlmFileUploaderHandler>, IOptions<Settings>, 
-        IOptions<ReplicateSettings>, IFileSystem, IPredictionDatabaseService, Task<IResult>> ReplicateWebhookTest()
+    public static Func<ReplicateApi, ILogger<ReplicateRouter>, ILogger<LlmFileUploaderHandler>, IOptions<Settings>,
+        IOptions<ReplicateSettings>, IFileSystem, IPredictionDatabaseService, CommentChecker, Task<IResult>> ReplicateWebhookTest()
     {
-        return async (replicateApi, logger, llmLogger, settings, replicateSettings, fs, predictionDatabaseService) => {
+        return async (replicateApi, logger, llmLogger, settings, replicateSettings, fs, predictionDatabaseService, commentChecker) => {
             logger.LogInformation("replicate-webhook-test");
 
-            var llm = new LlmFileUploaderHandler(llmLogger, settings, replicateSettings, replicateApi, fs, predictionDatabaseService);
+            var llm = new LlmFileUploaderHandler(llmLogger, settings, replicateSettings, replicateApi, fs, predictionDatabaseService, commentChecker);
 
             var inputPath = settings.Value.TempFolderPath + "/joost-main.zip";
 
@@ -34,17 +35,17 @@ public class ReplicateRouter
         };
     }
 
-    public static Func<int, HttpContext, ILogger<ReplicateRouter>, IOptions<Settings>, ReplicateCodeLlamaResultDTO, 
+    public static Func<int, HttpContext, ILogger<ReplicateRouter>, IOptions<Settings>, ReplicateCodeLlamaResultDTO,
         PredictionDbContext, IServiceBusService, Task> ReplicateWebhook()
     {
         return (id, context, logger, settings, resultDto, db, serviceBusService) => {
             if (resultDto.status == "succeeded")
             {
                 logger.LogInformation("Incoming LLM data for id: {id}", id);
-                
+
                 var dbPrediction = db.Predictions
                     .First(p => p.Id == id);
-                
+
                 string result = CombineTokens(resultDto.output);
                 string[] codeLines = dbPrediction.InputCode.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
                 string resultWithComments = AddCommentsToCode(codeLines, result);
@@ -62,7 +63,7 @@ public class ReplicateRouter
                         logger.LogCritical("Error: {message}, {stackTrace}", e.Message, e.StackTrace);
                         throw;
                     }
-                
+
                     SendLlmResponseToFrontend(logger, dbPrediction.FileName, result, serviceBusService);
                     logger.LogInformation("Llm response successfully processed");
                 }
@@ -85,7 +86,7 @@ public class ReplicateRouter
                 lines[lineNumber] = inlineComment + "\n" + lines[lineNumber];
             }
         }
-        
+
         return string.Join(Environment.NewLine, lines);
     }
 

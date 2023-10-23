@@ -17,6 +17,7 @@ public class FileHandlerFactory : IFileHandlerFactory
     private readonly IOptions<ReplicateSettings> _replicateSettings;
     private readonly ReplicateApi _replicateApi;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
+    private readonly CommentChecker _commentChecker;
 
     public FileHandlerFactory(
         ILogger<FileValidator> fileValidatorLogger,
@@ -26,7 +27,8 @@ public class FileHandlerFactory : IFileHandlerFactory
         IFileSystem fileSystem,
         IOptions<ReplicateSettings> replicateSettings,
         ReplicateApi replicateApi,
-        IPredictionDatabaseService predictionDatabaseService
+        IPredictionDatabaseService predictionDatabaseService,
+        CommentChecker commentChecker
         )
     {
         _extensionSettings = extensionSettings;
@@ -34,6 +36,7 @@ public class FileHandlerFactory : IFileHandlerFactory
         _replicateSettings = replicateSettings;
         _replicateApi = replicateApi;
         _predictionDatabaseService = predictionDatabaseService;
+        _commentChecker = commentChecker;
         _fileHandlerStreet = BuildFileHandlerStreet(fileValidatorLogger, zipHandlerLogger, llmFileUploaderHandlerLogger);
     }
 
@@ -43,8 +46,8 @@ public class FileHandlerFactory : IFileHandlerFactory
     {
         var fileValidator = new FileValidator(fileValidatorLogger, _extensionSettings);
         var zipHandler = new ZipHandler(zipHandlerLogger, _extensionSettings, _fileSystem);
-        var llm = new LlmFileUploaderHandler(llmFileUploaderHandlerLogger, _extensionSettings, _replicateSettings, 
-                                             _replicateApi, _fileSystem, _predictionDatabaseService);
+        var llm = new LlmFileUploaderHandler(llmFileUploaderHandlerLogger, _extensionSettings, _replicateSettings,
+                                             _replicateApi, _fileSystem, _predictionDatabaseService, _commentChecker);
 
         fileValidator.SetNext(zipHandler);
         zipHandler.SetNext(llm);
