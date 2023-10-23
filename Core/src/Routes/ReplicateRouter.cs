@@ -45,15 +45,6 @@ public class ReplicateRouter
                 
                 var dbPrediction = db.Predictions
                     .First(p => p.Id == id);
-                // result = """
-                //              /// <summary>
-                //              /// This code calculates the sum of two numbers
-                //              /// </summary>
-                //              /// <param name="number1"></param>
-                //              /// <param name="number2"></param>
-                //              /// <returns>ETststsdfasdfajsdflkjafhkajhfashkhakfho;ash</returns>
-                //              public int CalculateSum(int number1, int number2)
-                //          """;
 
                 if (settings.Value.AllowedFileTypes.Contains(dbPrediction.FileExtension))
                 {

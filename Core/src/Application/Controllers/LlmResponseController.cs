@@ -38,7 +38,7 @@ public class LlmResponseController
         List<string> commentLines = generatedComment.Split(Environment.NewLine).ToList();
         List<string> contentLines = content.Split(Environment.NewLine).ToList();
 
-        //Remove old comments
+        //Remove old comments.
         int removeIndex = GetIndex(commentLines, contentLines);
         if (removeIndex < 0) return content;
         contentLines = RemoveOldComment(contentLines, removeIndex);
