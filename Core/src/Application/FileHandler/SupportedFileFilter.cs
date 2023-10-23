@@ -7,13 +7,13 @@ using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler
 {
-    public class ZipHandler : AbstractFileHandler
+    public class SupportedFileFilter : AbstractFileHandler
     {
         private readonly IOptions<Settings> _settings;
         private readonly IFileSystem _fileSystem;
         private const string ContentType = "application/zip";
 
-        public ZipHandler(ILogger<ZipHandler> logger, IOptions<Settings> settings, IFileSystem fileSystem) : base(logger, settings)
+        public SupportedFileFilter(ILogger<SupportedFileFilter> logger, IOptions<Settings> settings, IFileSystem fileSystem) : base(logger, settings)
         {
             _settings = settings;
             _fileSystem = fileSystem;
@@ -64,7 +64,7 @@ namespace aia_api.Application.FileHandler
         {
             foreach (var entry in archive.Entries)
             {
-                var extension = GetExtension(entry);
+                var extension = _fileSystem.Path.GetExtension(entry.FullName);
                 if (string.IsNullOrEmpty(extension)) continue;
 
                 CountExtension(extension);
@@ -75,9 +75,6 @@ namespace aia_api.Application.FileHandler
                 }
             }
         }
-
-        private string GetExtension(ZipArchiveEntry entry) =>
-            _fileSystem.Path.GetExtension(entry.FullName);
 
         private async Task CopyEntryToNewArchive(ZipArchiveEntry entry, ZipArchive outputArchive)
         {

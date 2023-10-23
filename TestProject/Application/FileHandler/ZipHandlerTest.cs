@@ -11,7 +11,7 @@ namespace TestProject.Application.FileHandler;
 public class ZipHandlerTest
 {
     private Mock<IOptions<Settings>> _settingsMock;
-    private Mock<ILogger<ZipHandler>> _loggerMock;
+    private Mock<ILogger<SupportedFileFilter>> _loggerMock;
 
     [SetUp]
     public void SetUp()
@@ -22,7 +22,7 @@ public class ZipHandlerTest
             OutputFolderPath = "some/temp/path",
             AllowedFileTypes = new []{ ".zip "}
         });
-        _loggerMock = new Mock<ILogger<ZipHandler>>();
+        _loggerMock = new Mock<ILogger<SupportedFileFilter>>();
     }
 
     [Test]
@@ -48,7 +48,7 @@ public class ZipHandlerTest
         mockFs.AddFile("somefile.zip", new MockFileData(zipData));
         
         var abstractFileHandlerLoggerMock = new Mock<ILogger<AbstractFileHandler>>();
-        var zipHandler = new ZipHandler(_loggerMock.Object, _settingsMock.Object, mockFs);
+        var zipHandler = new SupportedFileFilter(_loggerMock.Object, _settingsMock.Object, mockFs);
         var nextHandlerMock = new Mock<AbstractFileHandler>(abstractFileHandlerLoggerMock.Object, _settingsMock.Object);
         zipHandler.SetNext(nextHandlerMock.Object);
 
@@ -64,7 +64,7 @@ public class ZipHandlerTest
     {
         // Arrange
         var abstractFileHandlerLoggerMock = new Mock<ILogger<AbstractFileHandler>>();
-        var zipHandler = new ZipHandler(_loggerMock.Object, _settingsMock.Object, new MockFileSystem());
+        var zipHandler = new SupportedFileFilter(_loggerMock.Object, _settingsMock.Object, new MockFileSystem());
         var nextHandlerMock = new Mock<AbstractFileHandler>(abstractFileHandlerLoggerMock.Object, _settingsMock.Object);
         zipHandler.SetNext(nextHandlerMock.Object);
 
@@ -79,7 +79,7 @@ public class ZipHandlerTest
     public void Handle_ShouldNotThrow_WhenNoNextHandler()
     {
         // Arrange
-        var zipHandler = new ZipHandler(_loggerMock.Object, _settingsMock.Object, new MockFileSystem());
+        var zipHandler = new SupportedFileFilter(_loggerMock.Object, _settingsMock.Object, new MockFileSystem());
 
         // Act & Assert
         Assert.DoesNotThrowAsync(async () => await zipHandler.Handle("somefile.txt", "text/plain"));
