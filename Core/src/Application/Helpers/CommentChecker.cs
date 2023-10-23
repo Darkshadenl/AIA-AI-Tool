@@ -12,19 +12,19 @@ public class CommentChecker
         _logger = logger;
     }
 
-    public bool CheckForComments(ZipArchiveEntry zipArchiveEntry, string fileExtension)
+    public bool HasComments(ZipArchiveEntry zipArchiveEntry, string fileExtension)
     {
         switch (fileExtension)
         {
             case ".ts":
                 string pattern = @"(\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/\*\*[\s\S]*?\*\/)";
-                return FilesHaveComments(zipArchiveEntry, pattern);
+                return FileHasComments(zipArchiveEntry, pattern);
             default:
                 throw new ArgumentException("File extension not supported.");
         }
     }
 
-    private bool FilesHaveComments(ZipArchiveEntry file, string pattern)
+    private bool FileHasComments(ZipArchiveEntry file, string pattern)
     {
         var hasComments = false;
         using var reader = new StreamReader(file.Open());

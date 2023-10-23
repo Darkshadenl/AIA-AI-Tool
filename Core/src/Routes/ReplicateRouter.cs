@@ -20,12 +20,12 @@ public class ReplicateRouter
 {
     [Obsolete("Remove at a later stage after implementing ReplicateWebHook further")]
     public static Func<ReplicateApi, ILogger<ReplicateRouter>, ILogger<LlmFileUploaderHandler>, IOptions<Settings>,
-        IOptions<ReplicateSettings>, IFileSystem, IPredictionDatabaseService, CommentChecker, Task<IResult>> ReplicateWebhookTest()
+        IOptions<ReplicateSettings>, IFileSystem, IPredictionDatabaseService, Task<IResult>> ReplicateWebhookTest()
     {
-        return async (replicateApi, logger, llmLogger, settings, replicateSettings, fs, predictionDatabaseService, commentChecker) => {
+        return async (replicateApi, logger, llmLogger, settings, replicateSettings, fs, predictionDatabaseService) => {
             logger.LogInformation("replicate-webhook-test");
 
-            var llm = new LlmFileUploaderHandler(llmLogger, settings, replicateSettings, replicateApi, fs, predictionDatabaseService, commentChecker);
+            var llm = new LlmFileUploaderHandler(llmLogger, settings, replicateSettings, replicateApi, fs, predictionDatabaseService);
 
             var inputPath = settings.Value.TempFolderPath + "/joost-main.zip";
 

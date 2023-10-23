@@ -45,6 +45,11 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
         return false;
     }
 
+    protected bool IsValidFile(string inputContentType, string[] contentTypes)
+    {
+        return contentTypes.Any(c => inputContentType == c);
+    }
+
     protected void CountExtension(string extension)
     {
         if (!ExtensionsCount.ContainsKey(extension))

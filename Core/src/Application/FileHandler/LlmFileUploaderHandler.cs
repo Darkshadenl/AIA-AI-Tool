@@ -1,17 +1,18 @@
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
-using System.Text.RegularExpressions;
 using aia_api.Application.Helpers;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
-using aia_api.Services;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.FileHandler;
 
+/// <summary>
+/// Uploads files to Replicate.
+/// </summary>
 public class LlmFileUploaderHandler : AbstractFileHandler
 {
     private readonly ILogger<LlmFileUploaderHandler> _logger;
@@ -19,7 +20,6 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private readonly ReplicateApi _replicateApi;
     private readonly IFileSystem _fileSystem;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
-    private readonly CommentChecker _commentChecker;
     private readonly ReplicateSettings _replicateSettings;
     private readonly List<string> _errors = new();
 
@@ -29,8 +29,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         IOptions<ReplicateSettings> replicateSettings,
         ILlmApi replicateApi,
         IFileSystem fileSystem,
-        IPredictionDatabaseService predictionDatabaseService,
-        CommentChecker commentChecker
+        IPredictionDatabaseService predictionDatabaseService
         ) : base(logger, settings)
     {
         _logger = logger;
@@ -38,7 +37,6 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         _replicateApi = (ReplicateApi) replicateApi;
         _fileSystem = fileSystem;
         _predictionDatabaseService = predictionDatabaseService;
-        _commentChecker = commentChecker;
         _replicateSettings = replicateSettings.Value;
     }
 
@@ -46,11 +44,11 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     /// This handle method expects a zip-file at the outputPath with the name of the file in the inputPath.
     /// If it does not exist, it will throw an exception.
     /// </summary>
-    /// <throws>FileNotFoundException  if zip-file cannot be found</throws>
+    /// <throws>FileNotFoundException if zip-file cannot be found</throws>
     public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
         var fileName = _fileSystem.Path.GetFileName(inputPath);
-        var outputFilePath = _fileSystem.Path.Combine(_settings.OutputFolderPath, fileName);
+        var outputFilePath = _fileSystem.Path.Combine(_settings.TempFolderPath + "Output/", fileName);
         var zipArchive = GetZipArchive(outputFilePath);
 
         await ProcessFiles(zipArchive);
@@ -91,10 +89,6 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         foreach (var file in zipArchive.Entries)
         {
             // if (number++ > maxNumber) break;
-
-            var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
-            if (string.IsNullOrEmpty(fileExtension)) continue;
-            if (_commentChecker.CheckForComments(file, fileExtension)) continue;
             await ProcessFile(file);
         }
     }

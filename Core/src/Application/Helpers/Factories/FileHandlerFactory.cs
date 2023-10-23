@@ -21,7 +21,7 @@ public class FileHandlerFactory : IFileHandlerFactory
 
     public FileHandlerFactory(
         ILogger<FileValidator> fileValidatorLogger,
-        ILogger<ZipHandler> zipHandlerLogger,
+        ILogger<FileContentsFilter> zipHandlerLogger,
         ILogger<LlmFileUploaderHandler> llmFileUploaderHandlerLogger,
         IOptions<Settings> extensionSettings,
         IFileSystem fileSystem,
@@ -41,13 +41,13 @@ public class FileHandlerFactory : IFileHandlerFactory
     }
 
     private IUploadedFileHandler BuildFileHandlerStreet(ILogger<FileValidator> fileValidatorLogger,
-                                                        ILogger<ZipHandler> zipHandlerLogger,
+                                                        ILogger<FileContentsFilter> zipHandlerLogger,
                                                         ILogger<LlmFileUploaderHandler> llmFileUploaderHandlerLogger)
     {
         var fileValidator = new FileValidator(fileValidatorLogger, _extensionSettings);
-        var zipHandler = new ZipHandler(zipHandlerLogger, _extensionSettings, _fileSystem);
+        var zipHandler = new FileContentsFilter(zipHandlerLogger, _extensionSettings, _fileSystem, _commentChecker);
         var llm = new LlmFileUploaderHandler(llmFileUploaderHandlerLogger, _extensionSettings, _replicateSettings,
-                                             _replicateApi, _fileSystem, _predictionDatabaseService, _commentChecker);
+                                             _replicateApi, _fileSystem, _predictionDatabaseService);
 
         fileValidator.SetNext(zipHandler);
         zipHandler.SetNext(llm);
