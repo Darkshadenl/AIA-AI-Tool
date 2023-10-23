@@ -19,7 +19,6 @@ namespace aia_api.Migrations
                     FileName = table.Column<string>(type: "TEXT", nullable: false),
                     FileExtension = table.Column<string>(type: "TEXT", nullable: false),
                     Prompt = table.Column<string>(type: "TEXT", nullable: false),
-                    InputCode = table.Column<string>(type: "TEXT", nullable: false),
                     PredictionResponseText = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
