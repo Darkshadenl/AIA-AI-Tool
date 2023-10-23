@@ -36,23 +36,33 @@ public class ReplicateRouter
     }
 
     public static Func<int, HttpContext, ILogger<ReplicateRouter>, IOptions<Settings>, ReplicateCodeLlamaResultDTO, 
-        PredictionDbContext, IServiceBusService, LlmResponseController, Task> ReplicateWebhook()
+        PredictionDbContext, LlmResponseController, Task> ReplicateWebhook()
     {
-        return (id, context, logger, settings, resultDto, db, serviceBusService, llmResponseController) => {
+        return (id, context, logger, settings, resultDto, db, llmResponseController) => {
             if (resultDto.status == "succeeded")
             {
                 logger.LogInformation("Incoming LLM data for id: {id}", id);
                 
                 var dbPrediction = db.Predictions
                     .First(p => p.Id == id);
-                
-                string result = llmResponseController.CombineTokens(resultDto.output);
+                // result = """
+                //              /// <summary>
+                //              /// This code calculates the sum of two numbers
+                //              /// </summary>
+                //              /// <param name="number1"></param>
+                //              /// <param name="number2"></param>
+                //              /// <returns>ETststsdfasdfajsdflkjafhkajhfashkhakfho;ash</returns>
+                //              public int CalculateSum(int number1, int number2)
+                //          """;
 
                 if (settings.Value.AllowedFileTypes.Contains(dbPrediction.FileExtension))
                 {
+                    string result = llmResponseController.CombineTokens(resultDto.output);
+                    string codeWithComments = llmResponseController.ReplaceCommentInCode(result, dbPrediction.InputCode);
+                    
                     try
                     {
-                        dbPrediction.PredictionResponseText = result;
+                        dbPrediction.PredictionResponseText = codeWithComments;
                         db.Entry(dbPrediction).State = EntityState.Modified;
                         db.SaveChanges();
                     }
@@ -62,7 +72,7 @@ public class ReplicateRouter
                         throw;
                     }
                 
-                    llmResponseController.SendLlmResponseToFrontend(dbPrediction, result, serviceBusService);
+                    llmResponseController.SendLlmResponseToFrontend(dbPrediction, codeWithComments);
                     logger.LogInformation("Llm response successfully processed");
                 }
             }

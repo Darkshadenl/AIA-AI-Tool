@@ -64,6 +64,7 @@ namespace aia_api.Application.Controllers
             catch (Exception e)
             {
                 await InvokeErrorMessage(connection, "Something went wrong.");
+                _logger.LogCritical("Error: {message}, {stackTrace}", e.Message, e.StackTrace);
             }
         }
 
