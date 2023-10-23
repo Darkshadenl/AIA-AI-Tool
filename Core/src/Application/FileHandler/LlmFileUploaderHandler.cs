@@ -1,6 +1,7 @@
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
+using aia_api.Application.Helpers;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
@@ -59,11 +60,11 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private async Task<IDbPrediction> SavePredictionToDatabase(ZipArchiveEntry file)
     {
         var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
-        
+
         using var reader = new StreamReader(file.Open());
         string inputCode = await reader.ReadToEndAsync();
         var customPrompt = _replicateSettings.Prompt.Replace("${code}", inputCode);
-        
+
         var dbPrediction = new DbPrediction
         {
             FileExtension = fileExtension,
@@ -77,12 +78,12 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
     private async Task ProcessFiles(ZipArchive zipArchive)
     {
-        var maxNumber = 2;  // TODO remove at some point
-        var number = 0; // TODO remove at some point
+        // var maxNumber = 2;
+        // var number = 0;
 
         foreach (var file in zipArchive.Entries)
         {
-            if (number++ > maxNumber) break; // TODO remove at some point
+            // if (number++ > maxNumber) break; 
 
             var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
             if (string.IsNullOrEmpty(fileExtension)) continue;
@@ -95,10 +96,13 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         var dbPrediction = await SavePredictionToDatabase(file);
         var webHookWithId = _replicateSettings.WebhookUrl.Replace("${dbPredictionId}", dbPrediction.Id.ToString());
         var prediction = _replicateApi.CreateCodeLlamaPrediction(dbPrediction, webHookWithId);
-        var response = await _replicateApi.SendPrediction(prediction);
 
-        if (!response.IsSuccessStatusCode)
-            _errors.Add($"File: {file.FullName}, Error: {response.ReasonPhrase}");
+        if (EnvHelper.ReplicateEnabled())
+        {
+            var response = await _replicateApi.SendPrediction(prediction);
+            if (!response.IsSuccessStatusCode)
+                _errors.Add($"File: {file.FullName}, Error: {response.ReasonPhrase}");
+        }
     }
 
     private HandlerResult CreateHandlerResult()
