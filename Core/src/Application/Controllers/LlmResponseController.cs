@@ -57,7 +57,7 @@ public class LlmResponseController
         int index = methodIndex - 1;
         while (contentLines[index].Trim().StartsWith("/"))
         {
-            contentLines.Remove(contentLines[index]);
+            contentLines.RemoveAt(index);
             index--;
             if (index < 0) break;
         }
