@@ -6,10 +6,19 @@ namespace aia_api.Application.Helpers;
 public class CommentChecker
 {
     private readonly ILogger<CommentChecker> _logger;
+    private readonly List<string> _logs;
 
     public CommentChecker(ILogger<CommentChecker> logger)
     {
         _logger = logger;
+        _logs = new List<string>();
+    }
+
+    public void LogLogsAndClear()
+    {
+        var logs = string.Join("\n", _logs);
+        _logger.LogInformation(logs);
+        _logs.Clear();
     }
 
     public bool HasComments(ZipArchiveEntry zipArchiveEntry, string fileExtension)
@@ -36,14 +45,15 @@ public class CommentChecker
         if (matches.Count > 0)
         {
             hasComments = true;
-            _logger.LogInformation("{Name} contains comments.", file.FullName);
+            _logs.Add(string.Format("{0} contains comments.", file.FullName));
 
             foreach (Match match in matches)
             {
-                _logger.LogInformation("Found comment: {Value}", match.Value);
+                _logs.Add(string.Format("Found comment: {0}", match.Value));
             }
         }
-        _logger.LogInformation("{Name} does not contain comments.", file.Name);
+
+        _logs.Add(string.Format("{0} does not contain comments.", file.Name));
 
         return hasComments;
     }

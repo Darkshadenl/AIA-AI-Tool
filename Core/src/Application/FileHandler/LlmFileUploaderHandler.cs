@@ -88,8 +88,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         foreach (var file in zipArchive.Entries)
         {
             number++;
-            _logger.LogInformation("Uploading {number} of {Count} files...", number, zipArchive.Entries.Count);
-            _logger.LogInformation("filename: {FullName}", file.FullName);
+            _logger.LogInformation("Uploading {number} of {Count} files... \nFilename: {FullName}", number, zipArchive.Entries.Count, file.FullName);
             if (maxNumber != 0)
                 if (number > maxNumber) break;
             await ProcessFile(file);

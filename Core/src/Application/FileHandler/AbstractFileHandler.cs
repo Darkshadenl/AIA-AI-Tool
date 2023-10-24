@@ -66,7 +66,7 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
 
     protected void LogExtensionsCount()
     {
-        foreach (var (key, value) in ExtensionsCount)
-            _logger.LogInformation("{extension}: {amount}", key, value);
+        var logs = string.Join("\n", ExtensionsCount.Select(x => $"{x.Key}: {x.Value}"));
+        _logger.LogInformation(logs);
     }
 }

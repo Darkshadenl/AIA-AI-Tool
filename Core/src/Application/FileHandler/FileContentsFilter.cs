@@ -87,6 +87,7 @@ public class FileContentsFilter : AbstractFileHandler
                 await CopyEntryToNewArchive(entry, outputArchive);
             }
         }
+        _commentChecker.LogLogsAndClear();
     }
 
     private async Task CopyEntryToNewArchive(ZipArchiveEntry entry, ZipArchive outputArchive)
