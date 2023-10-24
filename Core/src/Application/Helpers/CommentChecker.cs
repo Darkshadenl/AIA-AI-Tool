@@ -26,7 +26,7 @@ public class CommentChecker
         switch (fileExtension)
         {
             case ".ts":
-                string pattern = @"((?<=\s|^)\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/\*\*[\s\S]*?\*\/)";
+                var pattern = @"((?<=\s|^)(?<!:)\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/\*\*[\s\S]*?\*\/)";
                 return FileHasComments(zipArchiveEntry, pattern);
             default:
                 throw new ArgumentException("File extension not supported.");
@@ -45,15 +45,15 @@ public class CommentChecker
         if (matches.Count > 0)
         {
             hasComments = true;
-            _logs.Add(string.Format("{0} contains comments.", file.FullName));
+            _logs.Add($"{file.FullName} contains comments.");
 
             foreach (Match match in matches)
             {
-                _logs.Add(string.Format("Found comment: {0}", match.Value));
+                _logs.Add($"Found comment: {match.Value}");
             }
         }
 
-        _logs.Add(string.Format("{0} does not contain comments.", file.Name));
+        _logs.Add($"{file.Name} does not contain comments.");
 
         return hasComments;
     }
