@@ -26,7 +26,7 @@ public class CommentChecker
         switch (fileExtension)
         {
             case ".ts":
-                var pattern = @"((?<=\s|^)(?<!:)\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/\*\*[\s\S]*?\*\/)";
+                var pattern = @"((?<=\s|^)\/\/(?!.*eslint)[^\n]*|\/\*(?!\s*eslint)[\s\S]*?\*\/|\/\*\*[\s\S]*?\*\/)";
                 return FileHasComments(zipArchiveEntry, pattern);
             default:
                 throw new ArgumentException("File extension not supported.");
