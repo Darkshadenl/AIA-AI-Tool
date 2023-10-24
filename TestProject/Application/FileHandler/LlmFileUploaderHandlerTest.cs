@@ -35,11 +35,10 @@ public class LlmFileUploaderHandlerTest
         var fileName = "testzip.zip";
         var inputPathFolder = "/Users/quintenmeijboom/Documents/Repos/aia_api/TestProject/Testfiles/";
         var inputContentType = "application/zip";
-        var outputFolderPath = "/Users/quintenmeijboom/Documents/Repos/aia_api/TestProject/Testfiles/Output/";
         var inputPath = Path.Combine(inputPathFolder, fileName);
 
         var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
-        var settings = Options.Create(new Settings { OutputFolderPath = outputFolderPath });
+        var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
         var replicateSettings = Options.Create(
             new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
 
@@ -64,7 +63,8 @@ public class LlmFileUploaderHandlerTest
 
         var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
         var dbContext = new Mock<PredictionDbContext>(CreateDbContextOptions());
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), (InterfacesAia.IPredictionDatabaseService) dbContext.Object);
+        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(),
+            (InterfacesAia.IPredictionDatabaseService) dbContext.Object);
 
         // Act
         var result = await handler.Handle(inputPath, inputContentType);
@@ -86,11 +86,10 @@ public class LlmFileUploaderHandlerTest
         var fileName = "testzip.zip";
         var inputPathFolder = "/Users/quintenmeijboom/Documents/Repos/aia_api/TestProject/Testfiles/";
         var inputContentType = "application/zip";
-        var outputFolderPath = "/Users/quintenmeijboom/Documents/Repos/aia_api/TestProject/Testfiles/Output/";
         var inputPath = Path.Combine(inputPathFolder, fileName);
 
         var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
-        var settings = Options.Create(new Settings { OutputFolderPath = outputFolderPath });
+        var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
         var replicateSettings = Options.Create(
             new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
 
@@ -115,7 +114,8 @@ public class LlmFileUploaderHandlerTest
 
         var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
         var dbContext = new Mock<PredictionDbContext>(CreateDbContextOptions());
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), (InterfacesAia.IPredictionDatabaseService)dbContext.Object);
+        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(),
+            (InterfacesAia.IPredictionDatabaseService)dbContext.Object);
 
         // Act
         var result = await handler.Handle(inputPath, inputContentType);
@@ -137,11 +137,10 @@ public class LlmFileUploaderHandlerTest
         var zipFileName = "testzip.zip";
         var inputPathFolder = "/Users/quintenmeijboom/Documents/Repos/aia_api/TestProject/Testfiles/";
         var inputContentType = "application/zip";
-        var outputFolderPath = "/Users/quintenmeijboom/Documents/Repos/aia_api/TestProject/Testfiles/Output/";
         var inputPath = Path.Combine(inputPathFolder, zipFileName);
 
         var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
-        var settings = Options.Create(new Settings { OutputFolderPath = outputFolderPath });
+        var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
         var replicateSettings = Options.Create(
             new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
 
@@ -186,11 +185,10 @@ public class LlmFileUploaderHandlerTest
         var zipFileName = "testzip.zip";
         var inputPathFolder = "/Users/quintenmeijboom/Documents/Repos/aia_api/TestProject/Testfiles/";
         var inputContentType = "application/zip";
-        var outputFolderPath = "/Users/quintenmeijboom/Documents/Repos/aia_api/TestProject/Testfiles/Output/";
         var inputPath = Path.Combine(inputPathFolder, zipFileName);
 
         var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
-        var settings = Options.Create(new Settings { OutputFolderPath = outputFolderPath });
+        var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
         var replicateSettings = Options.Create(
             new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
 
@@ -216,7 +214,8 @@ public class LlmFileUploaderHandlerTest
         var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
         var dbContext = new PredictionDbContext(CreateDbContextOptions());
 
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), (InterfacesAia.IPredictionDatabaseService)dbContext);
+        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(),
+            (InterfacesAia.IPredictionDatabaseService)dbContext);
 
         // Act
         await handler.Handle(inputPath, inputContentType);

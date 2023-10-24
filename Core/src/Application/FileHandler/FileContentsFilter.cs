@@ -14,6 +14,7 @@ namespace aia_api.Application.FileHandler;
 public class FileContentsFilter : AbstractFileHandler
 {
     private readonly Settings _settings;
+    private readonly ILogger<FileContentsFilter> _logger;
     private readonly IFileSystem _fileSystem;
     private readonly CommentChecker _commentChecker;
 
@@ -25,6 +26,7 @@ public class FileContentsFilter : AbstractFileHandler
     ) : base(logger, settings)
     {
         _settings = settings.Value;
+        _logger = logger;
         _fileSystem = fileSystem;
         _commentChecker = commentChecker;
     }
@@ -81,6 +83,7 @@ public class FileContentsFilter : AbstractFileHandler
 
             if (IsSupportedExtension(extension) && _commentChecker.HasComments(entry, extension))
             {
+                _logger.LogInformation("Filtering {entry}...", entry.FullName);
                 await CopyEntryToNewArchive(entry, outputArchive);
             }
         }

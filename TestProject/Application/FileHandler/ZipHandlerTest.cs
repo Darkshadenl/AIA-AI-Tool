@@ -1,6 +1,7 @@
 using System.IO.Abstractions.TestingHelpers;
 using System.IO.Compression;
 using aia_api.Application.FileHandler;
+using aia_api.Application.Helpers;
 using aia_api.Configuration.Records;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -11,7 +12,7 @@ namespace TestProject.Application.FileHandler;
 public class ZipHandlerTest
 {
     private Mock<IOptions<Settings>> _settingsMock;
-    private Mock<ILogger<SupportedFileFilter>> _loggerMock;
+    private Mock<ILogger<FileContentsFilter>> _loggerMock;
 
     [SetUp]
     public void SetUp()
@@ -19,10 +20,10 @@ public class ZipHandlerTest
         _settingsMock = new Mock<IOptions<Settings>>();
         _settingsMock.Setup(s => s.Value).Returns(new Settings
         {
-            OutputFolderPath = "some/temp/path",
+            TempFolderPath = "some/temp/path",
             AllowedFileTypes = new []{ ".zip "}
         });
-        _loggerMock = new Mock<ILogger<SupportedFileFilter>>();
+        _loggerMock = new Mock<ILogger<FileContentsFilter>>();
     }
 
     [Test]
@@ -46,9 +47,11 @@ public class ZipHandlerTest
         }
 
         mockFs.AddFile("somefile.zip", new MockFileData(zipData));
-        
+
         var abstractFileHandlerLoggerMock = new Mock<ILogger<AbstractFileHandler>>();
-        var zipHandler = new SupportedFileFilter(_loggerMock.Object, _settingsMock.Object, mockFs);
+        var commentCheckerLoggerMock = new Mock<ILogger<CommentChecker>>();
+        var commentChecker = new CommentChecker(commentCheckerLoggerMock.Object);
+        var zipHandler = new FileContentsFilter(_loggerMock.Object, _settingsMock.Object, mockFs,commentChecker);
         var nextHandlerMock = new Mock<AbstractFileHandler>(abstractFileHandlerLoggerMock.Object, _settingsMock.Object);
         zipHandler.SetNext(nextHandlerMock.Object);
 
@@ -64,7 +67,9 @@ public class ZipHandlerTest
     {
         // Arrange
         var abstractFileHandlerLoggerMock = new Mock<ILogger<AbstractFileHandler>>();
-        var zipHandler = new SupportedFileFilter(_loggerMock.Object, _settingsMock.Object, new MockFileSystem());
+        var commentCheckerLoggerMock = new Mock<ILogger<CommentChecker>>();
+        var commentChecker = new CommentChecker(commentCheckerLoggerMock.Object);
+        var zipHandler = new FileContentsFilter(_loggerMock.Object, _settingsMock.Object, new MockFileSystem(), commentChecker);
         var nextHandlerMock = new Mock<AbstractFileHandler>(abstractFileHandlerLoggerMock.Object, _settingsMock.Object);
         zipHandler.SetNext(nextHandlerMock.Object);
 
@@ -79,7 +84,9 @@ public class ZipHandlerTest
     public void Handle_ShouldNotThrow_WhenNoNextHandler()
     {
         // Arrange
-        var zipHandler = new SupportedFileFilter(_loggerMock.Object, _settingsMock.Object, new MockFileSystem());
+        var commentCheckerLoggerMock = new Mock<ILogger<CommentChecker>>();
+        var commentChecker = new CommentChecker(commentCheckerLoggerMock.Object);
+        var zipHandler = new FileContentsFilter(_loggerMock.Object, _settingsMock.Object, new MockFileSystem(), commentChecker);
 
         // Act & Assert
         Assert.DoesNotThrowAsync(async () => await zipHandler.Handle("somefile.txt", "text/plain"));

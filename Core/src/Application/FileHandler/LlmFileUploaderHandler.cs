@@ -82,13 +82,16 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
     private async Task ProcessFiles(ZipArchive zipArchive)
     {
-        var maxNumber = 5;
+        var maxNumber = 0;
         var number = 0;
-        _logger.LogInformation("Processing {maxNumber} of {Count} files...", maxNumber, zipArchive.Entries.Count);
 
         foreach (var file in zipArchive.Entries)
         {
-            // if (number++ > maxNumber) break;
+            number++;
+            _logger.LogInformation("Uploading {number} of {Count} files...", number, zipArchive.Entries.Count);
+            _logger.LogInformation("filename: {FullName}", file.FullName);
+            if (maxNumber != 0)
+                if (number > maxNumber) break;
             await ProcessFile(file);
         }
     }
