@@ -26,7 +26,6 @@ public class CommentChecker
         switch (fileExtension)
         {
             case ".ts":
-                var oldPattern = @"((?<=\s|^)\/\/(?!.*eslint)[^\n]*|\/\*(?!\s*eslint)[\s\S]*?\*\/|\/\*\*[\s\S]*?\*\/)";
                 var detectCommentsPattern = @"((?<=\s|^)\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/\*\*[\s\S]*?\*\/)";
                 var detectEslintCommentsPattern =
                     @"(\/\/.*eslint-.*|\/\*[\s\S]*?eslint-[\s\S]*?\*\/|\/\*\*[\s\S]*?eslint-[\s\S]*?\*\/)";
