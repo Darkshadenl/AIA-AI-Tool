@@ -7,6 +7,10 @@ public class CommentChecker
 {
     private readonly ILogger<CommentChecker> _logger;
     private readonly List<string> _logs;
+    private ZipArchiveEntry _file;
+    private MatchCollection _allComments;
+    private MatchCollection _eslintComments;
+    private MatchCollection _inlineComments;
 
     public CommentChecker(ILogger<CommentChecker> logger)
     {
@@ -23,6 +27,7 @@ public class CommentChecker
 
     public bool HasComments(ZipArchiveEntry zipArchiveEntry, string fileExtension)
     {
+        _file = zipArchiveEntry;
         switch (fileExtension)
         {
             case ".ts":
@@ -31,22 +36,22 @@ public class CommentChecker
                     @"(\/\/.*eslint-.*|\/\*[\s\S]*?eslint-[\s\S]*?\*\/|\/\*\*[\s\S]*?eslint-[\s\S]*?\*\/)";
                 var detectInlineCommentsPattern =
                     @"(?<=\S{1,3}\s{0,2})\/\/[^\n]*|(?<=\S{1,3}\s{0,2})\/\*[\s\S]*?\*\/|(?<=\S{1,3}\s{0,2})\/\*\*[\s\S]*?\*\/";
-                return FileHasComments(zipArchiveEntry, detectCommentsPattern, detectEslintCommentsPattern,
+                return FileHasComments(detectCommentsPattern, detectEslintCommentsPattern,
                     detectInlineCommentsPattern);
             default:
                 throw new ArgumentException("File extension not supported.");
         }
     }
 
-    private bool FileHasComments(ZipArchiveEntry file, string allCommentPattern, string eslintCommentPattern,
+    private bool FileHasComments(string allCommentPattern, string eslintCommentPattern,
         string detectInlineCommentPattern)
     {
-        var fileContent = ReadFileContent(file);
-        var allComments = FindMatches(fileContent, allCommentPattern);
-        var eslintComments = FindMatches(fileContent, eslintCommentPattern);
-        var inlineComments = FindMatches(fileContent, detectInlineCommentPattern);
+        var fileContent = ReadFileContent(_file);
+        _allComments = FindMatches(fileContent, allCommentPattern);
+        _eslintComments = FindMatches(fileContent, eslintCommentPattern);
+        _inlineComments = FindMatches(fileContent, detectInlineCommentPattern);
 
-        return AnalyzeComments(file, allComments, eslintComments, inlineComments);
+        return AnalyzeComments();
     }
 
     private string ReadFileContent(ZipArchiveEntry file)
@@ -60,48 +65,46 @@ public class CommentChecker
         return Regex.Matches(text, pattern, RegexOptions.Multiline);
     }
 
-    private bool AnalyzeComments(ZipArchiveEntry file, MatchCollection allComments, MatchCollection eslintComments,
-        MatchCollection inlineComments)
+    private bool AnalyzeComments()
     {
-        if (allComments.Count == 0)
+        if (_allComments.Count == 0)
         {
-            Log($"{file.Name} does not contain comments.");
+            Log($"{_file.Name} does not contain comments.");
             return false;
         }
 
-        var nonEssentialCommentCount = eslintComments.Count + inlineComments.Count;
+        var nonEssentialCommentCount = _eslintComments.Count + _inlineComments.Count;
 
-        if (nonEssentialCommentCount == allComments.Count)
+        if (nonEssentialCommentCount == _allComments.Count)
         {
-            Log($"{file.Name} contains only eslint or inline comments. Skipping.");
+            Log($"{_file.Name} contains only eslint or inline comments. Skipping.");
             return false;
         }
 
-        if (IsOnlyTypeOfComment(allComments, eslintComments, file, "eslint"))
+        if (IsOnlyTypeOfComment(_eslintComments, "eslint"))
             return false;
 
-        if (IsOnlyTypeOfComment(allComments, inlineComments, file, "inline"))
+        if (IsOnlyTypeOfComment(_inlineComments, "inline"))
             return false;
 
-        LogComments(file, allComments);
+        LogComments(_allComments);
         return true;
     }
 
-    private bool IsOnlyTypeOfComment(MatchCollection allComments, MatchCollection specificComments,
-        ZipArchiveEntry file, string commentType)
+    private bool IsOnlyTypeOfComment(MatchCollection specificComments, string commentType)
     {
-        if (allComments.Count <= specificComments.Count)
+        if (_allComments.Count <= specificComments.Count)
         {
-            Log($"Found only {commentType} comment in {file.FullName}. Skipping.");
+            Log($"Found only {commentType} comment in {_file.FullName}. Skipping.");
             return true;
         }
 
         return false;
     }
 
-    private void LogComments(ZipArchiveEntry file, MatchCollection comments)
+    private void LogComments(MatchCollection comments)
     {
-        Log($"Found comments in {file.FullName}.");
+        Log($"Found comments in {_file.FullName}.");
         for (var index = 0; index < comments.Count; index++)
         {
             var match = comments[index];
