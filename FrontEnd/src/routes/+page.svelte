@@ -9,6 +9,8 @@
 		if (form?.success) form.success = "";
 		if (form?.error) form.error = "";
 	}
+
+
 </script>
 
 <h1>ZIP File upload</h1>
@@ -20,6 +22,8 @@
 {#if form?.success}
 	<p class="success">{form.success}</p>
 {/if}
+
+<a href="/differences">Differences</a>
 
 <form method="POST" action="?/uploadFile" enctype="multipart/form-data">
 	<p>

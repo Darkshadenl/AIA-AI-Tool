@@ -2,6 +2,7 @@
 
 import { error } from '@sveltejs/kit';
 import { HubConnectionBuilder, HttpTransportType, HubConnection } from '@microsoft/signalr';
+import { newCodeStore } from "./store.js";
 
 const API_URL = "http://localhost:5195/uploadZip";
 
@@ -70,9 +71,9 @@ export class SignalRService {
   RegisterGetLLMResponseCallback() {
     if (!this.connection) throw error(500, "No connection found");
 
-    this.connection.on("ReturnLLMResponse", async (fileName, contentType, fileContent) => {
-      console.log(`File ${fileName} with content type ${contentType} received.`);
-      console.log(fileContent);
+    this.connection.on("ReturnLLMResponse", (fileName, contentType, fileContent) => {
+      newCodeStore.update((value) => [...value, fileContent]);
     });
+    this.connection.on("ReceiveOldCode", () => {});
   }
 }
