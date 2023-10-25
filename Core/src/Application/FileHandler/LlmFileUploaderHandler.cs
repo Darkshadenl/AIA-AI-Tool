@@ -94,6 +94,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             await ProcessFile(file);
         }
     }
+
     private async Task ProcessFile(ZipArchiveEntry file)
     {
         var dbPrediction = await SavePredictionToDatabase(file);

@@ -34,4 +34,18 @@
     <ItemGroup>
       <None Remove="Application\Controller\" />
     </ItemGroup>
+    <ItemGroup>
+      <None Remove="Application\FileHandler\code_snippets.txt" />
+      <Content Include="Application\FileHandler\code_snippets.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Application\FileHandler\comments.txt" />
+      <Content Include="Application\FileHandler\comments.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Application\FileHandler\eslint_comments.txt" />
+      <Content Include="Application\FileHandler\eslint_comments.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
 </Project>
