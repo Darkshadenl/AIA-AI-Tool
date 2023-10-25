@@ -2,7 +2,7 @@
 
 import { error } from '@sveltejs/kit';
 import { HubConnectionBuilder, HttpTransportType, HubConnection } from '@microsoft/signalr';
-import { newCodeStore, oldCodeStore } from "./store.js";
+import { oldCodeStore, newCodeStore, errorMessage, successMessage } from "./store.js";
 
 const API_URL = "http://localhost:5195/uploadZip";
 
@@ -41,9 +41,18 @@ export class SignalRService {
                   .withAutomaticReconnect([5000, 5000, 5000, 5000, 5000])
                   .build();
 
-    this.RegisterGetLLMResponseCallback();
+    this.RegisterSignalRCallbacks();
 
     await this.connection.start().catch(err => console.log(err.toString()));
+  }
+
+  async stopConnection() {
+    if (!this.connection) return console.log("No connection found to stop.");
+
+    await this.connection.stop().then(() => {
+      this.connection = undefined;
+      console.log("Connection stopped.");
+    }).catch(err => console.log(err.toString()));
   }
 
   getConnection() {
@@ -68,8 +77,18 @@ export class SignalRService {
     return this.connection.invoke('UploadChunk', fileName, contentType, chunk, index, totalChunks);
   }
 
-  RegisterGetLLMResponseCallback() {
+  RegisterSignalRCallbacks() {
     if (!this.connection) throw error(500, "No connection found");
+
+    this.connection.on('UploadSuccess', (message) => {
+      successMessage.set(message);
+      console.log(`Success: ${message}`);
+    });
+
+    this.connection.on('ReceiveError', (message) => {
+      errorMessage.set(message);
+      console.log(`ServerError: ${message}`);
+    });
 
     this.connection.on("ReturnLLMResponse", (fileName, contentType, fileContent, oldFileContent) => {
       oldCodeStore.update((value) => [...value, { fileName: fileName, code: oldFileContent }]);
