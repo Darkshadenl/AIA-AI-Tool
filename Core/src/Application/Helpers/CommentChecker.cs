@@ -38,33 +38,76 @@ public class CommentChecker
     }
 
     private bool FileHasComments(ZipArchiveEntry file, string allCommentPattern, string eslintCommentPattern,
-        string detectInlineCommentPattern)
+    string detectInlineCommentPattern)
+{
+    var fileContent = ReadFileContent(file);
+    var allComments = FindMatches(fileContent, allCommentPattern);
+    var eslintComments = FindMatches(fileContent, eslintCommentPattern);
+    var inlineComments = FindMatches(fileContent, detectInlineCommentPattern);
+
+    return AnalyzeComments(file, allComments, eslintComments, inlineComments);
+}
+
+private string ReadFileContent(ZipArchiveEntry file)
+{
+    using var reader = new StreamReader(file.Open());
+    return reader.ReadToEnd();
+}
+
+private MatchCollection FindMatches(string text, string pattern)
+{
+    return Regex.Matches(text, pattern, RegexOptions.Multiline);
+}
+
+private bool AnalyzeComments(ZipArchiveEntry file, MatchCollection allComments, MatchCollection eslintComments, MatchCollection inlineComments)
+{
+    if (allComments.Count == 0)
     {
-        var hasComments = false;
-        using var reader = new StreamReader(file.Open());
-        var fileContent = reader.ReadToEnd();
-
-        var allCommentsMatches = Regex.Matches(fileContent, allCommentPattern, RegexOptions.Multiline);
-        var eslintCommentsMatches = Regex.Matches(fileContent, eslintCommentPattern, RegexOptions.Multiline);
-        var inlineCommentsMatches = Regex.Matches(fileContent, detectInlineCommentPattern, RegexOptions.Multiline);
-        reader.Close();
-
-        if (allCommentsMatches.Count > 0)
-        {
-            if (allCommentsMatches.Count <= eslintCommentsMatches.Count)
-                return false;
-            if (allCommentsMatches.Count <= inlineCommentsMatches.Count)
-                return false;
-
-            _logs.Add($"Found comments that are not eslint comments in {file.FullName}.");
-            hasComments = true;
-
-            foreach (Match match in allCommentsMatches)
-                _logs.Add($"Found comment: {match.Value}");
-        }
-        else
-            _logs.Add($"{file.Name} does not contain comments.");
-
-        return hasComments;
+        Log($"{file.Name} does not contain comments.");
+        return false;
     }
+
+    var nonEssentialCommentCount = eslintComments.Count + inlineComments.Count;
+
+    if (nonEssentialCommentCount == allComments.Count)
+    {
+        Log($"{file.Name} contains only eslint or inline comments. Skipping.");
+        return false;
+    }
+
+    if (IsOnlyTypeOfComment(allComments, eslintComments, file, "eslint"))
+        return false;
+
+    if (IsOnlyTypeOfComment(allComments, inlineComments, file, "inline"))
+        return false;
+
+    LogComments(file, allComments);
+    return true;
+}
+
+private bool IsOnlyTypeOfComment(MatchCollection allComments, MatchCollection specificComments, ZipArchiveEntry file, string commentType)
+{
+    if (allComments.Count <= specificComments.Count)
+    {
+        Log($"Found only {commentType} comment in {file.FullName}. Skipping.");
+        return true;
+    }
+    return false;
+}
+
+private void LogComments(ZipArchiveEntry file, MatchCollection comments)
+{
+    Log($"Found comments in {file.FullName}.");
+    for (var index = 0; index < comments.Count; index++)
+    {
+        var match = comments[index];
+        Log($"Comment {index}: {match.Value}");
+    }
+}
+
+private void Log(string message)
+{
+    _logs.Add(message);
+}
+
 }
