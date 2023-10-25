@@ -72,8 +72,8 @@ export class SignalRService {
     if (!this.connection) throw error(500, "No connection found");
 
     this.connection.on("ReturnLLMResponse", (fileName, contentType, fileContent, oldFileContent) => {
-      oldCodeStore.update((value) => [...value, oldFileContent]);
-      newCodeStore.update((value) => [...value, fileContent]);
+      oldCodeStore.update((value) => [...value, { fileName: fileName, code: oldFileContent }]);
+      newCodeStore.update((value) => [...value, { fileName: fileName, code: fileContent }]);
     });
   }
 }

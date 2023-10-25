@@ -30,11 +30,11 @@ namespace SignalR
             }
         }
 
-        public async Task ReturnLLMResponse(string fileName, string contentType, string fileContent)
+        public async Task ReturnLLMResponse(string fileName, string contentType, string fileContent, string oldFileContent)
         {
-            if (await SendErrorIfEmpty(fileContent)) return;
+            if (await SendErrorIfEmpty(fileContent) || await SendErrorIfEmpty(oldFileContent)) return;
 
-            await Clients.Others.ReturnLLMResponse(fileName, contentType, fileContent);
+            await Clients.Others.ReturnLLMResponse(fileName, contentType, fileContent, oldFileContent);
             _logger.LogInformation("Chunk {fileName} of file {contentType} send to clients", fileName, contentType);
         }
 

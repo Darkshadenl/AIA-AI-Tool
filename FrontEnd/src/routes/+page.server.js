@@ -4,6 +4,7 @@ import { fail, error } from '@sveltejs/kit';
 import { SignalRService } from '../SignalRServer.js';
 import { HubConnection } from '@microsoft/signalr';
 import { newCodeStore, oldCodeStore } from "../store.js";
+import * as stores from '../store.js';
 
 const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
 
@@ -29,6 +30,7 @@ export const actions = {
 	 * @returns {Promise<Object>} - A promise resolving to either a success or error response
 	 */
 	uploadFile: async ({ request }) => {
+        resetStores();
         const signalRService = SignalRService.getInstance();
 
         const formData = await request.formData();
@@ -132,4 +134,15 @@ async function processFileChunks(fileChunks, fileName, contentType) {
 async function chunkToByteArray(chunk) {
   const arrayBuffer = await chunk.arrayBuffer();
   return new Uint8Array(arrayBuffer);
+}
+
+/**
+ *
+ */
+function resetStores() {
+  for (const storeName in stores) {
+    if (Object.hasOwnProperty.call(stores, storeName)) {
+      stores[storeName].set([]);
+    }
+  }
 }

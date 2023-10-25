@@ -7,8 +7,9 @@
   <h1>{title}</h1>
 
   {#each code as codeBlock}
+    <h3>{codeBlock.fileName}</h3>
     <pre>
-      {codeBlock}
+      {codeBlock.code}
     </pre>
   {/each}
 </div>
