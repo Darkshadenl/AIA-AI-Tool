@@ -29,13 +29,16 @@ public class CommentChecker
                 var detectCommentsPattern = @"((?<=\s|^)\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/\*\*[\s\S]*?\*\/)";
                 var detectEslintCommentsPattern =
                     @"(\/\/.*eslint-.*|\/\*[\s\S]*?eslint-[\s\S]*?\*\/|\/\*\*[\s\S]*?eslint-[\s\S]*?\*\/)";
-                return FileHasComments(zipArchiveEntry, detectCommentsPattern, detectEslintCommentsPattern);
+                var detectInlineCommentsPattern =
+                    @"(?<=\S{1,3}\s{0,2})\/\/[^\n]*|(?<=\S{1,3}\s{0,2})\/\*[\s\S]*?\*\/|(?<=\S{1,3}\s{0,2})\/\*\*[\s\S]*?\*\/";
+                return FileHasComments(zipArchiveEntry, detectCommentsPattern, detectEslintCommentsPattern, detectInlineCommentsPattern);
             default:
                 throw new ArgumentException("File extension not supported.");
         }
     }
 
-    private bool FileHasComments(ZipArchiveEntry file, string allCommentPattern, string eslintCommentPattern)
+    private bool FileHasComments(ZipArchiveEntry file, string allCommentPattern, string eslintCommentPattern,
+        string detectInlineCommentPattern)
     {
         var hasComments = false;
         using var reader = new StreamReader(file.Open());
@@ -43,25 +46,24 @@ public class CommentChecker
 
         var allCommentsMatches = Regex.Matches(fileContent, allCommentPattern, RegexOptions.Multiline);
         var eslintCommentsMatches = Regex.Matches(fileContent, eslintCommentPattern, RegexOptions.Multiline);
+        var inlineCommentsMatches = Regex.Matches(fileContent, detectInlineCommentPattern, RegexOptions.Multiline);
         reader.Close();
 
         if (allCommentsMatches.Count > 0)
         {
             if (allCommentsMatches.Count <= eslintCommentsMatches.Count)
-            {
                 return false;
-            }
+            if (allCommentsMatches.Count <= inlineCommentsMatches.Count)
+                return false;
+
             _logs.Add($"Found comments that are not eslint comments in {file.FullName}.");
             hasComments = true;
+
             foreach (Match match in allCommentsMatches)
-            {
                 _logs.Add($"Found comment: {match.Value}");
-            }
         }
         else
-        {
             _logs.Add($"{file.Name} does not contain comments.");
-        }
 
         return hasComments;
     }

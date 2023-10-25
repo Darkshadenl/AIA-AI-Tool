@@ -1,5 +1,6 @@
 using System.IO.Abstractions.TestingHelpers;
 using System.IO.Compression;
+using System.Text;
 using aia_api.Application.FileHandler;
 using aia_api.Application.Helpers;
 using aia_api.Configuration.Records;
@@ -112,7 +113,7 @@ public class FileContentsFilterTest
     }
 
     [Test]
-    public async Task Filter_ShouldFindAllComments()
+    public async Task Filter_ShouldFind_AllComments()
     {
         // Arrange
         var mockFs = new MockFileSystem();
@@ -162,8 +163,8 @@ public class FileContentsFilterTest
         Assert.That(filteredArchive.Entries, Has.Count.EqualTo(originalArchive.Entries.Count));
     }
 
-     [Test]
-    public async Task Filter_ShouldIgnoreEslintComments()
+    [Test]
+    public async Task Filter_ShouldIgnore_EslintComments()
     {
         // Arrange
         var mockFs = new MockFileSystem();
@@ -225,5 +226,73 @@ public class FileContentsFilterTest
 
         Assert.That(filteredArchive.Entries, Has.Count.Not.EqualTo(combinationCount));
         Assert.That(filteredArchive.Entries, Has.Count.EqualTo(combinationCount - eslintCommentCount));
+    }
+
+    [Test]
+    public async Task Filter_ShouldNot_DetectInlineComments()
+    {
+        // Arrange
+        var mockFs = new MockFileSystem();
+        var expectedAmountEntries = 0;
+        // filename, content
+        var combinedCodeComments = new List<Tuple<string, string>>();
+        var combinationCount = 20;
+        var random = new Random();
+
+        for (var i = 0; i < combinationCount; i++)
+        {
+            var randomCodeSnippet = _codeSnippets[random.Next(0, _codeSnippets.Count - 1)];
+            var randomComment = _commentsList[random.Next(40, _commentsList.Count - 1)];
+            if (randomComment == string.Empty) throw new Exception("Empty comment");
+            var splitCode = randomCodeSnippet.Split("\n");
+            int lineNumber = random.Next(1, splitCode.Length);
+            var codeWithComment = new StringBuilder();
+
+            for (var index = 0; index < splitCode.Length; index++)
+            {
+                var codeLine = splitCode[index];
+                if (codeLine == string.Empty) continue;
+                if (index == lineNumber)
+                    codeWithComment.AppendLine($"{codeLine} {randomComment}");
+                else
+                    codeWithComment.AppendLine(codeLine);
+            }
+            var tuple = Tuple.Create($"file{i}.ts", codeWithComment.ToString());
+            combinedCodeComments.Add(tuple);
+        }
+
+        byte[] zipData;
+        using (var ms = new MemoryStream())
+        {
+            using (ZipArchive archiveBase = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                for (int i = 0; i < combinedCodeComments.Count; i++)
+                {
+                    var entry = archiveBase.CreateEntry(combinedCodeComments[i].Item1);
+                    using StreamWriter writer = new StreamWriter(entry.Open());
+                    writer.Write(combinedCodeComments[i].Item2);
+                }
+            }
+            zipData = ms.ToArray();
+        }
+
+        mockFs.AddFile("/temp/somefile.zip", new MockFileData(zipData));
+        var commentCheckerLoggerMock = new Mock<ILogger<CommentChecker>>();
+        var commentChecker = new CommentChecker(commentCheckerLoggerMock.Object);
+        var fileContentsFilter = new FileContentsFilter(_loggerMock.Object, _settingsMock.Object, mockFs, commentChecker);
+
+        // Act
+        await fileContentsFilter.Handle("/temp/somefile.zip", "application/zip");
+
+        // Assert
+        var fileExists = mockFs.FileExists("/some/temp/Output/somefile.zip");
+        Assert.That(fileExists, Is.True);
+
+        var filteredBytes = await mockFs.File.ReadAllBytesAsync("/some/temp/Output/somefile.zip");
+        using var filteredZipStream = new MemoryStream(filteredBytes);
+        using ZipArchive filteredArchive = new ZipArchive(filteredZipStream, ZipArchiveMode.Read);
+
+        Assert.That(filteredArchive.Entries, Has.Count.Not.EqualTo(combinationCount));
+        Assert.That(filteredArchive.Entries, Has.Count.EqualTo(expectedAmountEntries));
     }
 }
