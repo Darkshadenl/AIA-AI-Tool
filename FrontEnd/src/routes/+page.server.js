@@ -3,6 +3,7 @@
 import { fail, error } from '@sveltejs/kit';
 import { SignalRService } from '../SignalRServer.js';
 import { HubConnection } from '@microsoft/signalr';
+import { newCodeStore, oldCodeStore } from "../store.js";
 
 const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
 
@@ -13,6 +14,8 @@ const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
 export const load = (async () => {
   const signalRService = SignalRService.getInstance();
   await signalRService.startConnection();
+  oldCodeStore.set([]);
+  newCodeStore.set([]);
 });
 
 /** @type {Object} */
@@ -106,6 +109,8 @@ function sliceFileIntoChunks(file) {
  * Upload each chunk of the zip file to the API using SignalR.
  * @async
  * @param {Blob[]} fileChunks - The list of chunks.
+ * @param {string} fileName - The name of the file before it was sliced into chunks
+ * @param {string} contentType - The content type of the file before it was sliced into chunks.
  */
 async function processFileChunks(fileChunks, fileName, contentType) {
   const signalRService = SignalRService.getInstance();

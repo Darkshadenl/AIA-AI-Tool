@@ -63,7 +63,7 @@ public class ReplicateRouter
                         throw;
                     }
                 
-                    SendLlmResponseToFrontend(logger, dbPrediction.FileName, result, serviceBusService);
+                    SendLlmResponseToFrontend(logger, dbPrediction, result, serviceBusService);
                     logger.LogInformation("Llm response successfully processed");
                 }
             }
@@ -111,10 +111,12 @@ public class ReplicateRouter
 
     }
 
-    private static async void SendLlmResponseToFrontend(ILogger<ReplicateRouter> logger, string fileName, string content, IServiceBusService serviceBusService)
+    private static async void SendLlmResponseToFrontend(ILogger<ReplicateRouter> logger, DbPrediction dbPrediction, string content, IServiceBusService serviceBusService)
     {
         HubConnection connection = serviceBusService.GetConnection();
         if (connection.State != HubConnectionState.Connected) return;
+
+        string fileName = dbPrediction.FileName;
 
         if (!new FileExtensionContentTypeProvider().TryGetContentType(fileName, out string contentType))
         {
@@ -122,7 +124,7 @@ public class ReplicateRouter
             logger.LogDebug("Could not find content type of file {fileName}", fileName);
         }
 
-        await connection.InvokeAsync("ReturnLLMResponse", fileName, contentType, content);
+        await connection.InvokeAsync("ReturnLLMResponse", fileName, contentType, content, dbPrediction.InputCode);
         logger.LogInformation("File {fileName} send to clients", fileName);
     }
 }
