@@ -1,23 +1,11 @@
 //@ts-check
 
-import { fail, error } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { SignalRService } from '../SignalRServer.js';
-import { HubConnection } from '@microsoft/signalr';
-import { newCodeStore, oldCodeStore } from "../store.js";
 import * as stores from '../store.js';
+import { successMessage } from "../store.js";
 
 const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
-
-/**
- * Create API connection using SignalR
- * @type {import('@sveltejs/kit').Load}
- */
-export const load = (async () => {
-  const signalRService = SignalRService.getInstance();
-  await signalRService.startConnection();
-  oldCodeStore.set([]);
-  newCodeStore.set([]);
-});
 
 /** @type {Object} */
 export const actions = {
@@ -30,60 +18,33 @@ export const actions = {
 	 * @returns {Promise<Object>} - A promise resolving to either a success or error response
 	 */
 	uploadFile: async ({ request }) => {
-        resetStores();
-        const signalRService = SignalRService.getInstance();
+    resetStores();
+    await establishSignalRConnection();
 
-        const formData = await request.formData();
-        const file = formData.get('file');
-        
-        if (!(file instanceof File)) return;
-        if (file.size <= 0) return fail(400, { error: "No file received or file is empty." });
-        if (file.size > FILE_SIZE_LIMIT_IN_BYTES) return fail(413, { error: `File size of file "${file.name}" exceeded the limit of ${FILE_SIZE_LIMIT_IN_BYTES / 1000 / 1000} MB.` });
+    const formData = await request.formData();
+    const file = formData.get('file');
 
-        const fileChunks = sliceFileIntoChunks(file);
-        await processFileChunks(fileChunks, file.name, file.type);
-        return await showResult(signalRService);
+    if (!(file instanceof File)) return;
+    if (file.size <= 0) return fail(400, { error: "No file received or file is empty." });
+    if (file.size > FILE_SIZE_LIMIT_IN_BYTES) return fail(413, { error: `File size of file "${file.name}" exceeded the limit of ${FILE_SIZE_LIMIT_IN_BYTES / 1000 / 1000} MB.` });
+
+    const fileChunks = sliceFileIntoChunks(file);
+    await processFileChunks(fileChunks, file.name, file.type);
+    // let message;
+    // successMessage.subscribe((value) => {
+		// 	message = value;
+		// });
+    // return { success: message }
 	}
 }
 
 /**
- * Fetches the result of the file upload operation from the SignalR service
- * @async
- * @function
- * @param {SignalRService} signalRService
- * @returns {Promise<Object>} - A promise resolving to either a success or error response
+ * Creates and starts a connection with the SignalR server, as well as closing an earlier connection if it exists.
  */
-async function showResult(signalRService) {
-  let connection = signalRService.getConnection();
-  if (!connection) throw error(500, "No connection found");
-
-  return receiveMessage(connection)
-  .then((successMessage) => {
-    return { success: successMessage }
-  })
-  .catch((errorMessage) => {
-    return fail(500, { error: errorMessage });
-  });
-}
-
-/**
- * Listens for success or error messages from the server
- * @function
- * @param {HubConnection} connection - The SignalR connection to the server
- * @returns {Promise} - A promise resolving with a success message or rejecting with an error message
- */
-function receiveMessage(connection) {
-  return new Promise((resolve, reject) => {
-    connection.on('UploadSuccess', (message) => {
-      console.log(`Success: ${message}`);
-      resolve(message);
-    });
-
-    connection.on('ReceiveError', (message) => {
-      console.log(`ServerError: ${message}`);
-      reject(message);
-    });
-  });
+async function establishSignalRConnection() {
+  const signalRService = SignalRService.getInstance();
+  if (signalRService.getConnection()) await signalRService.stopConnection();
+  await signalRService.startConnection();
 }
 
 /**
@@ -142,7 +103,7 @@ async function chunkToByteArray(chunk) {
 function resetStores() {
   for (const storeName in stores) {
     if (Object.hasOwnProperty.call(stores, storeName)) {
-      stores[storeName].set([]);
+      stores[storeName].update(() => null);
     }
   }
 }

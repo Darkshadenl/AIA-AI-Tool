@@ -6,12 +6,14 @@
 <div class={$$props.class}>
   <h1>{title}</h1>
 
-  {#each code as codeBlock}
-    <h3>{codeBlock.fileName}</h3>
-    <pre>
-      {codeBlock.code}
-    </pre>
-  {/each}
+  {#if code}
+    {#each code as codeBlock}
+      <h3>{codeBlock.fileName}</h3>
+      <pre>
+        {codeBlock.code}
+      </pre>
+    {/each}
+  {/if}
 </div>
 
 <style>

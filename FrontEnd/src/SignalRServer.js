@@ -4,7 +4,7 @@ import { error } from '@sveltejs/kit';
 import { HubConnectionBuilder, HttpTransportType, HubConnection } from '@microsoft/signalr';
 import { oldCodeStore, newCodeStore, errorMessage, successMessage } from "./store.js";
 
-const API_URL = "http://localhost:5195/uploadZip";
+const API_URL = process.env.API_URL || "http://localhost:5195/uploadZip";
 
 export class SignalRService {
   /** @type {SignalRService} */
@@ -49,10 +49,7 @@ export class SignalRService {
   async stopConnection() {
     if (!this.connection) return console.log("No connection found to stop.");
 
-    await this.connection.stop().then(() => {
-      this.connection = undefined;
-      console.log("Connection stopped.");
-    }).catch(err => console.log(err.toString()));
+    await this.connection.stop().then(() => this.connection = undefined).catch(err => console.log(err.toString()));
   }
 
   getConnection() {
@@ -91,8 +88,14 @@ export class SignalRService {
     });
 
     this.connection.on("ReturnLLMResponse", (fileName, contentType, fileContent, oldFileContent) => {
-      oldCodeStore.update((value) => [...value, { fileName: fileName, code: oldFileContent }]);
-      newCodeStore.update((value) => [...value, { fileName: fileName, code: fileContent }]);
+      oldCodeStore.update((value) => {
+        if (value) return [...value, { fileName: fileName, code: oldFileContent }];
+        return [{ fileName: fileName, code: oldFileContent }];
+      });
+      newCodeStore.update((value) => {
+        if (value) return [...value, { fileName: fileName, code: fileContent }];
+        return [{ fileName: fileName, code: oldFileContent }];
+      });
     });
   }
 }
