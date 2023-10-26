@@ -1,16 +1,12 @@
 using System.IO.Abstractions;
 using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
-using aia_api.Application.Controllers;
-using aia_api.Application.FileHandler;
+using aia_api.Application.Handlers.FileHandler;
+using aia_api.Application.Helpers;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
 using aia_api.Routes.DTO;
 using InterfacesAia;
-using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -36,9 +32,9 @@ public class ReplicateRouter
     }
 
     public static Func<int, HttpContext, ILogger<ReplicateRouter>, IOptions<Settings>, ReplicateCodeLlamaResultDTO, 
-        PredictionDbContext, LlmResponseController, Task> ReplicateWebhook()
+        PredictionDbContext, CommentManipulationHelper, ISignalRService, Task> ReplicateWebhook()
     {
-        return (id, context, logger, settings, resultDto, db, llmResponseController) => {
+        return (id, context, logger, settings, resultDto, db, commentManipulationHelper, signalRService) => {
             if (resultDto.status == "succeeded")
             {
                 logger.LogInformation("Incoming LLM data for id: {id}", id);
@@ -48,8 +44,8 @@ public class ReplicateRouter
 
                 if (settings.Value.AllowedFileTypes.Contains(dbPrediction.FileExtension))
                 {
-                    string result = llmResponseController.CombineTokens(resultDto.output);
-                    string codeWithComments = llmResponseController.ReplaceCommentInCode(result, dbPrediction.InputCode);
+                    string result = commentManipulationHelper.CombineTokens(resultDto.output);
+                    string codeWithComments = commentManipulationHelper.ReplaceCommentInCode(result, dbPrediction.InputCode);
                     
                     try
                     {
@@ -63,7 +59,7 @@ public class ReplicateRouter
                         throw;
                     }
                 
-                    llmResponseController.SendLlmResponseToFrontend(dbPrediction, codeWithComments);
+                    signalRService.SendLlmResponseToFrontend(dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments);
                     logger.LogInformation("Llm response successfully processed");
                 }
             }

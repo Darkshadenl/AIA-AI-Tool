@@ -1,6 +1,6 @@
 using System.IO.Abstractions;
 using System.Net;
-using aia_api.Application.FileHandler;
+using aia_api.Application.Handlers.FileHandler;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
@@ -10,7 +10,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
-using NUnit.Framework.Internal;
 
 namespace TestProject.Application.FileHandler;
 

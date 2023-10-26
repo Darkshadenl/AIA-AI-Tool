@@ -1,19 +1,17 @@
-using System.Net;
 using aia_api.Configuration.Records;
 using aia_api.Services;
 using InterfacesAia;
-using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
 
-namespace aia_api.Application.FileHandler;
+namespace aia_api.Application.Handlers.FileHandler;
 
-public class UploadHandler : AbstractFileHandler
+public class AzureUploadHandler : AbstractFileHandler
 {
-    private readonly ILogger<UploadHandler> _logger;
+    private readonly ILogger<AzureUploadHandler> _logger;
     private readonly IOptions<Settings> _settings;
     private readonly AzureService _azureService;
 
-    public UploadHandler(ILogger<UploadHandler> logger, IOptions<Settings> settings, AzureService azureService) : base(logger, settings)
+    public AzureUploadHandler(ILogger<AzureUploadHandler> logger, IOptions<Settings> settings, AzureService azureService) : base(logger, settings)
     {
         _logger = logger;
         _settings = settings;

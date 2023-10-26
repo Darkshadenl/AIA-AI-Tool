@@ -1,28 +1,14 @@
 using System.Text;
-using aia_api.Database;
-using InterfacesAia;
-using Microsoft.AspNetCore.SignalR.Client;
 
-namespace aia_api.Application.Controllers;
+namespace aia_api.Application.Helpers;
 
-public class LlmResponseController
+public class CommentManipulationHelper
 {
-    private readonly ILogger<LlmResponseController> _logger;
-    private readonly IServiceBusService _serviceBusService;
+    private readonly ILogger<CommentManipulationHelper> _logger;
 
-    public LlmResponseController(ILogger<LlmResponseController> logger, IServiceBusService serviceBusService)
+    public CommentManipulationHelper(ILogger<CommentManipulationHelper> logger)
     {
         _logger = logger;
-        _serviceBusService = serviceBusService;
-    }
-
-    public async void SendLlmResponseToFrontend(DbPrediction dbPrediction, string content)
-    {
-        HubConnection connection = _serviceBusService.GetConnection();
-        if (connection.State != HubConnectionState.Connected) return;
-
-        await connection.InvokeAsync("ReturnLLMResponse", dbPrediction.FileName, dbPrediction.FileExtension, content);
-        _logger.LogInformation("File {fileName} send to clients", dbPrediction.FileName);
     }
 
     public string CombineTokens(string[] tokens)

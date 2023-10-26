@@ -1,22 +1,19 @@
-using aia_api.Application.Controllers;
-using InterfacesAia;
+using aia_api.Application.Helpers;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace TestProject.Application.Controller;
+namespace TestProject.Application.Helpers;
 
-public class LlmResponseControllerTest
+public class CommentManipulationHelperTest
 {
-    private Mock<ILogger<LlmResponseController>> _logger;
-    private Mock<IServiceBusService> _serviceBusService;
-    private LlmResponseController _llmResponseController;
+    private Mock<ILogger<CommentManipulationHelper>> _logger;
+    private CommentManipulationHelper _llmResponseController;
 
     [SetUp]
     public void SetUp()
     {
-        _logger = new Mock<ILogger<LlmResponseController>>();
-        _serviceBusService = new Mock<IServiceBusService>();
-        _llmResponseController = new LlmResponseController(_logger.Object, _serviceBusService.Object);
+        _logger = new Mock<ILogger<CommentManipulationHelper>>();
+        _llmResponseController = new CommentManipulationHelper(_logger.Object);
     }
 
     [Test]
@@ -97,7 +94,10 @@ public class LlmResponseControllerTest
                   }
                   """;
         
+        // Act
         string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
+        
+        // Assert
         Assert.That(codeWithComments, Is.EqualTo(expectedCode));
     }
     
@@ -154,7 +154,10 @@ public class LlmResponseControllerTest
                   }
                   """;
         
+        // Act
         string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
+        
+        // Assert
         Assert.That(codeWithComments, Is.EqualTo(expectedCode));
     }
     
@@ -236,7 +239,10 @@ public class LlmResponseControllerTest
                   }
                   """;
 
+        // Act
         string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
+        
+        // Assert
         Assert.That(codeWithComments, Is.EqualTo(expectedCode));
     }
     
@@ -295,5 +301,19 @@ public class LlmResponseControllerTest
         
         string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
         Assert.That(codeWithComments, Is.EqualTo(expectedCode));
+    }
+
+    [Test]
+    public void ProcessLlmResponse_ShouldCombineTokens()
+    {
+        // Arrange
+        var expectedResult = "This is a token.";
+        var tokens = new string[] { "This", " ", "is", " ", "a", " ", "to", "ken", "." };
+        
+        // Act
+        var combinedTokens = _llmResponseController.CombineTokens(tokens);
+        
+        // Assert
+        Assert.That(combinedTokens, Is.EqualTo(expectedResult));
     }
 }

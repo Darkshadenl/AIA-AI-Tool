@@ -1,11 +1,11 @@
 using aia_api.Application.Helpers.Factories;
 using aia_api.Configuration.Records;
 using aia_api.Services;
-using aia_api.Application.Controllers;
-using aia_api.src.Services;
+using aia_api.Application.Helpers;
 using Azure.Storage;
 using System.IO.Abstractions;
 using System.Net.Http.Headers;
+using aia_api.Application.Handlers;
 using aia_api.Application.Replicate;
 using aia_api.Database;
 using Azure.Storage.Blobs;
@@ -74,6 +74,7 @@ public static class DependencyInjectionConfig
         services.AddSingleton<IFileSystemStorageService, FileSystemStorageService>();
         services.AddSingleton<IFileSystem, FileSystem>();
         services.AddSingleton<IServiceBusService, ServiceBusService>();
+        services.AddSingleton<ISignalRService, SignalRService>();
         services.AddSingleton<IPredictionDatabaseService, PredictionDatabaseService>();
         services.AddScoped<AzureService>();
         services.AddScoped<GitlabService>();
@@ -81,8 +82,8 @@ public static class DependencyInjectionConfig
         var cs = configuration.GetConnectionString("DefaultConnection");
 
         services.AddSingleton<IFileHandlerFactory, FileHandlerFactory>();
-        services.AddSingleton<IUploadController, UploadController>();
-        services.AddSingleton<LlmResponseController>();
+        services.AddSingleton<IUploadController, UploadHandler>();
+        services.AddSingleton<CommentManipulationHelper>();
         services.AddSingleton<ReplicateApi>();
 
     }

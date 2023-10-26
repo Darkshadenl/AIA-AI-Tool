@@ -3,7 +3,7 @@ using InterfacesAia;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
 
-namespace aia_api.src.Services
+namespace aia_api.Services
 {
 	public class ServiceBusService : IServiceBusService
     {

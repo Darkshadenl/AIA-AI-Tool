@@ -4,11 +4,10 @@ using System.Net;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
-using aia_api.Services;
 using InterfacesAia;
 using Microsoft.Extensions.Options;
 
-namespace aia_api.Application.FileHandler;
+namespace aia_api.Application.Handlers.FileHandler;
 
 public class LlmFileUploaderHandler : AbstractFileHandler
 {
