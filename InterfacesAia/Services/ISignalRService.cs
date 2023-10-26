@@ -1,4 +1,4 @@
-namespace InterfacesAia;
+namespace InterfacesAia.Services;
 
 public interface ISignalRService
 {

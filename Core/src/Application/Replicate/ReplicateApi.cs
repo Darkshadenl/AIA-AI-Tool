@@ -1,6 +1,7 @@
 using System.Text;
 using aia_api.Configuration.Records;
 using InterfacesAia;
+using InterfacesAia.Database;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 

@@ -2,8 +2,9 @@ using aia_api.Application.EndpointFilter;
 using aia_api.Configuration;
 using aia_api.Database;
 using aia_api.Routes;
+using InterfacesAia.Handlers;
 using Microsoft.AspNetCore.SignalR.Client;
-using InterfacesAia;
+using InterfacesAia.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
@@ -13,11 +14,11 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
-IUploadController uploadController = app.Services.GetRequiredService<IUploadController>();
+IUploadHandler uploadHandler = app.Services.GetRequiredService<IUploadHandler>();
 IServiceBusService serviceBusService = app.Services.GetRequiredService<IServiceBusService>();
 HubConnection connection = await serviceBusService.ExecuteAsync();
 
-connection.On<string, string, byte[], int, int>("UploadChunk", uploadController.ReceiveFileChunk);
+connection.On<string, string, byte[], int, int>("UploadChunk", uploadHandler.ReceiveFileChunk);
 
 var api = app.MapGroup("/api");
 var db = app.MapGroup("/db");

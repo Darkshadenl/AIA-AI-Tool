@@ -6,7 +6,9 @@ using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
 using aia_api.Routes.DTO;
+using aia_api.Services;
 using InterfacesAia;
+using InterfacesAia.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -32,35 +34,23 @@ public class ReplicateRouter
     }
 
     public static Func<int, HttpContext, ILogger<ReplicateRouter>, IOptions<Settings>, ReplicateCodeLlamaResultDTO, 
-        PredictionDbContext, CommentManipulationHelper, ISignalRService, Task> ReplicateWebhook()
+        IPredictionDatabaseService, CommentManipulationHelper, ISignalRService, Task> ReplicateWebhook()
     {
-        return (id, context, logger, settings, resultDto, db, commentManipulationHelper, signalRService) => {
+        return (id, context, logger, settings, resultDto, databaseService, commentManipulationHelper, signalRService) => {
             if (resultDto.status == "succeeded")
             {
                 logger.LogInformation("Incoming LLM data for id: {id}", id);
-                
-                var dbPrediction = db.Predictions
-                    .First(p => p.Id == id);
 
+                var dbPrediction = databaseService.GetPrediction(id);
+                
                 if (settings.Value.AllowedFileTypes.Contains(dbPrediction.FileExtension))
                 {
                     string result = commentManipulationHelper.CombineTokens(resultDto.output);
                     string codeWithComments = commentManipulationHelper.ReplaceCommentInCode(result, dbPrediction.InputCode);
                     
-                    try
-                    {
-                        dbPrediction.PredictionResponseText = codeWithComments;
-                        db.Entry(dbPrediction).State = EntityState.Modified;
-                        db.SaveChanges();
-                    }
-                    catch (Exception e)
-                    {
-                        logger.LogCritical("Error: {message}, {stackTrace}", e.Message, e.StackTrace);
-                        throw;
-                    }
-                
+                    databaseService.UpdatePrediction(dbPrediction, codeWithComments);
                     signalRService.SendLlmResponseToFrontend(dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments);
-                    logger.LogInformation("Llm response successfully processed");
+                    logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.Id, dbPrediction.FileName);
                 }
             }
             context.Response.StatusCode = (int) HttpStatusCode.NoContent;

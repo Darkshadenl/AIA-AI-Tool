@@ -1,4 +1,5 @@
 using InterfacesAia;
+using InterfacesAia.Services;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace aia_api.Services;
@@ -20,7 +21,6 @@ public class SignalRService : ISignalRService
         if (connection.State != HubConnectionState.Connected) return;
 
         await connection.InvokeAsync("ReturnLLMResponse", fileName, fileExtension, content);
-        _logger.LogInformation("File {fileName} send to clients", fileName);
     }
     
     public async Task InvokeSuccessMessage(string successMessage)
@@ -29,7 +29,6 @@ public class SignalRService : ISignalRService
         if (connection.State != HubConnectionState.Connected) return;
         
         await connection.InvokeAsync("UploadSuccess", successMessage);
-        _logger.LogInformation("{message}", successMessage);
     }
     
     public async Task InvokeErrorMessage(string errorMessage)
@@ -38,6 +37,5 @@ public class SignalRService : ISignalRService
         if (connection.State != HubConnectionState.Connected) return;
         
         await connection.InvokeAsync("ReturnError", errorMessage);
-        _logger.LogError("Error: {error}", errorMessage);
     }
 }

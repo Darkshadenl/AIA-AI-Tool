@@ -1,4 +1,4 @@
-namespace InterfacesAia;
+namespace InterfacesAia.Handlers;
 
 /// <summary>
 /// The handler for the chain of responsibility.
