@@ -19,7 +19,9 @@ public class PredictionDatabaseService : IPredictionDatabaseService
 
     public async Task<IDbPrediction> CreatePrediction(IDbPrediction prediction)
     {
-        await using var context = GetDbContext();
+        using var scope = _serviceScopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PredictionDbContext>();
+        
         await context.AddAsync((DbPrediction) prediction);
         await context.SaveChangesAsync();
 
@@ -28,13 +30,17 @@ public class PredictionDatabaseService : IPredictionDatabaseService
     
     public IDbPrediction GetPrediction(int predictionId)
     {
-        using var context = GetDbContext();
+        using var scope = _serviceScopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PredictionDbContext>();
+        
         return context.Predictions.First(p => p.Id == predictionId);
     }
 
     public async void UpdatePrediction(IDbPrediction dbPrediction, string responseText)
     {
-        await using var context = GetDbContext();
+        using var scope = _serviceScopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PredictionDbContext>();
+        
         try
         {
             dbPrediction.PredictionResponseText = responseText;
@@ -46,11 +52,5 @@ public class PredictionDatabaseService : IPredictionDatabaseService
             _logger.LogCritical("Error: {message}, {stackTrace}", e.Message, e.StackTrace);
             throw;
         }
-    }
-
-    private PredictionDbContext GetDbContext()
-    {
-        var scope = _serviceScopeFactory.CreateScope();
-        return scope.ServiceProvider.GetRequiredService<PredictionDbContext>();
     }
 }
