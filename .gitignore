@@ -38,6 +38,9 @@ msbuild.log
 msbuild.err
 msbuild.wrn
 
+# Test results
+TestResults/
+
 # .net core files
 appsettings.json
 appsettings.development.json
