@@ -1,0 +1,19 @@
+default:
+  image: mcr.microsoft.com/dotnet/sdk:7.0
+  tags:
+    - docker
+
+Test:
+  stage: test
+  needs: []
+  script:
+    - dotnet test aia_api.sln --logger 'junit' --logger 'console;verbosity=detailed'
+  artifacts:
+    reports:
+      junit: TestProject/TestResults/TestResults.xml
+
+Build:
+  stage: build
+  needs: []
+  script:
+    - dotnet build aia_api.sln

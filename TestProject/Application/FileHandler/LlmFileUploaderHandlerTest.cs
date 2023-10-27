@@ -4,28 +4,44 @@ using aia_api.Application.FileHandler;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
+using aia_api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
-using NUnit.Framework.Internal;
 
 namespace TestProject.Application.FileHandler;
 
 public class LlmFileUploaderHandlerTest
 {
-    private DbContextOptions<PredictionDbContext> CreateDbContextOptions()
+    private PredictionDatabaseService _predictionDatabaseService;
+    private PredictionDbContext _dbContext;
+
+    [SetUp]
+    public void Setup()
     {
-        var options = new DbContextOptionsBuilder<PredictionDbContext>()
+        Environment.SetEnvironmentVariable("REPLICATE_ENABLED", "true");
+
+        var dbContextOptions = new DbContextOptionsBuilder<PredictionDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .EnableSensitiveDataLogging()
             .LogTo(Console.WriteLine)
             .ConfigureWarnings(x => x.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
-        return options;
+        _dbContext = new PredictionDbContext(dbContextOptions);
+        var serviceScopeFactory = new Mock<IServiceScopeFactory>();
+        var mockScope = new Mock<IServiceScope>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceProvider.Setup(x => x.GetService(typeof(PredictionDbContext))).Returns(_dbContext);
+        mockScope.Setup(x => x.ServiceProvider).Returns(mockServiceProvider.Object);
+        serviceScopeFactory.Setup(x => x.CreateScope()).Returns(mockScope.Object);
+        _predictionDatabaseService = new PredictionDatabaseService(serviceScopeFactory.Object);
+
+
     }
 
     [Test]
@@ -33,7 +49,7 @@ public class LlmFileUploaderHandlerTest
     {
         // Arrange
         var fileName = "testzip.zip";
-        var inputPathFolder = "/Users/quintenmeijboom/Documents/Repos/aia_api/TestProject/Testfiles/";
+        var inputPathFolder = "./Testfiles/";
         var inputContentType = "application/zip";
         var inputPath = Path.Combine(inputPathFolder, fileName);
 
@@ -62,9 +78,7 @@ public class LlmFileUploaderHandlerTest
         clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
         var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var dbContext = new Mock<PredictionDbContext>(CreateDbContextOptions());
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(),
-            (InterfacesAia.IPredictionDatabaseService) dbContext.Object);
+        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), _predictionDatabaseService);
 
         // Act
         var result = await handler.Handle(inputPath, inputContentType);
@@ -84,7 +98,7 @@ public class LlmFileUploaderHandlerTest
     {
         // Arrange
         var fileName = "testzip.zip";
-        var inputPathFolder = "/Users/quintenmeijboom/Documents/Repos/aia_api/TestProject/Testfiles/";
+        var inputPathFolder = "./Testfiles/";
         var inputContentType = "application/zip";
         var inputPath = Path.Combine(inputPathFolder, fileName);
 
@@ -113,9 +127,7 @@ public class LlmFileUploaderHandlerTest
         clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
         var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var dbContext = new Mock<PredictionDbContext>(CreateDbContextOptions());
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(),
-            (InterfacesAia.IPredictionDatabaseService)dbContext.Object);
+        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), _predictionDatabaseService);
 
         // Act
         var result = await handler.Handle(inputPath, inputContentType);
@@ -135,7 +147,7 @@ public class LlmFileUploaderHandlerTest
     {
         // Arrange
         var zipFileName = "testzip.zip";
-        var inputPathFolder = "/Users/quintenmeijboom/Documents/Repos/aia_api/TestProject/Testfiles/";
+        var inputPathFolder = "./Testfiles/";
         var inputContentType = "application/zip";
         var inputPath = Path.Combine(inputPathFolder, zipFileName);
 
@@ -164,13 +176,11 @@ public class LlmFileUploaderHandlerTest
         clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
         var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var dbContext = new PredictionDbContext(CreateDbContextOptions());
-
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), (InterfacesAia.IPredictionDatabaseService)dbContext);
+        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), _predictionDatabaseService);
 
         // Act
         await handler.Handle(inputPath, inputContentType);
-        var retrievedPredictions = dbContext.Predictions.ToList();
+        var retrievedPredictions = _dbContext.Predictions.ToList();
 
         // Assert
         Assert.That(retrievedPredictions, Is.Not.Null);
@@ -183,7 +193,7 @@ public class LlmFileUploaderHandlerTest
     {
         // Arrange
         var zipFileName = "testzip.zip";
-        var inputPathFolder = "/Users/quintenmeijboom/Documents/Repos/aia_api/TestProject/Testfiles/";
+        var inputPathFolder = "./Testfiles/";
         var inputContentType = "application/zip";
         var inputPath = Path.Combine(inputPathFolder, zipFileName);
 
@@ -212,14 +222,11 @@ public class LlmFileUploaderHandlerTest
         clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
         var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var dbContext = new PredictionDbContext(CreateDbContextOptions());
-
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(),
-            (InterfacesAia.IPredictionDatabaseService)dbContext);
+        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), _predictionDatabaseService);
 
         // Act
         await handler.Handle(inputPath, inputContentType);
-        var retrievedPredictions = dbContext.Predictions.ToList();
+        var retrievedPredictions = _dbContext.Predictions.ToList();
 
         // Assert
         foreach (var prediction in retrievedPredictions)
