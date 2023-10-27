@@ -1,10 +1,12 @@
 ﻿using aia_api.Configuration.Records;
-using InterfacesAia;
+using InterfacesAia.Handlers;
+using InterfacesAia.Helpers;
+using InterfacesAia.Services;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.Handlers;
 
-public class UploadHandler : IUploadController
+public class UploadHandler : IUploadHandler
 {
     private readonly ILogger<UploadHandler> _logger;
     private readonly IOptions<Settings> _settings;
@@ -32,6 +34,7 @@ public class UploadHandler : IUploadController
         if (index == totalChunks - 1)
         {
             await _signalRService.InvokeSuccessMessage("File uploaded successfully.");
+            _logger.LogInformation("File uploaded successfully.");
             ZipHandler(fileName, contentType);
             _memoryStream = new MemoryStream();
         }
@@ -44,12 +47,14 @@ public class UploadHandler : IUploadController
         if (_memoryStream.Length <= 0)
         {
             await _signalRService.InvokeErrorMessage("No file received or file is empty.");
+            _logger.LogError("No file received or file is empty.");
             return;
         }
 
         if (!_settings.Value.SupportedContentTypes.Contains(contentType))
         {
             await _signalRService.InvokeErrorMessage("Invalid file type. Only ZIP files are allowed.");
+            _logger.LogError("Invalid file type. Only ZIP files are allowed.");
             return;
         }
 
@@ -59,9 +64,17 @@ public class UploadHandler : IUploadController
         {
             var path = await _fileSystemStorageService.StoreInTemp(_memoryStream, fileName);
             var result = await handlerStreet.Handle(path, contentType);
-                
-            if (result.Success) await _signalRService.InvokeSuccessMessage("File sent to the AI model.");
-            else await _signalRService.InvokeErrorMessage(result.ErrorMessage);
+
+            if (result.Success)
+            {
+                await _signalRService.InvokeSuccessMessage("File sent to the AI model.");
+                _logger.LogInformation("File sent to the AI model.");
+            }
+            else
+            {
+                await _signalRService.InvokeErrorMessage(result.ErrorMessage);
+                _logger.LogError("Error: {error}", result.ErrorMessage);
+            }
         }
         catch (Exception e)
         {

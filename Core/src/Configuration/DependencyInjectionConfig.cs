@@ -9,7 +9,9 @@ using aia_api.Application.Handlers;
 using aia_api.Application.Replicate;
 using aia_api.Database;
 using Azure.Storage.Blobs;
-using InterfacesAia;
+using InterfacesAia.Handlers;
+using InterfacesAia.Helpers;
+using InterfacesAia.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace aia_api.Configuration;
@@ -82,9 +84,8 @@ public static class DependencyInjectionConfig
         var cs = configuration.GetConnectionString("DefaultConnection");
 
         services.AddSingleton<IFileHandlerFactory, FileHandlerFactory>();
-        services.AddSingleton<IUploadController, UploadHandler>();
+        services.AddSingleton<IUploadHandler, UploadHandler>();
         services.AddSingleton<CommentManipulationHelper>();
         services.AddSingleton<ReplicateApi>();
-
     }
 }

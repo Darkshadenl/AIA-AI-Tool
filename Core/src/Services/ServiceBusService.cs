@@ -1,5 +1,6 @@
 ﻿using aia_api.Configuration.Records;
 using InterfacesAia;
+using InterfacesAia.Services;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
 
