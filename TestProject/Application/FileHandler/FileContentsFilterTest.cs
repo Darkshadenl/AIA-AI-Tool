@@ -30,9 +30,9 @@ public class FileContentsFilterTest
         });
         _loggerMock = new Mock<ILogger<FileContentsFilter>>();
 
-        _codeSnippets = File.ReadAllText("./Application/FileHandler/code_snippets.txt").Split(new[] { "```" }, StringSplitOptions.RemoveEmptyEntries).Where(snippet => !string.IsNullOrWhiteSpace(snippet)).ToList();
-        var commentsContent = File.ReadAllText("./Application/FileHandler/comments.txt");
-        var eslintComments = File.ReadAllText("./Application/FileHandler/eslint_comments.txt");
+        _codeSnippets = File.ReadAllText("./Testfiles/_code_snippets.txt").Split(new[] { "```" }, StringSplitOptions.RemoveEmptyEntries).Where(snippet => !string.IsNullOrWhiteSpace(snippet)).ToList();
+        var commentsContent = File.ReadAllText("./Testfiles/_comments.txt");
+        var eslintComments = File.ReadAllText("./Testfiles/_eslint_comments.txt");
 
         _commentsList = commentsContent.Split(new[] { "---" }, StringSplitOptions.RemoveEmptyEntries)
             .Select(c => c.Trim())
