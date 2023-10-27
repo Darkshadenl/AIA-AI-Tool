@@ -1,6 +1,6 @@
 using System.IO.Abstractions;
 using System.Net;
-using aia_api.Application.FileHandler;
+using aia_api.Application.Handlers.FileHandler;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
@@ -34,10 +34,11 @@ public class LlmFileUploaderHandlerTest
         var serviceScopeFactory = new Mock<IServiceScopeFactory>();
         var mockScope = new Mock<IServiceScope>();
         var mockServiceProvider = new Mock<IServiceProvider>();
+        var mockLogger = new Mock<ILogger<PredictionDatabaseService>>();
         mockServiceProvider.Setup(x => x.GetService(typeof(PredictionDbContext))).Returns(_dbContext);
         mockScope.Setup(x => x.ServiceProvider).Returns(mockServiceProvider.Object);
         serviceScopeFactory.Setup(x => x.CreateScope()).Returns(mockScope.Object);
-        _predictionDatabaseService = new PredictionDatabaseService(serviceScopeFactory.Object);
+        _predictionDatabaseService = new PredictionDatabaseService(mockLogger.Object, serviceScopeFactory.Object);
     }
 
     [Test]

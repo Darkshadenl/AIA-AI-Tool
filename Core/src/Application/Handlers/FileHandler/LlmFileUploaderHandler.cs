@@ -4,11 +4,13 @@ using System.Net;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
-using aia_api.Services;
 using InterfacesAia;
+using InterfacesAia.Database;
+using InterfacesAia.Handlers;
+using InterfacesAia.Services;
 using Microsoft.Extensions.Options;
 
-namespace aia_api.Application.FileHandler;
+namespace aia_api.Application.Handlers.FileHandler;
 
 public class LlmFileUploaderHandler : AbstractFileHandler
 {
@@ -17,7 +19,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private readonly IFileSystem _fileSystem;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
     private readonly ReplicateSettings _replicateSettings;
-    private readonly List<string> _errors = new();
+    private List<string> _errors;
 
     public LlmFileUploaderHandler(
         ILogger<LlmFileUploaderHandler> logger,
@@ -42,6 +44,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     /// <throws>FileNotFoundException  if zip-file cannot be found</throws>
     public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
+        _errors = new();
         var fileName = _fileSystem.Path.GetFileName(inputPath);
         var outputFilePath = _fileSystem.Path.Combine(_settings.Value.OutputFolderPath, fileName);
         var zipArchive = GetZipArchive(outputFilePath);
@@ -59,11 +62,11 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private async Task<IDbPrediction> SavePredictionToDatabase(ZipArchiveEntry file)
     {
         var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
-        
+
         using var reader = new StreamReader(file.Open());
         string inputCode = await reader.ReadToEndAsync();
         var customPrompt = _replicateSettings.Prompt.Replace("${code}", inputCode);
-        
+
         var dbPrediction = new DbPrediction
         {
             FileExtension = fileExtension,
@@ -77,13 +80,8 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
     private async Task ProcessFiles(ZipArchive zipArchive)
     {
-        var maxNumber = 2;  // TODO remove at some point
-        var number = 0; // TODO remove at some point
-
         foreach (var file in zipArchive.Entries)
         {
-            if (number++ > maxNumber) break; // TODO remove at some point
-
             var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
             if (string.IsNullOrEmpty(fileExtension)) continue;
             await ProcessFile(file);

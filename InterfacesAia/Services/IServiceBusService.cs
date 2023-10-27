@@ -1,7 +1,6 @@
-﻿using System;
-using Microsoft.AspNetCore.SignalR.Client;
+﻿using Microsoft.AspNetCore.SignalR.Client;
 
-namespace InterfacesAia
+namespace InterfacesAia.Services
 {
 	public interface IServiceBusService
 	{
