@@ -4,12 +4,8 @@ using aia_api.Application.Handlers.FileHandler;
 using aia_api.Application.Helpers;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
-using aia_api.Database;
 using aia_api.Routes.DTO;
-using aia_api.Services;
-using InterfacesAia;
 using InterfacesAia.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace aia_api.Routes;
@@ -17,7 +13,7 @@ namespace aia_api.Routes;
 public class ReplicateRouter
 {
     [Obsolete("Remove at a later stage after implementing ReplicateWebHook further")]
-    public static Func<ReplicateApi, ILogger<ReplicateRouter>, ILogger<LlmFileUploaderHandler>, IOptions<Settings>, 
+    public static Func<ReplicateApi, ILogger<ReplicateRouter>, ILogger<LlmFileUploaderHandler>, IOptions<Settings>,
         IOptions<ReplicateSettings>, IFileSystem, IPredictionDatabaseService, Task<IResult>> ReplicateWebhookTest()
     {
         return async (replicateApi, logger, llmLogger, settings, replicateSettings, fs, predictionDatabaseService) => {
@@ -33,7 +29,8 @@ public class ReplicateRouter
         };
     }
 
-    public static Func<int, HttpContext, ILogger<ReplicateRouter>, IOptions<Settings>, ReplicateCodeLlamaResultDTO, 
+
+    public static Func<int, HttpContext, ILogger<ReplicateRouter>, IOptions<Settings>, ReplicateCodeLlamaResultDTO,
         IPredictionDatabaseService, CommentManipulationHelper, ISignalRService, Task> ReplicateWebhook()
     {
         return (id, context, logger, settings, resultDto, databaseService, commentManipulationHelper, signalRService) => {
@@ -42,12 +39,13 @@ public class ReplicateRouter
                 logger.LogInformation("Incoming LLM data for id: {id}", id);
 
                 var dbPrediction = databaseService.GetPrediction(id);
-                
+
                 if (settings.Value.AllowedFileTypes.Contains(dbPrediction.FileExtension))
                 {
+
                     string result = commentManipulationHelper.CombineTokens(resultDto.output);
                     string codeWithComments = commentManipulationHelper.ReplaceCommentInCode(result, dbPrediction.InputCode);
-                    
+
                     databaseService.UpdatePrediction(dbPrediction, codeWithComments);
                     signalRService.SendLlmResponseToFrontend(dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments);
                     logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.Id, dbPrediction.FileName);
@@ -57,4 +55,5 @@ public class ReplicateRouter
             return Task.CompletedTask;
         };
     }
+
 }

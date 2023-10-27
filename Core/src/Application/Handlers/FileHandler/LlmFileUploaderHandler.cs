@@ -1,6 +1,7 @@
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
+using aia_api.Application.Helpers;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
@@ -12,9 +13,13 @@ using Microsoft.Extensions.Options;
 
 namespace aia_api.Application.Handlers.FileHandler;
 
+/// <summary>
+/// Uploads files to Replicate.
+/// </summary>
 public class LlmFileUploaderHandler : AbstractFileHandler
 {
-    private readonly IOptions<Settings> _settings;
+    private readonly ILogger<LlmFileUploaderHandler> _logger;
+    private readonly Settings _settings;
     private readonly ReplicateApi _replicateApi;
     private readonly IFileSystem _fileSystem;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
@@ -30,7 +35,8 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         IPredictionDatabaseService predictionDatabaseService
         ) : base(logger, settings)
     {
-        _settings = settings;
+        _logger = logger;
+        _settings = settings.Value;
         _replicateApi = (ReplicateApi) replicateApi;
         _fileSystem = fileSystem;
         _predictionDatabaseService = predictionDatabaseService;
@@ -41,12 +47,12 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     /// This handle method expects a zip-file at the outputPath with the name of the file in the inputPath.
     /// If it does not exist, it will throw an exception.
     /// </summary>
-    /// <throws>FileNotFoundException  if zip-file cannot be found</throws>
+    /// <throws>FileNotFoundException if zip-file cannot be found</throws>
     public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
     {
         _errors = new();
         var fileName = _fileSystem.Path.GetFileName(inputPath);
-        var outputFilePath = _fileSystem.Path.Combine(_settings.Value.OutputFolderPath, fileName);
+        var outputFilePath = _fileSystem.Path.Combine(_settings.TempFolderPath + "Output/", fileName);
         var zipArchive = GetZipArchive(outputFilePath);
 
         await ProcessFiles(zipArchive);
@@ -80,10 +86,12 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
     private async Task ProcessFiles(ZipArchive zipArchive)
     {
+        var number = 0;
+
         foreach (var file in zipArchive.Entries)
         {
-            var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
-            if (string.IsNullOrEmpty(fileExtension)) continue;
+            number++;
+            _logger.LogInformation("Uploading {number} of {Count} files... \nFilename: {FullName}", number, zipArchive.Entries.Count, file.FullName);
             await ProcessFile(file);
         }
     }
@@ -93,10 +101,13 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         var dbPrediction = await SavePredictionToDatabase(file);
         var webHookWithId = _replicateSettings.WebhookUrl.Replace("${dbPredictionId}", dbPrediction.Id.ToString());
         var prediction = _replicateApi.CreateCodeLlamaPrediction(dbPrediction, webHookWithId);
-        var response = await _replicateApi.SendPrediction(prediction);
 
-        if (!response.IsSuccessStatusCode)
-            _errors.Add($"File: {file.FullName}, Error: {response.ReasonPhrase}");
+        if (EnvHelper.ReplicateEnabled())
+        {
+            var response = await _replicateApi.SendPrediction(prediction);
+            if (!response.IsSuccessStatusCode)
+                _errors.Add($"File: {file.FullName}, Error: {response.ReasonPhrase}");
+        }
     }
 
     private HandlerResult CreateHandlerResult()

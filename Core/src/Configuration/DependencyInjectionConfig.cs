@@ -74,6 +74,7 @@ public static class DependencyInjectionConfig
         services.AddDbContext<PredictionDbContext>(options =>
             options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
 
+        services.AddSingleton<CommentChecker>();
         services.AddSingleton(new BlobServiceClient(connectionString, credential));
         services.AddSingleton<IFileSystemStorageService, FileSystemStorageService>();
         services.AddSingleton<IFileSystem, FileSystem>();

@@ -23,6 +23,8 @@ public class LlmFileUploaderHandlerTest
     [SetUp]
     public void Setup()
     {
+        Environment.SetEnvironmentVariable("REPLICATE_ENABLED", "true");
+
         var dbContextOptions = new DbContextOptionsBuilder<PredictionDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .EnableSensitiveDataLogging()
@@ -48,11 +50,10 @@ public class LlmFileUploaderHandlerTest
         var fileName = "testzip.zip";
         var inputPathFolder = "./Testfiles/";
         var inputContentType = "application/zip";
-        var outputFolderPath = "./Testfiles/Output/";
         var inputPath = Path.Combine(inputPathFolder, fileName);
 
         var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
-        var settings = Options.Create(new Settings { OutputFolderPath = outputFolderPath });
+        var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
         var replicateSettings = Options.Create(
             new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
 
@@ -98,11 +99,10 @@ public class LlmFileUploaderHandlerTest
         var fileName = "testzip.zip";
         var inputPathFolder = "./Testfiles/";
         var inputContentType = "application/zip";
-        var outputFolderPath = "./Testfiles/Output/";
         var inputPath = Path.Combine(inputPathFolder, fileName);
 
         var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
-        var settings = Options.Create(new Settings { OutputFolderPath = outputFolderPath });
+        var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
         var replicateSettings = Options.Create(
             new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
 
@@ -148,11 +148,10 @@ public class LlmFileUploaderHandlerTest
         var zipFileName = "testzip.zip";
         var inputPathFolder = "./Testfiles/";
         var inputContentType = "application/zip";
-        var outputFolderPath = "./Testfiles/Output/";
         var inputPath = Path.Combine(inputPathFolder, zipFileName);
 
         var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
-        var settings = Options.Create(new Settings { OutputFolderPath = outputFolderPath });
+        var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
         var replicateSettings = Options.Create(
             new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
 
@@ -195,11 +194,10 @@ public class LlmFileUploaderHandlerTest
         var zipFileName = "testzip.zip";
         var inputPathFolder = "./Testfiles/";
         var inputContentType = "application/zip";
-        var outputFolderPath = "./Testfiles/Output/";
         var inputPath = Path.Combine(inputPathFolder, zipFileName);
 
         var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
-        var settings = Options.Create(new Settings { OutputFolderPath = outputFolderPath });
+        var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
         var replicateSettings = Options.Create(
             new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
 
