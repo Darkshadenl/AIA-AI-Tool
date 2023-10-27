@@ -59,11 +59,11 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private async Task<IDbPrediction> SavePredictionToDatabase(ZipArchiveEntry file)
     {
         var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
-        
+
         using var reader = new StreamReader(file.Open());
         string inputCode = await reader.ReadToEndAsync();
         var customPrompt = _replicateSettings.Prompt.Replace("${code}", inputCode);
-        
+
         var dbPrediction = new DbPrediction
         {
             FileExtension = fileExtension,
@@ -77,13 +77,8 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
     private async Task ProcessFiles(ZipArchive zipArchive)
     {
-        var maxNumber = 2;  // TODO remove at some point
-        var number = 0; // TODO remove at some point
-
         foreach (var file in zipArchive.Entries)
         {
-            if (number++ > maxNumber) break; // TODO remove at some point
-
             var fileExtension = _fileSystem.Path.GetExtension(file.FullName);
             if (string.IsNullOrEmpty(fileExtension)) continue;
             await ProcessFile(file);
