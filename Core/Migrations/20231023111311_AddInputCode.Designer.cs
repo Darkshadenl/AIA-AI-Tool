@@ -10,7 +10,7 @@ using aia_api.Database;
 namespace aia_api.Migrations
 {
     [DbContext(typeof(PredictionDbContext))]
-    [Migration("20231023111940_AddInputCode")]
+    [Migration("20231023111311_AddInputCode")]
     partial class AddInputCode
     {
         /// <inheritdoc />
