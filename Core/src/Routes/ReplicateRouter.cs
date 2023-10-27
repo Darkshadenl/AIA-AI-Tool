@@ -2,6 +2,7 @@ using System.IO.Abstractions;
 using System.Net;
 using aia_api.Application.Handlers.FileHandler;
 using aia_api.Application.Helpers;
+using aia_api.Application.OpenAi;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Routes.DTO;
@@ -14,12 +15,12 @@ public class ReplicateRouter
 {
     [Obsolete("Remove at a later stage after implementing ReplicateWebHook further")]
     public static Func<ReplicateApi, ILogger<ReplicateRouter>, ILogger<LlmFileUploaderHandler>, IOptions<Settings>,
-        IOptions<ReplicateSettings>, IFileSystem, IPredictionDatabaseService, Task<IResult>> ReplicateWebhookTest()
+        IOptions<ReplicateSettings>, IFileSystem, IPredictionDatabaseService, OpenAiApi, Task<IResult>> ReplicateWebhookTest()
     {
-        return async (replicateApi, logger, llmLogger, settings, replicateSettings, fs, predictionDatabaseService) => {
+        return async (replicateApi, logger, llmLogger, settings, replicateSettings, fs, predictionDatabaseService, openAiApi) => {
             logger.LogInformation("replicate-webhook-test");
 
-            var llm = new LlmFileUploaderHandler(llmLogger, settings, replicateSettings, replicateApi, fs, predictionDatabaseService);
+            var llm = new LlmFileUploaderHandler(llmLogger, settings, replicateSettings, replicateApi, openAiApi, fs, predictionDatabaseService);
 
             var inputPath = settings.Value.TempFolderPath + "/joost-main.zip";
 

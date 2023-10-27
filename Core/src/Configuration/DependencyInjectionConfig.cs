@@ -6,6 +6,7 @@ using Azure.Storage;
 using System.IO.Abstractions;
 using System.Net.Http.Headers;
 using aia_api.Application.Handlers;
+using aia_api.Application.OpenAi;
 using aia_api.Application.Replicate;
 using aia_api.Database;
 using Azure.Storage.Blobs;
@@ -90,5 +91,6 @@ public static class DependencyInjectionConfig
         services.AddSingleton<IUploadHandler, UploadHandler>();
         services.AddSingleton<CommentManipulationHelper>();
         services.AddSingleton<ReplicateApi>();
+        services.AddSingleton<OpenAiApi>();
     }
 }

@@ -1,5 +1,6 @@
 using System.IO.Abstractions;
 using aia_api.Application.Handlers.FileHandler;
+using aia_api.Application.OpenAi;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using InterfacesAia.Handlers;
@@ -16,6 +17,7 @@ public class FileHandlerFactory : IFileHandlerFactory
     private readonly IFileSystem _fileSystem;
     private readonly IOptions<ReplicateSettings> _replicateSettings;
     private readonly ReplicateApi _replicateApi;
+    private readonly OpenAiApi _openAiApi;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
     private readonly CommentChecker _commentChecker;
 
@@ -27,6 +29,7 @@ public class FileHandlerFactory : IFileHandlerFactory
         IFileSystem fileSystem,
         IOptions<ReplicateSettings> replicateSettings,
         ReplicateApi replicateApi,
+        OpenAiApi openAiApi,
         IPredictionDatabaseService predictionDatabaseService,
         CommentChecker commentChecker
         )
@@ -35,6 +38,7 @@ public class FileHandlerFactory : IFileHandlerFactory
         _fileSystem = fileSystem;
         _replicateSettings = replicateSettings;
         _replicateApi = replicateApi;
+        _openAiApi = openAiApi;
         _predictionDatabaseService = predictionDatabaseService;
         _commentChecker = commentChecker;
         _fileHandlerStreet = BuildFileHandlerStreet(fileValidatorLogger, zipHandlerLogger, llmFileUploaderHandlerLogger);
@@ -47,7 +51,7 @@ public class FileHandlerFactory : IFileHandlerFactory
         var fileValidator = new FileValidator(fileValidatorLogger, _extensionSettings);
         var zipHandler = new FileContentsFilter(zipHandlerLogger, _extensionSettings, _fileSystem, _commentChecker);
         var llm = new LlmFileUploaderHandler(llmFileUploaderHandlerLogger, _extensionSettings, _replicateSettings,
-                                             _replicateApi, _fileSystem, _predictionDatabaseService);
+                                             _replicateApi, _openAiApi, _fileSystem, _predictionDatabaseService);
 
         fileValidator.SetNext(zipHandler);
         zipHandler.SetNext(llm);

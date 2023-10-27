@@ -2,6 +2,7 @@ using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
 using aia_api.Application.Helpers;
+using aia_api.Application.OpenAi;
 using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
@@ -21,6 +22,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private readonly ILogger<LlmFileUploaderHandler> _logger;
     private readonly Settings _settings;
     private readonly ReplicateApi _replicateApi;
+    private readonly OpenAiApi _openAiApi;
     private readonly IFileSystem _fileSystem;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
     private readonly ReplicateSettings _replicateSettings;
@@ -31,6 +33,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         IOptions<Settings> settings,
         IOptions<ReplicateSettings> replicateSettings,
         ILlmApi replicateApi,
+        OpenAiApi openAiApi,
         IFileSystem fileSystem,
         IPredictionDatabaseService predictionDatabaseService
         ) : base(logger, settings)
@@ -38,6 +41,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         _logger = logger;
         _settings = settings.Value;
         _replicateApi = (ReplicateApi) replicateApi;
+        _openAiApi = openAiApi;
         _fileSystem = fileSystem;
         _predictionDatabaseService = predictionDatabaseService;
         _replicateSettings = replicateSettings.Value;
@@ -104,6 +108,8 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
         if (EnvHelper.ReplicateEnabled())
         {
+            var openAiResponse = await _openAiApi.SendOpenAiCompletion();
+            Console.WriteLine(openAiResponse.Value.Choices[0].Message.Content);
             var response = await _replicateApi.SendPrediction(prediction);
             if (!response.IsSuccessStatusCode)
                 _errors.Add($"File: {file.FullName}, Error: {response.ReasonPhrase}");
