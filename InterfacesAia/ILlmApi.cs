@@ -1,3 +1,5 @@
+using InterfacesAia.Database;
+
 namespace InterfacesAia;
 
 public interface ILlmApi

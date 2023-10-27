@@ -1,7 +1,7 @@
 using System.Net;
-using InterfacesAia;
+using InterfacesAia.Handlers;
 
-namespace aia_api.Application.FileHandler;
+namespace aia_api.Application.Handlers.FileHandler;
 
 public class HandlerResult : IHandlerResult
 {

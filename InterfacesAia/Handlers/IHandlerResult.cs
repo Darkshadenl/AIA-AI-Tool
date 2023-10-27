@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace InterfacesAia;
+namespace InterfacesAia.Handlers;
 
 public interface IHandlerResult
 {
