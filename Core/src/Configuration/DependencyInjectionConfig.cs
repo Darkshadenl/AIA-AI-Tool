@@ -30,6 +30,7 @@ public static class DependencyInjectionConfig
         var blobConfig = configuration.GetSection("AzureBlobStorage");
         var settings = configuration.GetSection("Settings");
         var replicate = configuration.GetSection("ReplicateSettings");
+        var openAi = configuration.GetSection("OpenAiSettings");
 
         if (settings == null)
             throw new ArgumentNullException(nameof(settings));
@@ -37,6 +38,7 @@ public static class DependencyInjectionConfig
         services.Configure<AzureBlobStorageSettings>(blobConfig);
         services.Configure<Settings>(settings);
         services.Configure<ReplicateSettings>(replicate);
+        services.Configure<OpenAiSettings>(openAi);
     }
 
     private static void ConfigureHttpClients(this IServiceCollection services, IConfiguration configuration)
