@@ -1,6 +1,6 @@
 using System.IO.Abstractions.TestingHelpers;
 using System.IO.Compression;
-using aia_api.Application.FileHandler;
+using aia_api.Application.Handlers.FileHandler;
 using aia_api.Configuration.Records;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

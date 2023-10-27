@@ -1,9 +1,10 @@
 ﻿using aia_api.Configuration.Records;
 using InterfacesAia;
+using InterfacesAia.Services;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
 
-namespace aia_api.src.Services
+namespace aia_api.Services
 {
 	public class ServiceBusService : IServiceBusService
     {

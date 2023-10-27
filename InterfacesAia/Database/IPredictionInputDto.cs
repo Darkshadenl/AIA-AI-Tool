@@ -1,4 +1,4 @@
-namespace InterfacesAia;
+namespace InterfacesAia.Database;
 
 public interface IPredictionInputDto
 {
