@@ -3,10 +3,8 @@ using System.IO.Compression;
 using System.Net;
 using aia_api.Application.Helpers;
 using aia_api.Application.OpenAi;
-using aia_api.Application.Replicate;
 using aia_api.Configuration.Records;
 using aia_api.Database;
-using InterfacesAia;
 using InterfacesAia.Database;
 using InterfacesAia.Handlers;
 using InterfacesAia.Services;
@@ -15,36 +13,35 @@ using Microsoft.Extensions.Options;
 namespace aia_api.Application.Handlers.FileHandler;
 
 /// <summary>
-/// Uploads files to Replicate.
+/// Upload files to OpenAi for processing
 /// </summary>
 public class LlmFileUploaderHandler : AbstractFileHandler
 {
     private readonly ILogger<LlmFileUploaderHandler> _logger;
     private readonly Settings _settings;
-    private readonly ReplicateApi _replicateApi;
     private readonly OpenAiApi _openAiApi;
     private readonly IFileSystem _fileSystem;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
-    private readonly ReplicateSettings _replicateSettings;
+    private readonly OpenAiSettings _openAiSettings;
     private List<string> _errors;
 
     public LlmFileUploaderHandler(
         ILogger<LlmFileUploaderHandler> logger,
         IOptions<Settings> settings,
-        IOptions<ReplicateSettings> replicateSettings,
-        ILlmApi replicateApi,
+        IOptions<OpenAiSettings> openAiSettings,
         OpenAiApi openAiApi,
+        ISignalRService signalRService,
+        CommentManipulationHelper commentManipulationHelper,
         IFileSystem fileSystem,
         IPredictionDatabaseService predictionDatabaseService
         ) : base(logger, settings)
     {
         _logger = logger;
         _settings = settings.Value;
-        _replicateApi = (ReplicateApi) replicateApi;
         _openAiApi = openAiApi;
         _fileSystem = fileSystem;
         _predictionDatabaseService = predictionDatabaseService;
-        _replicateSettings = replicateSettings.Value;
+        _openAiSettings = openAiSettings.Value;
     }
 
     /// <summary>
@@ -75,12 +72,14 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
         using var reader = new StreamReader(file.Open());
         string inputCode = await reader.ReadToEndAsync();
-        var customPrompt = _replicateSettings.Prompt.Replace("${code}", inputCode);
+        var customPrompt = _openAiSettings.Prompt.Replace("${code}", inputCode);
 
         var dbPrediction = new DbPrediction
         {
+            ModelName = _openAiSettings.ModelName,
             FileExtension = fileExtension,
             FileName = file.FullName,
+            SystemPrompt = _openAiSettings.SystemPrompt,
             Prompt = customPrompt,
             InputCode = inputCode
         };
@@ -103,16 +102,21 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private async Task ProcessFile(ZipArchiveEntry file)
     {
         var dbPrediction = await SavePredictionToDatabase(file);
-        var webHookWithId = _replicateSettings.WebhookUrl.Replace("${dbPredictionId}", dbPrediction.Id.ToString());
-        var prediction = _replicateApi.CreateCodeLlamaPrediction(dbPrediction, webHookWithId);
 
-        if (EnvHelper.ReplicateEnabled())
+        if (EnvHelper.OpenAiEnabled())
         {
-            var openAiResponse = await _openAiApi.SendOpenAiCompletion();
-            Console.WriteLine(openAiResponse.Value.Choices[0].Message.Content);
-            var response = await _replicateApi.SendPrediction(prediction);
-            if (!response.IsSuccessStatusCode)
-                _errors.Add($"File: {file.FullName}, Error: {response.ReasonPhrase}");
+            var time = DateTime.Now;
+            var openAiResponse = await _openAiApi.SendOpenAiCompletion(dbPrediction);
+            var newTime = DateTime.Now;
+
+            if (openAiResponse.FinishReason != null)
+            {
+                Console.WriteLine(newTime - time);
+                Console.WriteLine(openAiResponse.Message.Content);
+
+                _openAiApi.ProcessApiResponse(openAiResponse, dbPrediction);
+                _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.Id, dbPrediction.FileName);
+            }
         }
     }
 

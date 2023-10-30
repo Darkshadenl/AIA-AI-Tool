@@ -1,7 +1,8 @@
 using System.IO.Abstractions;
 using System.Net;
 using aia_api.Application.Handlers.FileHandler;
-using aia_api.Application.Replicate;
+using aia_api.Application.Helpers;
+using aia_api.Application.OpenAi;
 using aia_api.Configuration.Records;
 using aia_api.Database;
 using aia_api.Services;
@@ -17,13 +18,16 @@ namespace TestProject.Application.FileHandler;
 
 public class LlmFileUploaderHandlerTest
 {
+    private const string OpenAiApiToken = "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";
+    private const string ModelName = "gpt-3.5-turbo";
+    
     private PredictionDatabaseService _predictionDatabaseService;
     private PredictionDbContext _dbContext;
 
     [SetUp]
     public void Setup()
     {
-        Environment.SetEnvironmentVariable("REPLICATE_ENABLED", "true");
+        Environment.SetEnvironmentVariable("OPENAI_ENABLED", "true");
 
         var dbContextOptions = new DbContextOptionsBuilder<PredictionDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
@@ -53,9 +57,12 @@ public class LlmFileUploaderHandlerTest
         var inputPath = Path.Combine(inputPathFolder, fileName);
 
         var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
+        var signalRServiceLoggerMock = new Mock<ILogger<SignalRService>>();
+        var serviceBusServiceLoggerMock = new Mock<ILogger<ServiceBusService>>();
+        var commentManipulationHelperLoggerMock = new Mock<ILogger<CommentManipulationHelper>>();
         var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
-        var replicateSettings = Options.Create(
-            new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
+        var openAiSettings = Options.Create(
+            new OpenAiSettings() { ApiToken = OpenAiApiToken, ModelName = ModelName, SystemPrompt = "systemPrompt", Prompt = "prompt"});
 
         var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
         mockHttpMessageHandler
@@ -76,8 +83,13 @@ public class LlmFileUploaderHandlerTest
         var clientFactory = new Mock<IHttpClientFactory>();
         clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
-        var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), _predictionDatabaseService);
+        var commentManipulationHelper = new CommentManipulationHelper(commentManipulationHelperLoggerMock.Object);
+        var signalRService = new SignalRService(signalRServiceLoggerMock.Object,
+            new ServiceBusService(serviceBusServiceLoggerMock.Object, settings));
+        var openAiApi = new OpenAiApi(openAiSettings, signalRService, commentManipulationHelper, _predictionDatabaseService);
+        
+        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, openAiSettings, openAiApi, signalRService, 
+                                                   commentManipulationHelper , new FileSystem(), _predictionDatabaseService);
 
         // Act
         var result = await handler.Handle(inputPath, inputContentType);
@@ -102,9 +114,12 @@ public class LlmFileUploaderHandlerTest
         var inputPath = Path.Combine(inputPathFolder, fileName);
 
         var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
+        var signalRServiceLoggerMock = new Mock<ILogger<SignalRService>>();
+        var serviceBusServiceLoggerMock = new Mock<ILogger<ServiceBusService>>();
+        var commentManipulationHelperLoggerMock = new Mock<ILogger<CommentManipulationHelper>>();
         var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
-        var replicateSettings = Options.Create(
-            new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
+        var openAiSettings = Options.Create(
+            new OpenAiSettings() { ApiToken = OpenAiApiToken, ModelName = ModelName, SystemPrompt = "systemPrompt", Prompt = "prompt"});
 
         var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
         mockHttpMessageHandler
@@ -125,9 +140,14 @@ public class LlmFileUploaderHandlerTest
         var clientFactory = new Mock<IHttpClientFactory>();
         clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
-        var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), _predictionDatabaseService);
-
+        var commentManipulationHelper = new CommentManipulationHelper(commentManipulationHelperLoggerMock.Object);
+        var signalRService = new SignalRService(signalRServiceLoggerMock.Object,
+            new ServiceBusService(serviceBusServiceLoggerMock.Object, settings));
+        var openAiApi = new OpenAiApi(openAiSettings, signalRService, commentManipulationHelper, _predictionDatabaseService);
+        
+        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, openAiSettings, openAiApi, signalRService, 
+                                                   commentManipulationHelper , new FileSystem(), _predictionDatabaseService);
+        
         // Act
         var result = await handler.Handle(inputPath, inputContentType);
 
@@ -151,9 +171,12 @@ public class LlmFileUploaderHandlerTest
         var inputPath = Path.Combine(inputPathFolder, zipFileName);
 
         var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
+        var signalRServiceLoggerMock = new Mock<ILogger<SignalRService>>();
+        var serviceBusServiceLoggerMock = new Mock<ILogger<ServiceBusService>>();
+        var commentManipulationHelperLoggerMock = new Mock<ILogger<CommentManipulationHelper>>();
         var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
-        var replicateSettings = Options.Create(
-            new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
+        var openAiSettings = Options.Create(
+            new OpenAiSettings() { ApiToken = OpenAiApiToken, ModelName = ModelName, SystemPrompt = "systemPrompt", Prompt = "prompt"});
 
         var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
         mockHttpMessageHandler
@@ -174,8 +197,13 @@ public class LlmFileUploaderHandlerTest
         var clientFactory = new Mock<IHttpClientFactory>();
         clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
-        var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), _predictionDatabaseService);
+        var commentManipulationHelper = new CommentManipulationHelper(commentManipulationHelperLoggerMock.Object);
+        var signalRService = new SignalRService(signalRServiceLoggerMock.Object,
+            new ServiceBusService(serviceBusServiceLoggerMock.Object, settings));
+        var openAiApi = new OpenAiApi(openAiSettings, signalRService, commentManipulationHelper, _predictionDatabaseService);
+        
+        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, openAiSettings, openAiApi, signalRService, 
+            commentManipulationHelper , new FileSystem(), _predictionDatabaseService);
 
         // Act
         await handler.Handle(inputPath, inputContentType);
@@ -197,9 +225,12 @@ public class LlmFileUploaderHandlerTest
         var inputPath = Path.Combine(inputPathFolder, zipFileName);
 
         var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
+        var signalRServiceLoggerMock = new Mock<ILogger<SignalRService>>();
+        var serviceBusServiceLoggerMock = new Mock<ILogger<ServiceBusService>>();
+        var commentManipulationHelperLoggerMock = new Mock<ILogger<CommentManipulationHelper>>();
         var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
-        var replicateSettings = Options.Create(
-            new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
+        var openAiSettings = Options.Create(
+            new OpenAiSettings() { ApiToken = OpenAiApiToken, ModelName = ModelName, SystemPrompt = "systemPrompt", Prompt = "prompt"});
 
         var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
         mockHttpMessageHandler
@@ -220,8 +251,13 @@ public class LlmFileUploaderHandlerTest
         var clientFactory = new Mock<IHttpClientFactory>();
         clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
-        var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), _predictionDatabaseService);
+        var commentManipulationHelper = new CommentManipulationHelper(commentManipulationHelperLoggerMock.Object);
+        var signalRService = new SignalRService(signalRServiceLoggerMock.Object,
+            new ServiceBusService(serviceBusServiceLoggerMock.Object, settings));
+        var openAiApi = new OpenAiApi(openAiSettings, signalRService, commentManipulationHelper, _predictionDatabaseService);
+        
+        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, openAiSettings, openAiApi, signalRService, 
+            commentManipulationHelper , new FileSystem(), _predictionDatabaseService);
 
         // Act
         await handler.Handle(inputPath, inputContentType);

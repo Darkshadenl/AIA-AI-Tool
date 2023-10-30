@@ -34,10 +34,18 @@ namespace aia_api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ModelName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("PredictionResponseText")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Prompt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SystemPrompt")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
