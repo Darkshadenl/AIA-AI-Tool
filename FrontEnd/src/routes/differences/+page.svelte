@@ -3,11 +3,9 @@
   import { invalidateAll } from "$app/navigation";
 
   export let data;
-  setInterval(invalidateAll, 500);
 </script>
 
-<!--Line 6 can only exist when the onclick in this button is present, so DO NOT REMOVE IT!-->
-<button style="visibility: hidden" on:click={async () => await invalidateAll()}>Refresh</button>
+<button on:click={async () => await invalidateAll()}>Refresh</button>
 
 {#if data.successMessage}
   <p>{data.successMessage}</p>

@@ -49,7 +49,7 @@ public class ReplicateRouter
                     string codeWithComments = commentManipulationHelper.ReplaceCommentInCode(result, dbPrediction.InputCode);
                     
                     databaseService.UpdatePrediction(dbPrediction, codeWithComments);
-                    signalRService.SendLlmResponseToFrontend(dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments);
+                    signalRService.SendLlmResponseToFrontend(dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments, dbPrediction.InputCode);
                     logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.Id, dbPrediction.FileName);
                 }
             }
