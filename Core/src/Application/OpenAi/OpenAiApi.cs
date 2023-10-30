@@ -10,18 +10,21 @@ namespace aia_api.Application.OpenAi;
 
 public class OpenAiApi
 {
+    private readonly ILogger<OpenAiApi> _logger;
     private readonly OpenAiSettings _openAiSettings;
     private readonly ISignalRService _signalRService;
     private readonly CommentManipulationHelper _commentManipulationHelper;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
     
     public OpenAiApi(
+        ILogger<OpenAiApi> logger,
         IOptions<OpenAiSettings> openAiSettings,
         ISignalRService signalRService,
         CommentManipulationHelper commentManipulationHelper,
         IPredictionDatabaseService predictionDatabaseService
         )
     {
+        _logger = logger;
         _openAiSettings = openAiSettings.Value;
         _signalRService = signalRService;
         _commentManipulationHelper = commentManipulationHelper;
@@ -33,6 +36,7 @@ public class OpenAiApi
         ChatCompletionsOptions options = CreateChatCompletionsOptions(dbPrediction.Prompt);
         OpenAIClient openAiClient = new OpenAIClient(_openAiSettings.ApiToken);
         Response<ChatCompletions> response = await openAiClient.GetChatCompletionsAsync(_openAiSettings.ModelName, options);
+        _logger.LogDebug("LLM usage for {fileName} was {usage}", dbPrediction.FileName, response.Value.Usage);
         return response.Value.Choices.First();
     }
 
@@ -57,11 +61,8 @@ public class OpenAiApi
             new ChatMessage { Role = ChatRole.User, Content = prompt },
         })
         {
-
-            Temperature = 0.5f,
-            PresencePenalty = 0,
-            FrequencyPenalty = 0,
-            ChoiceCount = 1
+            Temperature = _openAiSettings.Temperature,
+            MaxTokens = _openAiSettings.MaxTokens
         };
     }
 }

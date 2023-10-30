@@ -5,6 +5,7 @@ using aia_api.Application.Helpers;
 using aia_api.Application.OpenAi;
 using aia_api.Configuration.Records;
 using aia_api.Database;
+using Azure.AI.OpenAI;
 using InterfacesAia.Database;
 using InterfacesAia.Handlers;
 using InterfacesAia.Services;
@@ -19,10 +20,10 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 {
     private readonly ILogger<LlmFileUploaderHandler> _logger;
     private readonly Settings _settings;
+    private readonly OpenAiSettings _openAiSettings;
     private readonly OpenAiApi _openAiApi;
     private readonly IFileSystem _fileSystem;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
-    private readonly OpenAiSettings _openAiSettings;
     private List<string> _errors;
 
     public LlmFileUploaderHandler(
@@ -30,18 +31,16 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         IOptions<Settings> settings,
         IOptions<OpenAiSettings> openAiSettings,
         OpenAiApi openAiApi,
-        ISignalRService signalRService,
-        CommentManipulationHelper commentManipulationHelper,
         IFileSystem fileSystem,
         IPredictionDatabaseService predictionDatabaseService
         ) : base(logger, settings)
     {
         _logger = logger;
         _settings = settings.Value;
+        _openAiSettings = openAiSettings.Value;
         _openAiApi = openAiApi;
         _fileSystem = fileSystem;
         _predictionDatabaseService = predictionDatabaseService;
-        _openAiSettings = openAiSettings.Value;
     }
 
     /// <summary>
@@ -55,7 +54,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         var fileName = _fileSystem.Path.GetFileName(inputPath);
         var outputFilePath = _fileSystem.Path.Combine(_settings.TempFolderPath + "Output/", fileName);
         var zipArchive = GetZipArchive(outputFilePath);
-
+        
         await ProcessFiles(zipArchive);
         return CreateHandlerResult();
     }
@@ -108,16 +107,26 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             var time = DateTime.Now;
             var openAiResponse = await _openAiApi.SendOpenAiCompletion(dbPrediction);
             var newTime = DateTime.Now;
-
-            if (openAiResponse.FinishReason != null)
-            {
-                Console.WriteLine(newTime - time);
-                Console.WriteLine(openAiResponse.Message.Content);
-
-                _openAiApi.ProcessApiResponse(openAiResponse, dbPrediction);
-                _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.Id, dbPrediction.FileName);
-            }
+            Console.WriteLine($"Duration: {newTime - time} - Finish reason: {openAiResponse.FinishReason}");
+            
+            CheckIfErrors(openAiResponse, file);
+            if (_errors.Count > 0) return;
+            
+            _openAiApi.ProcessApiResponse(openAiResponse, dbPrediction);
+            _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.Id, dbPrediction.FileName);
         }
+    }
+
+    private void CheckIfErrors(ChatChoice openAiResponse, ZipArchiveEntry file)
+    {
+        if (openAiResponse.Message.Content.Length <= 0) 
+            _errors.Add($"File: {file.FullName}, Error: No content received from LLM.");
+        if (openAiResponse.FinishReason == CompletionsFinishReason.TokenLimitReached)
+            _errors.Add($"File {file.FullName}, Error: Token limit reached for message.");
+        if (openAiResponse.FinishReason == CompletionsFinishReason.ContentFiltered)
+            _errors.Add($"File {file.FullName}, Error: Potentially sensitive content found and filtered from the LLM result.");
+        if (openAiResponse.FinishReason == null)
+            _errors.Add($"File {file.FullName}, Error: LLM is still processing the request.");
     }
 
     private HandlerResult CreateHandlerResult()
