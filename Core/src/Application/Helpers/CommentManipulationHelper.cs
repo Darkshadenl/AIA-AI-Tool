@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace aia_api.Application.Helpers;
 
@@ -19,39 +20,43 @@ public class CommentManipulationHelper
         return stringBuilder.ToString().Trim();
     }
 
-    public string ReplaceCommentInCode(string generatedComment, string content)
+    public string ReplaceCommentInCode(string generatedComment, string inputCode)
     {
-        List<string> commentLines = generatedComment.Split(Environment.NewLine).ToList();
-        List<string> contentLines = content.Split(Environment.NewLine).ToList();
-
-        //Remove old comments.
-        int removeIndex = GetIndex(commentLines, contentLines);
-        if (removeIndex < 0) return content;
-        contentLines = RemoveOldComment(contentLines, removeIndex);
+        //Remove old comments
+        inputCode = Regex.Replace(inputCode, @"\n((?<=\s|^)\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/\*\*[\s\S]*?\*\/)", "").Trim();
         
-        //Insert new comments.
-        int insertIndex = GetIndex(commentLines, contentLines);
-        if (insertIndex < 0) return content;
-        commentLines.Remove(commentLines.Last());
-        contentLines.InsertRange(insertIndex, commentLines);
-
+        //Insert new comments
+        MatchCollection commentMatches = GetComments(generatedComment, @"\[RETURN\](.*?)\[\/RETURN\]");
+        List<string> contentLines = InsertCommentsIntoCode(commentMatches, inputCode);
+        
         return string.Join(Environment.NewLine, contentLines);
     }
 
-    private List<string> RemoveOldComment(List<string> contentLines, int methodIndex)
+    private List<string> InsertCommentsIntoCode(MatchCollection commentMatches, string inputCode)
     {
-        int index = methodIndex - 1;
-        while (contentLines[index].Trim().StartsWith("/"))
+        List<string> contentLines = inputCode.Split(Environment.NewLine, StringSplitOptions.TrimEntries).ToList();
+
+        foreach (Match match in commentMatches)
         {
-            contentLines.RemoveAt(index);
-            index--;
-            if (index < 0) break;
+            string comment = match.Groups[1].Value.Trim();
+            List<string> commentLines = comment.Split(Environment.NewLine, StringSplitOptions.TrimEntries).ToList();
+            
+            int insertIndex = GetMethodLineIndex(commentLines, contentLines);
+            if (insertIndex < 0) return contentLines;
+            commentLines.Remove(commentLines.Last());
+            contentLines.InsertRange(insertIndex, commentLines);
         }
 
         return contentLines;
     }
 
-    private int GetIndex(List<string> commentLines, List<string> contentLines)
+    /// <summary>
+    /// Gets the index of the line that contains the method signature.
+    /// </summary>
+    /// <param name="commentLines">List of lines of the newly generated comment by the LLM</param>
+    /// <param name="contentLines">List of lines of the original input code</param>
+    /// <returns>The index of the line that contains the method signature</returns>
+    private int GetMethodLineIndex(List<string> commentLines, List<string> contentLines)
     {
         int index = contentLines.IndexOf(commentLines.Last());
         if (index < 0)
@@ -61,5 +66,10 @@ public class CommentManipulationHelper
         }
 
         return index;
+    }
+
+    private MatchCollection GetComments(string content, string pattern)
+    {
+        return Regex.Matches(content, pattern, RegexOptions.Singleline);
     }
 }
