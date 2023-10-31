@@ -25,6 +25,7 @@
 
 <a href="/differences">Newly Generated Comments</a>
 
+<p>Currently, only TypeScript files within the ZIP file are being processed by the AI.</p>
 <form method="POST" action="?/uploadFile" enctype="multipart/form-data">
 	<p>
 		<label>
