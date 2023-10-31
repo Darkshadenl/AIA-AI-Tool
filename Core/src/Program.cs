@@ -4,6 +4,7 @@ using aia_api.Database;
 using aia_api.Routes;
 using InterfacesAia.Handlers;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.AspNetCore.Http.Features;
 using InterfacesAia.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,11 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Services.SetupDi(builder.Configuration);
 builder.Services.AddSignalR();
+builder.WebHost.UseKestrel(o => o.Limits.MaxRequestBodySize = long.MaxValue);
+builder.Services.Configure<FormOptions>(x =>
+{
+    x.MultipartBodyLengthLimit = int.MaxValue;
+});
 
 var app = builder.Build();
 
@@ -22,6 +28,7 @@ connection.On<string, string, byte[], int, int>("UploadChunk", uploadHandler.Rec
 
 var api = app.MapGroup("/api");
 var db = app.MapGroup("/db");
+
 
 api.MapPost("/upload/zip", UploadRouter.ZipHandler())
     .AddEndpointFilter<EmptyFileFilter>();
@@ -45,7 +52,6 @@ db.MapDelete("/clear-db", (PredictionDbContext dbContext) =>
 
     return Results.Ok("Database cleared successfully.");
 });
-
 
 
 app.Run();

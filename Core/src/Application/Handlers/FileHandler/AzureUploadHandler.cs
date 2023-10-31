@@ -22,7 +22,7 @@ public class AzureUploadHandler : AbstractFileHandler
     {
         try
         {
-            await _azureService.Pipeline(_settings.Value.OutputFolderPath, Path.GetFileName(inputPath));
+            await _azureService.Pipeline(_settings.Value.TempFolderPath + "Output/", Path.GetFileName(inputPath));
             _logger.LogInformation("File successfully uploaded to Azure.");
         }
         catch (IOException e)
@@ -34,7 +34,7 @@ public class AzureUploadHandler : AbstractFileHandler
             _logger.LogCritical("An unexpected error occurred: {message}, {stackTrace}", e.Message, e.StackTrace);
             throw;
         }
-        
+
         if (Next == null)
             return await base.Handle(inputPath, inputContentType);
 

@@ -6,4 +6,9 @@ public class EnvHelper
     {
         return Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
     }
+
+    public static bool ReplicateEnabled()
+    {
+        return Environment.GetEnvironmentVariable("REPLICATE_ENABLED") == "true";
+    }
 }
