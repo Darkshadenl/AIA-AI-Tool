@@ -46,7 +46,7 @@ public class OpenAiApi
             _commentManipulationHelper.ReplaceCommentInCode(openAiResponse.Message.Content, dbPrediction.InputCode);
                 
         _predictionDatabaseService.UpdatePrediction(dbPrediction, codeWithComments);
-        _signalRService.SendLlmResponseToFrontend(dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments);
+        _signalRService.SendLlmResponseToFrontend(dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments, dbPrediction.InputCode);
     }
 
     private ChatCompletionsOptions CreateChatCompletionsOptions(string prompt)
