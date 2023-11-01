@@ -36,7 +36,7 @@ public class PredictionDatabaseService : IPredictionDatabaseService
         return context.Predictions.First(p => p.Id == predictionId);
     }
 
-    public async void UpdatePrediction(IDbPrediction dbPrediction, string responseText)
+    public async void UpdatePredictionResponseText(IDbPrediction dbPrediction, string responseText)
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<PredictionDbContext>();
@@ -44,6 +44,24 @@ public class PredictionDatabaseService : IPredictionDatabaseService
         try
         {
             dbPrediction.PredictionResponseText = responseText;
+            context.Entry(dbPrediction).State = EntityState.Modified;
+            await context.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogCritical("Error: {message}, {stackTrace}", e.Message, e.StackTrace);
+            throw;
+        }
+    }
+    
+    public async void UpdatePredictionEditedResponseText(IDbPrediction dbPrediction, string editedResponseText)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PredictionDbContext>();
+        
+        try
+        {
+            dbPrediction.EditedResponseText = editedResponseText;
             context.Entry(dbPrediction).State = EntityState.Modified;
             await context.SaveChangesAsync();
         }

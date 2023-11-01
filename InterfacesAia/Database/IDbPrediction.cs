@@ -17,4 +17,5 @@ public interface IDbPrediction
     string Prompt { get; set; }
     string InputCode { get; set; }
     string? PredictionResponseText { get; set; }
+    string? EditedResponseText { get; set; }
 }

@@ -94,7 +94,7 @@ export class SignalRService {
       });
       newCodeStore.update((value) => {
         if (value) return [...value, { fileName: fileName, code: fileContent }];
-        return [{ fileName: fileName, code: oldFileContent }];
+        return [{ fileName: fileName, code: fileContent }];
       });
     });
   }

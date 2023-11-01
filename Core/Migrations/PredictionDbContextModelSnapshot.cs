@@ -22,6 +22,9 @@ namespace aia_api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("EditedResponseText")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("FileExtension")
                         .IsRequired()
                         .HasColumnType("TEXT");

@@ -107,13 +107,13 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             var time = DateTime.Now;
             var openAiResponse = await _openAiApi.SendOpenAiCompletion(dbPrediction);
             var newTime = DateTime.Now;
-            Console.WriteLine($"Duration: {newTime - time} - Finish reason: {openAiResponse.FinishReason}");
+            _logger.LogDebug($"Duration: {newTime - time} - Finish reason: {openAiResponse.FinishReason}");
             
             CheckIfErrors(openAiResponse, file);
             if (_errors.Count > 0) return;
             
             _openAiApi.ProcessApiResponse(openAiResponse, dbPrediction);
-            _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.Id, dbPrediction.FileName);
+            _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.FileName, dbPrediction.Id);
         }
     }
 

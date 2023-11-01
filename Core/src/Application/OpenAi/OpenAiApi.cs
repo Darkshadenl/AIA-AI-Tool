@@ -44,8 +44,9 @@ public class OpenAiApi
     {
         string codeWithComments = 
             _commentManipulationHelper.ReplaceCommentInCode(openAiResponse.Message.Content, dbPrediction.InputCode);
-                
-        _predictionDatabaseService.UpdatePrediction(dbPrediction, codeWithComments);
+        
+        _predictionDatabaseService.UpdatePredictionResponseText(dbPrediction, openAiResponse.Message.Content);
+        _predictionDatabaseService.UpdatePredictionEditedResponseText(dbPrediction, codeWithComments);
         _signalRService.SendLlmResponseToFrontend(dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments, dbPrediction.InputCode);
     }
 

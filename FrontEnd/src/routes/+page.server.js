@@ -3,7 +3,6 @@
 import { fail } from '@sveltejs/kit';
 import { SignalRService } from '../SignalRServer.js';
 import * as stores from '../store.js';
-import { successMessage } from "../store.js";
 
 const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
 

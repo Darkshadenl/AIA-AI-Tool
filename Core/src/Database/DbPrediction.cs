@@ -19,4 +19,5 @@ public class DbPrediction : IDbPrediction
     public string Prompt { get; set; }
     public string InputCode { get; set; }
     public string? PredictionResponseText { get; set; }
+    public string? EditedResponseText { get; set; }
 }
