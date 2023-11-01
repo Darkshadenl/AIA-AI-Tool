@@ -2,10 +2,10 @@ using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
 using aia_api.Application.Helpers;
-using aia_api.Application.Replicate;
+using aia_api.Application.OpenAi;
 using aia_api.Configuration.Records;
 using aia_api.Database;
-using InterfacesAia;
+using Azure.AI.OpenAI;
 using InterfacesAia.Database;
 using InterfacesAia.Handlers;
 using InterfacesAia.Services;
@@ -14,33 +14,33 @@ using Microsoft.Extensions.Options;
 namespace aia_api.Application.Handlers.FileHandler;
 
 /// <summary>
-/// Uploads files to Replicate.
+/// Upload files to OpenAi for processing
 /// </summary>
 public class LlmFileUploaderHandler : AbstractFileHandler
 {
     private readonly ILogger<LlmFileUploaderHandler> _logger;
     private readonly Settings _settings;
-    private readonly ReplicateApi _replicateApi;
+    private readonly OpenAiSettings _openAiSettings;
+    private readonly OpenAiApi _openAiApi;
     private readonly IFileSystem _fileSystem;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
-    private readonly ReplicateSettings _replicateSettings;
     private List<string> _errors;
 
     public LlmFileUploaderHandler(
         ILogger<LlmFileUploaderHandler> logger,
         IOptions<Settings> settings,
-        IOptions<ReplicateSettings> replicateSettings,
-        ILlmApi replicateApi,
+        IOptions<OpenAiSettings> openAiSettings,
+        OpenAiApi openAiApi,
         IFileSystem fileSystem,
         IPredictionDatabaseService predictionDatabaseService
         ) : base(logger, settings)
     {
         _logger = logger;
         _settings = settings.Value;
-        _replicateApi = (ReplicateApi) replicateApi;
+        _openAiSettings = openAiSettings.Value;
+        _openAiApi = openAiApi;
         _fileSystem = fileSystem;
         _predictionDatabaseService = predictionDatabaseService;
-        _replicateSettings = replicateSettings.Value;
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         var fileName = _fileSystem.Path.GetFileName(inputPath);
         var outputFilePath = _fileSystem.Path.Combine(_settings.TempFolderPath + "Output/", fileName);
         var zipArchive = GetZipArchive(outputFilePath);
-
+        
         await ProcessFiles(zipArchive);
         return CreateHandlerResult();
     }
@@ -71,12 +71,14 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
         using var reader = new StreamReader(file.Open());
         string inputCode = await reader.ReadToEndAsync();
-        var customPrompt = _replicateSettings.Prompt.Replace("${code}", inputCode);
+        var customPrompt = _openAiSettings.Prompt.Replace("${code}", inputCode);
 
         var dbPrediction = new DbPrediction
         {
+            ModelName = _openAiSettings.ModelName,
             FileExtension = fileExtension,
             FileName = file.FullName,
+            SystemPrompt = _openAiSettings.SystemPrompt,
             Prompt = customPrompt,
             InputCode = inputCode
         };
@@ -99,15 +101,32 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private async Task ProcessFile(ZipArchiveEntry file)
     {
         var dbPrediction = await SavePredictionToDatabase(file);
-        var webHookWithId = _replicateSettings.WebhookUrl.Replace("${dbPredictionId}", dbPrediction.Id.ToString());
-        var prediction = _replicateApi.CreateCodeLlamaPrediction(dbPrediction, webHookWithId);
 
-        if (EnvHelper.ReplicateEnabled())
+        if (EnvHelper.OpenAiEnabled())
         {
-            var response = await _replicateApi.SendPrediction(prediction);
-            if (!response.IsSuccessStatusCode)
-                _errors.Add($"File: {file.FullName}, Error: {response.ReasonPhrase}");
+            var time = DateTime.Now;
+            var openAiResponse = await _openAiApi.SendOpenAiCompletion(dbPrediction);
+            var newTime = DateTime.Now;
+            Console.WriteLine($"Duration: {newTime - time} - Finish reason: {openAiResponse.FinishReason}");
+            
+            CheckIfErrors(openAiResponse, file);
+            if (_errors.Count > 0) return;
+            
+            _openAiApi.ProcessApiResponse(openAiResponse, dbPrediction);
+            _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.Id, dbPrediction.FileName);
         }
+    }
+
+    private void CheckIfErrors(ChatChoice openAiResponse, ZipArchiveEntry file)
+    {
+        if (openAiResponse.Message.Content.Length <= 0) 
+            _errors.Add($"File: {file.FullName}, Error: No content received from LLM.");
+        if (openAiResponse.FinishReason == CompletionsFinishReason.TokenLimitReached)
+            _errors.Add($"File {file.FullName}, Error: Token limit reached for message.");
+        if (openAiResponse.FinishReason == CompletionsFinishReason.ContentFiltered)
+            _errors.Add($"File {file.FullName}, Error: Potentially sensitive content found and filtered from the LLM result.");
+        if (openAiResponse.FinishReason == null)
+            _errors.Add($"File {file.FullName}, Error: LLM is still processing the request.");
     }
 
     private HandlerResult CreateHandlerResult()

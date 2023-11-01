@@ -66,7 +66,6 @@
     <Content Include="$(MSBuildThisFileDirectory)..\Temp\Output\joost-maine.zip">
       <Link>Temp\Output\joost-maine.zip</Link>
     </Content>
-    <Content Include="$(MSBuildThisFileDirectory)aia.db" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="$(MSBuildThisFileDirectory)..\Temp\Output\joost-main-0a2c899c005597bf50e51eacf89f3031f77da8ae\web\src\menu.ts">
