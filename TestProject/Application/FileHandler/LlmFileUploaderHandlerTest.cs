@@ -1,29 +1,43 @@
 using System.IO.Abstractions;
 using System.Net;
 using aia_api.Application.Handlers.FileHandler;
-using aia_api.Application.Replicate;
+using aia_api.Application.Helpers;
+using aia_api.Application.OpenAi;
 using aia_api.Configuration.Records;
 using aia_api.Database;
 using aia_api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Moq.Protected;
 
 namespace TestProject.Application.FileHandler;
 
 public class LlmFileUploaderHandlerTest
 {
+    private const string FileName = "testzip.zip";
+    private const string InputContentType = "application/zip";
+    private const string InputPathFolder = "../../../Testfiles/";
+    
     private PredictionDatabaseService _predictionDatabaseService;
     private PredictionDbContext _dbContext;
+    private Mock<ILogger<LlmFileUploaderHandler>> _llmFileUploaderHandlerLoggerMock;
+    private Mock<ILogger<OpenAiApi>> _openAiApiLoggerMock;
+    private Mock<ILogger<SignalRService>> _signalRServiceLoggerMock;
+    private Mock<ILogger<ServiceBusService>> _serviceBusServiceLoggerMock;
+    private Mock<ILogger<CommentManipulationHelper>> _commentManipulationHelperLoggerMock;
+    private IOptions<Settings> _settings;
+    private IOptions<OpenAiSettings> _openAiSettings;
+    private CommentManipulationHelper _commentManipulationHelper;
+    private string _inputPath;
 
     [SetUp]
     public void Setup()
     {
-        Environment.SetEnvironmentVariable("REPLICATE_ENABLED", "true");
+        Environment.SetEnvironmentVariable("OPENAI_ENABLED", "true");
 
         var dbContextOptions = new DbContextOptionsBuilder<PredictionDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
@@ -40,48 +54,48 @@ public class LlmFileUploaderHandlerTest
         mockServiceProvider.Setup(x => x.GetService(typeof(PredictionDbContext))).Returns(_dbContext);
         mockScope.Setup(x => x.ServiceProvider).Returns(mockServiceProvider.Object);
         serviceScopeFactory.Setup(x => x.CreateScope()).Returns(mockScope.Object);
+
+        _llmFileUploaderHandlerLoggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
+        _openAiApiLoggerMock = new Mock<ILogger<OpenAiApi>>();
+        _signalRServiceLoggerMock = new Mock<ILogger<SignalRService>>();
+        _serviceBusServiceLoggerMock = new Mock<ILogger<ServiceBusService>>(); 
+        _commentManipulationHelperLoggerMock = new Mock<ILogger<CommentManipulationHelper>>();
+        
+        var config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.test.json")
+            .AddEnvironmentVariables() 
+            .Build();
+        
+        var settings = new Settings();
+        config.GetSection("Settings").Bind(settings);
+        _settings = Options.Create(settings);
+        
+        var openAiSettings = new OpenAiSettings();
+        config.GetSection("OpenAiSettings").Bind(openAiSettings);
+        _openAiSettings = Options.Create(openAiSettings);
+        
         _predictionDatabaseService = new PredictionDatabaseService(mockLogger.Object, serviceScopeFactory.Object);
+        _commentManipulationHelper = new CommentManipulationHelper(_commentManipulationHelperLoggerMock.Object);
+
+        
+        _inputPath = Path.Combine(InputPathFolder, FileName);
+        
     }
 
     [Test]
     public async Task Handle_ValidInput_ReturnsHandlerResult()
     {
         // Arrange
-        var fileName = "testzip.zip";
-        var inputPathFolder = "./Testfiles/";
-        var inputContentType = "application/zip";
-        var inputPath = Path.Combine(inputPathFolder, fileName);
-
-        var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
-        var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
-        var replicateSettings = Options.Create(
-            new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
-
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("[{'id':1,'value':'1'}]"),
-            });
-
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        httpClient.BaseAddress = new Uri("http://localhost");
-        var clientFactory = new Mock<IHttpClientFactory>();
-        clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
-
-        var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), _predictionDatabaseService);
-
+        var serviceBusService = new ServiceBusService(_serviceBusServiceLoggerMock.Object, _settings);
+        var signalRService = new SignalRService(_signalRServiceLoggerMock.Object, serviceBusService);
+        var openAiApi = new OpenAiApi(_openAiApiLoggerMock.Object, _openAiSettings, signalRService, _commentManipulationHelper, _predictionDatabaseService);
+        
+        var handler = new LlmFileUploaderHandler(_llmFileUploaderHandlerLoggerMock.Object, _settings, _openAiSettings, 
+                                                    openAiApi, new FileSystem(), _predictionDatabaseService);
+        
         // Act
-        var result = await handler.Handle(inputPath, inputContentType);
-
+        var result = await handler.Handle(_inputPath, InputContentType);
+        
         // Assert
         Assert.That(result, Is.Not.Null);
         Assert.Multiple(() =>
@@ -91,46 +105,22 @@ public class LlmFileUploaderHandlerTest
             Assert.That(result.ErrorMessage, Is.EqualTo("OK"));
         });
     }
-
+    
     [Test]
     public async Task Handle_ErrorsMoreThanZero_ReturnsSuccessFalseHandlerResult()
     {
         // Arrange
-        var fileName = "testzip.zip";
-        var inputPathFolder = "./Testfiles/";
-        var inputContentType = "application/zip";
-        var inputPath = Path.Combine(inputPathFolder, fileName);
-
-        var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
-        var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
-        var replicateSettings = Options.Create(
-            new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
-
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.BadRequest,
-                Content = new StringContent("some_content"),
-            });
-
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        httpClient.BaseAddress = new Uri("http://localhost");
-        var clientFactory = new Mock<IHttpClientFactory>();
-        clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
-
-        var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), _predictionDatabaseService);
-
+        var serviceBusService = new ServiceBusService(_serviceBusServiceLoggerMock.Object, _settings);
+        var signalRService = new SignalRService(_signalRServiceLoggerMock.Object, serviceBusService);
+        _openAiSettings.Value.MaxTokens = 1;
+        var openAiApi = new OpenAiApi(_openAiApiLoggerMock.Object, _openAiSettings, signalRService, _commentManipulationHelper, _predictionDatabaseService);
+        
+        var handler = new LlmFileUploaderHandler(_llmFileUploaderHandlerLoggerMock.Object, _settings, _openAiSettings, 
+            openAiApi, new FileSystem(), _predictionDatabaseService);
+        
         // Act
-        var result = await handler.Handle(inputPath, inputContentType);
-
+        var result = await handler.Handle(_inputPath, InputContentType);
+    
         // Assert
         Assert.That(result, Is.Not.Null);
         Assert.Multiple(() =>
@@ -140,93 +130,43 @@ public class LlmFileUploaderHandlerTest
             Assert.That(result.ErrorMessage, Is.Not.Empty);
         });
     }
-
+    
     [Test]
     public async Task Handle_CreatesDbPredictions_DbContainsPrediction()
     {
         // Arrange
-        var zipFileName = "testzip.zip";
-        var inputPathFolder = "./Testfiles/";
-        var inputContentType = "application/zip";
-        var inputPath = Path.Combine(inputPathFolder, zipFileName);
-
-        var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
-        var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
-        var replicateSettings = Options.Create(
-            new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
-
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("some_content"),
-            });
-
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        httpClient.BaseAddress = new Uri("http://localhost");
-        var clientFactory = new Mock<IHttpClientFactory>();
-        clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
-
-        var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), _predictionDatabaseService);
-
+        var serviceBusService = new ServiceBusService(_serviceBusServiceLoggerMock.Object, _settings);
+        var signalRService = new SignalRService(_signalRServiceLoggerMock.Object, serviceBusService);
+        var openAiApi = new OpenAiApi(_openAiApiLoggerMock.Object, _openAiSettings, signalRService, _commentManipulationHelper, _predictionDatabaseService);
+        
+        var handler = new LlmFileUploaderHandler(_llmFileUploaderHandlerLoggerMock.Object, _settings, _openAiSettings, 
+            openAiApi, new FileSystem(), _predictionDatabaseService);
+        
         // Act
-        await handler.Handle(inputPath, inputContentType);
+        await handler.Handle(_inputPath, InputContentType);
         var retrievedPredictions = _dbContext.Predictions.ToList();
-
+    
         // Assert
         Assert.That(retrievedPredictions, Is.Not.Null);
         Assert.That(retrievedPredictions, Is.Not.Empty);
-
+    
     }
-
+    
      [Test]
     public async Task Handle_CreatesDbPredictions_WithContent()
     {
         // Arrange
-        var zipFileName = "testzip.zip";
-        var inputPathFolder = "./Testfiles/";
-        var inputContentType = "application/zip";
-        var inputPath = Path.Combine(inputPathFolder, zipFileName);
-
-        var loggerMock = new Mock<ILogger<LlmFileUploaderHandler>>();
-        var settings = Options.Create(new Settings { TempFolderPath = inputPathFolder });
-        var replicateSettings = Options.Create(
-            new ReplicateSettings { Prompt = "prompt", WebhookUrl = "webhookUrl" });
-
-        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-        mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("some_content"),
-            });
-
-        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        httpClient.BaseAddress = new Uri("http://localhost");
-        var clientFactory = new Mock<IHttpClientFactory>();
-        clientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
-
-        var replicateApi = new Mock<ReplicateApi>(clientFactory.Object, replicateSettings);
-        var handler = new LlmFileUploaderHandler(loggerMock.Object, settings, replicateSettings, replicateApi.Object, new FileSystem(), _predictionDatabaseService);
-
+        var serviceBusService = new ServiceBusService(_serviceBusServiceLoggerMock.Object, _settings);
+        var signalRService = new SignalRService(_signalRServiceLoggerMock.Object, serviceBusService);
+        var openAiApi = new OpenAiApi(_openAiApiLoggerMock.Object, _openAiSettings, signalRService, _commentManipulationHelper, _predictionDatabaseService);
+        
+        var handler = new LlmFileUploaderHandler(_llmFileUploaderHandlerLoggerMock.Object, _settings, _openAiSettings, 
+            openAiApi, new FileSystem(), _predictionDatabaseService);
+    
         // Act
-        await handler.Handle(inputPath, inputContentType);
+        await handler.Handle(_inputPath, InputContentType);
         var retrievedPredictions = _dbContext.Predictions.ToList();
-
+    
         // Assert
         foreach (var prediction in retrievedPredictions)
         {

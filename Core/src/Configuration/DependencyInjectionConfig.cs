@@ -4,9 +4,8 @@ using aia_api.Services;
 using aia_api.Application.Helpers;
 using Azure.Storage;
 using System.IO.Abstractions;
-using System.Net.Http.Headers;
 using aia_api.Application.Handlers;
-using aia_api.Application.Replicate;
+using aia_api.Application.OpenAi;
 using aia_api.Database;
 using Azure.Storage.Blobs;
 using InterfacesAia.Handlers;
@@ -29,30 +28,18 @@ public static class DependencyInjectionConfig
     {
         var blobConfig = configuration.GetSection("AzureBlobStorage");
         var settings = configuration.GetSection("Settings");
-        var replicate = configuration.GetSection("ReplicateSettings");
+        var openAi = configuration.GetSection("OpenAiSettings");
 
         if (settings == null)
             throw new ArgumentNullException(nameof(settings));
 
         services.Configure<AzureBlobStorageSettings>(blobConfig);
         services.Configure<Settings>(settings);
-        services.Configure<ReplicateSettings>(replicate);
+        services.Configure<OpenAiSettings>(openAi);
     }
 
     private static void ConfigureHttpClients(this IServiceCollection services, IConfiguration configuration)
     {
-        var replicateSettings = configuration.GetSection("ReplicateSettings").Get<ReplicateSettings>();
-
-        if (replicateSettings == null)
-            throw new ArgumentNullException(nameof(replicateSettings));
-
-        services.AddHttpClient("replicateClient", c =>
-        {
-            c.BaseAddress = new Uri("https://api.replicate.com");
-            c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token",
-                replicateSettings.ApiToken);
-        });
-
         services.AddHttpClient("gitlabApiV4Client", c =>
         {
             c.BaseAddress = new Uri("https://gitlab.com");
@@ -87,6 +74,6 @@ public static class DependencyInjectionConfig
         services.AddSingleton<IFileHandlerFactory, FileHandlerFactory>();
         services.AddSingleton<IUploadHandler, UploadHandler>();
         services.AddSingleton<CommentManipulationHelper>();
-        services.AddSingleton<ReplicateApi>();
+        services.AddSingleton<OpenAiApi>();
     }
 }

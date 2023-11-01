@@ -13,7 +13,7 @@
       "applicationUrl": "http://localhost:5264",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "REPLICATE_ENABLED": "true"
+        "OPENAI_ENABLED": "true"
       },
       "dotnetRunMessages": true
     },

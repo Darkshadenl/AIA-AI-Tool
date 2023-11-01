@@ -10,8 +10,10 @@ public interface IDbPrediction
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     int Id { get; }
 
+    string ModelName { get; set; }
     string FileName { get; set; }
     string FileExtension { get; set; }
+    string SystemPrompt { get; set; }
     string Prompt { get; set; }
     string InputCode { get; set; }
     string? PredictionResponseText { get; set; }

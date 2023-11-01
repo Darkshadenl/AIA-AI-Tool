@@ -35,10 +35,6 @@ api.MapPost("/upload/zip", UploadRouter.ZipHandler())
 
 api.MapPost("/upload/repo", UploadRouter.RepoHandler());
 
-api.MapGet("/replicate-webhook-test", ReplicateRouter.ReplicateWebhookTest());
-
-api.MapPost("/replicate-webhook/{id}", ReplicateRouter.ReplicateWebhook());
-
 api.MapGet("/health", () => Results.Ok("OK"));
 
 db.MapDelete("/clear-db", (PredictionDbContext dbContext) =>

@@ -18,7 +18,7 @@ public class SignalRService : ISignalRService
     public async void SendLlmResponseToFrontend(string fileName, string fileExtension, string content)
     {
         HubConnection connection = _serviceBusService.GetConnection();
-        if (connection.State != HubConnectionState.Connected) return;
+        if (connection is not { State: HubConnectionState.Connected }) return;
 
         await connection.InvokeAsync("ReturnLLMResponse", fileName, fileExtension, content);
     }
