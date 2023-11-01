@@ -8,6 +8,7 @@ using aia_api.Database;
 using aia_api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,11 +18,8 @@ namespace TestProject.Application.FileHandler;
 
 public class LlmFileUploaderHandlerTest
 {
-    private const string OpenAiApiToken = "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";
-    private const string ModelName = "gpt-3.5-turbo";
-    
-    const string FileName = "testzip.zip";
-    const string InputContentType = "application/zip"; 
+    private const string FileName = "testzip.zip";
+    private const string InputContentType = "application/zip";
     private const string InputPathFolder = "../../../Testfiles/";
     
     private PredictionDatabaseService _predictionDatabaseService;
@@ -62,9 +60,19 @@ public class LlmFileUploaderHandlerTest
         _signalRServiceLoggerMock = new Mock<ILogger<SignalRService>>();
         _serviceBusServiceLoggerMock = new Mock<ILogger<ServiceBusService>>(); 
         _commentManipulationHelperLoggerMock = new Mock<ILogger<CommentManipulationHelper>>();
-        _settings = Options.Create(new Settings { TempFolderPath = InputPathFolder });
-        _openAiSettings = Options.Create(
-            new OpenAiSettings { ApiToken = OpenAiApiToken, ModelName = ModelName, SystemPrompt = "systemPrompt", Prompt = "prompt"});
+        
+        var config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.test.json")
+            .AddEnvironmentVariables() 
+            .Build();
+        
+        var settings = new Settings();
+        config.GetSection("Settings").Bind(settings);
+        _settings = Options.Create(settings);
+        
+        var openAiSettings = new OpenAiSettings();
+        config.GetSection("OpenAiSettings").Bind(openAiSettings);
+        _openAiSettings = Options.Create(openAiSettings);
         
         _predictionDatabaseService = new PredictionDatabaseService(mockLogger.Object, serviceScopeFactory.Object);
         _commentManipulationHelper = new CommentManipulationHelper(_commentManipulationHelperLoggerMock.Object);
