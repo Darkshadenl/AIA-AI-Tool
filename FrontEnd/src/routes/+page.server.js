@@ -1,7 +1,7 @@
 //@ts-check
 
 import { fail } from '@sveltejs/kit';
-import { SignalRService } from '../SignalRServer.js';
+import { uploadChunk, getConnection } from '../SignalRServer.js';
 import * as stores from '../store.js';
 
 const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
@@ -27,8 +27,13 @@ export const actions = {
     if (file.size <= 0) return fail(400, { error: "No file received or file is empty." });
     if (file.size > FILE_SIZE_LIMIT_IN_BYTES) return fail(413, { error: `File size of file "${file.name}" exceeded the limit of ${FILE_SIZE_LIMIT_IN_BYTES / 1000 / 1000} MB.` });
 
+    let connection = await getConnection();
+    console.log(connection.state)
+    let connectionId = await connection.invoke("GetConnectionId")
+    console.log("id=" + connectionId);
+
     const fileChunks = sliceFileIntoChunks(file);
-    await processFileChunks(fileChunks, file.name, file.type);
+    await processFileChunks(connectionId, fileChunks, file.name, file.type);
     // let message;
     // successMessage.subscribe((value) => {
 		// 	message = value;
@@ -41,9 +46,7 @@ export const actions = {
  * Creates and starts a connection with the SignalR server, as well as closing an earlier connection if it exists.
  */
 async function establishSignalRConnection() {
-  const signalRService = SignalRService.getInstance();
-  if (signalRService.getConnection()) await signalRService.stopConnection();
-  await signalRService.startConnection();
+  await getConnection();
 }
 
 /**
@@ -70,17 +73,16 @@ function sliceFileIntoChunks(file) {
 /**
  * Upload each chunk of the zip file to the API using SignalR.
  * @async
+ * @param {string} connectionId - The id of the connection with the SignalR server.
  * @param {Blob[]} fileChunks - The list of chunks.
- * @param {string} fileName - The name of the file before it was sliced into chunks
+ * @param {string} fileName - The name of the file before it was sliced into chunks.
  * @param {string} contentType - The content type of the file before it was sliced into chunks.
  */
-async function processFileChunks(fileChunks, fileName, contentType) {
-  const signalRService = SignalRService.getInstance();
-
+async function processFileChunks(connectionId, fileChunks, fileName, contentType) {
   for (let i = 0; i < fileChunks.length; i++) {
     const byteArray = await chunkToByteArray(fileChunks[i]);
     const base64 = Buffer.from(byteArray).toString('base64');
-    signalRService.uploadChunk(base64, fileName, contentType, i, fileChunks.length).catch((err) => {
+    uploadChunk(connectionId, base64, fileName, contentType, i, fileChunks.length).catch((err) => {
       console.error(err);
     });
   }

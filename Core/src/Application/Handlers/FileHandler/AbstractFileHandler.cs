@@ -18,7 +18,7 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
         _supportedContentTypes = settings.Value;
     }
 
-    public virtual Task<IHandlerResult> Handle(string inputPath, string inputContentType)
+    public virtual Task<IHandlerResult> Handle(string clientConnectionId, string inputPath, string inputContentType)
     {
         _logger.LogInformation("Input path: {path}", inputPath);
         _logger.LogInformation("Input content type: {contentType}", inputContentType);

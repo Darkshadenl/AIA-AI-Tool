@@ -21,7 +21,7 @@ namespace aia_api.Services
         public async Task<HubConnection> ExecuteAsync()
         {
             var uri = _settings.Value.ServiceBusUrl;
-            _connection = new HubConnectionBuilder().WithUrl(uri).Build();
+            _connection = new HubConnectionBuilder().WithUrl(uri).WithAutomaticReconnect().Build();
 
             try
             {

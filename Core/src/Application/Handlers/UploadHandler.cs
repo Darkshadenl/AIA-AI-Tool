@@ -26,8 +26,9 @@ public class UploadHandler : IUploadHandler
         _memoryStream = new MemoryStream();
     }
 
-    public async void ReceiveFileChunk(string fileName, string contentType, byte[] chunk, int index, int totalChunks)
+    public async void ReceiveFileChunk(string connectionId, string fileName, string contentType, byte[] chunk, int index, int totalChunks)
     {
+        Console.WriteLine(connectionId);
         _logger.LogInformation("Chunk {index} received", index);
         await _memoryStream.WriteAsync(chunk, 0, chunk.Length);
 
@@ -35,15 +36,16 @@ public class UploadHandler : IUploadHandler
         {
             await _signalRService.InvokeSuccessMessage("File uploaded successfully.");
             _logger.LogInformation("File uploaded successfully.");
-            ZipHandler(fileName, contentType);
+            ZipHandler(connectionId, fileName, contentType);
             _memoryStream = new MemoryStream();
         }
     }
 
-    private async void ZipHandler(string fileName, string contentType)
+    private async void ZipHandler(string clientConnectionId, string fileName, string contentType)
     {
         if (ParamIsEmpty(fileName, "File name is empty.").Result) return;
         if (ParamIsEmpty(contentType, "Content type of file is empty.").Result) return;
+        if (ParamIsEmpty(clientConnectionId, "Client connection id is empty.").Result) return;
         if (_memoryStream.Length <= 0)
         {
             await _signalRService.InvokeErrorMessage("No file received or file is empty.");
@@ -63,7 +65,7 @@ public class UploadHandler : IUploadHandler
         try
         {
             var path = await _fileSystemStorageService.StoreInTemp(_memoryStream, fileName);
-            var result = await handlerStreet.Handle(path, contentType);
+            var result = await handlerStreet.Handle(clientConnectionId, path, contentType);
 
             if (result.Success)
             {

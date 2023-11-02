@@ -47,7 +47,7 @@ public class OpenAiApi
         
         _predictionDatabaseService.UpdatePredictionResponseText(dbPrediction, openAiResponse.Message.Content);
         _predictionDatabaseService.UpdatePredictionEditedResponseText(dbPrediction, codeWithComments);
-        _signalRService.SendLlmResponseToFrontend(dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments, dbPrediction.InputCode);
+        _signalRService.SendLlmResponseToFrontend(dbPrediction.ClientConnectionId, dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments, dbPrediction.InputCode);
     }
 
     private ChatCompletionsOptions CreateChatCompletionsOptions(string prompt)

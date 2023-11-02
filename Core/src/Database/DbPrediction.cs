@@ -11,7 +11,7 @@ public class DbPrediction : IDbPrediction
     [Required]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-
+    public string ClientConnectionId { get; set; }
     public string ModelName { get; set; }
     public string FileName { get; set; }
     public string FileExtension { get; set; }

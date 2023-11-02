@@ -1,5 +1,7 @@
 <script>
 	import { redirect } from "@sveltejs/kit";
+	import { getConnection } from "../SignalRServer.js";
+	import { onMount } from "svelte";
 
 	export let form;
 
@@ -11,6 +13,16 @@
 		if (form?.success) form.success = "";
 		if (form?.error) form.error = "";
 	}
+
+	//TODO: Fix that connectionId is equal to the connectionId invoked to the SignalR server.
+	onMount(async () => {
+		const connection = await getConnection();
+
+		connection.on('ReturnLLMResponse', (connectionId, fileName, contentType, fileContent, oldFileContent) => {
+			console.log("Message received:", connectionId);
+			throw redirect(307, '/differences');
+		});
+	})
 </script>
 
 <h1>ZIP File upload</h1>

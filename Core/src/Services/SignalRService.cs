@@ -15,12 +15,12 @@ public class SignalRService : ISignalRService
         _serviceBusService = serviceBusService;
     }
     
-    public async void SendLlmResponseToFrontend(string fileName, string fileExtension, string content, string inputCode)
+    public async void SendLlmResponseToFrontend(string connectionId, string fileName, string fileExtension, string content, string inputCode)
     {
         HubConnection connection = _serviceBusService.GetConnection();
         if (connection is not { State: HubConnectionState.Connected }) return;
 
-        await connection.InvokeAsync("ReturnLLMResponse", fileName, fileExtension, content, inputCode);
+        await connection.InvokeAsync("ReturnLLMResponse", connectionId, fileName, fileExtension, content, inputCode);
     }
     
     public async Task InvokeSuccessMessage(string successMessage)

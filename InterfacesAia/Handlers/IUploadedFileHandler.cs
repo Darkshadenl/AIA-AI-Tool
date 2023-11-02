@@ -7,6 +7,6 @@ namespace InterfacesAia.Handlers;
 /// </summary>
 public interface IUploadedFileHandler
 {
-    Task<IHandlerResult> Handle(string inputPath, string inputContentType);
+    Task<IHandlerResult> Handle(string clientConnectionId, string inputPath, string inputContentType);
     void SetNext(IUploadedFileHandler next);
 }

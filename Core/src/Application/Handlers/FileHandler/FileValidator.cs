@@ -15,7 +15,7 @@ public class FileValidator : AbstractFileHandler
     public FileValidator(ILogger<FileValidator> logger, IOptions<Settings> settings) : base(logger, settings)
     { }
 
-    public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
+    public override async Task<IHandlerResult> Handle(string clientConnectionId, string inputPath, string inputContentType)
     {
         if (!File.Exists(inputPath))
         {
@@ -50,9 +50,9 @@ public class FileValidator : AbstractFileHandler
         }
 
         if (Next == null)
-            return await base.Handle(inputPath, inputContentType);
+            return await base.Handle(clientConnectionId, inputPath, inputContentType);
 
-        return await Next.Handle(inputPath, inputContentType);
+        return await Next.Handle(clientConnectionId, inputPath, inputContentType);
     }
 
 }

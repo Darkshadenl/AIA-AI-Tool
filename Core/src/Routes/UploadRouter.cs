@@ -29,7 +29,7 @@ public class UploadRouter
             {
                 Stream inputStream = compressedFile.OpenReadStream();
                 var path = await storageService.StoreInTemp(inputStream, fileName);
-                var result = await handlerStreet.Handle(path, compressedFile.ContentType);
+                var result = await handlerStreet.Handle("", path, compressedFile.ContentType);
 
                 context.Response.StatusCode = (int) result.StatusCode;
 
@@ -69,7 +69,7 @@ public class UploadRouter
             {
                 var downloadPath = await gitlabApi.DownloadRepository(projectId, apiToken);
                 IUploadedFileHandler handlerStreet = fileHandlerFactory.GetFileHandler();
-                var result = await handlerStreet.Handle(downloadPath, "application/zip");
+                var result = await handlerStreet.Handle("", downloadPath, "application/zip");
 
                 context.Response.StatusCode = (int) result.StatusCode;
 

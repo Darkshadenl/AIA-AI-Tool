@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Net.Mime;
+using System.Security.Claims;
 using Microsoft.AspNetCore.SignalR;
 
 namespace SignalR
@@ -13,14 +14,15 @@ namespace SignalR
             _logger = logger;
         }
         
-        public async Task UploadChunk(string fileName, string contentType, string chunkAsBase64, int index, int totalChunks)
+        public async Task UploadChunk(string connectionId, string fileName, string contentType, string chunkAsBase64, int index, int totalChunks)
         {
+            Console.WriteLine(connectionId);
             if (await SendErrorIfEmpty(chunkAsBase64)) return;
 
             try
             {
                 byte[] chunk = Convert.FromBase64String(chunkAsBase64);
-                await Clients.Others.UploadChunk(fileName, contentType, chunk, index, totalChunks);
+                await Clients.Others.UploadChunk(connectionId, fileName, contentType, chunk, index, totalChunks);
                 _logger.LogInformation("Chunk {index} of file {fileName} send to clients", index, fileName);
             }
             catch (FormatException e)
@@ -30,12 +32,12 @@ namespace SignalR
             }
         }
 
-        public async Task ReturnLLMResponse(string fileName, string contentType, string fileContent, string oldFileContent)
+        public async Task ReturnLLMResponse(string connectionId, string fileName, string contentType, string fileContent, string oldFileContent)
         {
             if (await SendErrorIfEmpty(fileContent) || await SendErrorIfEmpty(oldFileContent)) return;
 
-            await Clients.Others.ReturnLLMResponse(fileName, contentType, fileContent, oldFileContent);
-            _logger.LogInformation("Chunk {fileName} of file {contentType} send to clients", fileName, contentType);
+            await Clients.Client(connectionId).ReturnLLMResponse(connectionId, fileName, contentType, fileContent, oldFileContent);
+            _logger.LogInformation("File {fileName} with contentType {contentType} send to client with id {connectionId}", fileName, contentType, connectionId);
         }
 
         public async Task UploadSuccess(string successMessage)
@@ -48,6 +50,12 @@ namespace SignalR
         {
             await Clients.Others.ReceiveError(errorMessage);
             _logger.LogInformation("Received error: {message}", errorMessage);
+        }
+
+        public async Task<string> GetConnectionId()
+        {
+            Console.WriteLine(Context.ConnectionId);
+            return Context.ConnectionId;
         }
 
         private async Task<bool> SendErrorIfEmpty(string base64)
