@@ -1,6 +1,6 @@
 import { persisted } from "svelte-local-storage-store";
 
-export const progressInformationMessageStore = persisted('progressInformationMessageStore', null);
-export const errorMessageStore = persisted('errorMessageStore', null);
-export const oldCodeStore = persisted('oldCodeStore', null);
-export const newCodeStore = persisted('newCodeStore', null);
+export const progressInformationMessageStore = persisted('progressInformationMessageStore', null, { storage: "session" });
+export const errorMessageStore = persisted('errorMessageStore', null, { storage: "session" });
+export const oldCodeStore = persisted('oldCodeStore', null, { storage: "session" });
+export const newCodeStore = persisted('newCodeStore', null, { storage: "session" });

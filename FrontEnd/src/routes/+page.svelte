@@ -127,7 +127,7 @@
 	function resetStores() {
 		for (const storeName in stores) {
 			if (Object.hasOwnProperty.call(stores, storeName)) {
-				stores[storeName].update(() => null);
+				stores[storeName].set(null);
 			}
 		}
 	}
