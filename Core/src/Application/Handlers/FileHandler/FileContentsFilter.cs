@@ -31,13 +31,13 @@ public class FileContentsFilter : AbstractFileHandler
         _commentChecker = commentChecker;
     }
 
-    public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
+    public override async Task<IHandlerResult> Handle(string clientConnectionId, string inputPath, string inputContentType)
     {
         if (!IsValidFile(inputContentType, _settings.SupportedContentTypes))
         {
             if (Next != null)
-                return await Next.Handle(inputPath,  inputContentType);
-            return await base.Handle(inputPath, inputContentType);
+                return await Next.Handle(clientConnectionId, inputPath,  inputContentType);
+            return await base.Handle(clientConnectionId, inputPath, inputContentType);
         }
 
         using ZipArchive archive = InitializeInputArchive(inputPath);
@@ -53,8 +53,8 @@ public class FileContentsFilter : AbstractFileHandler
         archive.Dispose();
 
         if (Next == null)
-            return await base.Handle(inputPath, inputContentType);
-        return await Next.Handle(inputPath, inputContentType);
+            return await base.Handle(clientConnectionId, inputPath, inputContentType);
+        return await Next.Handle(clientConnectionId, inputPath, inputContentType);
     }
 
     private ZipArchive InitializeInputArchive(string path)

@@ -25,6 +25,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private readonly IFileSystem _fileSystem;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
     private List<string> _errors;
+    private string _clientConnectionId;
 
     public LlmFileUploaderHandler(
         ILogger<LlmFileUploaderHandler> logger,
@@ -48,9 +49,10 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     /// If it does not exist, it will throw an exception.
     /// </summary>
     /// <throws>FileNotFoundException if zip-file cannot be found</throws>
-    public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
+    public override async Task<IHandlerResult> Handle(string clientConnectionId, string inputPath, string inputContentType)
     {
         _errors = new();
+        _clientConnectionId = clientConnectionId;
         var fileName = _fileSystem.Path.GetFileName(inputPath);
         var outputFilePath = _fileSystem.Path.Combine(_settings.TempFolderPath + "Output/", fileName);
         var zipArchive = GetZipArchive(outputFilePath);
@@ -75,6 +77,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
         var dbPrediction = new DbPrediction
         {
+            ClientConnectionId = _clientConnectionId,
             ModelName = _openAiSettings.ModelName,
             FileExtension = fileExtension,
             FileName = file.FullName,
@@ -107,13 +110,13 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             var time = DateTime.Now;
             var openAiResponse = await _openAiApi.SendOpenAiCompletion(dbPrediction);
             var newTime = DateTime.Now;
-            Console.WriteLine($"Duration: {newTime - time} - Finish reason: {openAiResponse.FinishReason}");
+            _logger.LogDebug($"Duration: {newTime - time} - Finish reason: {openAiResponse.FinishReason}");
             
             CheckIfErrors(openAiResponse, file);
             if (_errors.Count > 0) return;
             
             _openAiApi.ProcessApiResponse(openAiResponse, dbPrediction);
-            _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.Id, dbPrediction.FileName);
+            _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.FileName, dbPrediction.Id);
         }
     }
 

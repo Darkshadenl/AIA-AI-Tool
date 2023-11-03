@@ -17,6 +17,7 @@ public class FileContentsFilterTest
     private List<string> _codeSnippets;
     private List<string> _commentsList;
     private List<string> _eslintList;
+    private string _clientConnectionId;
 
     [SetUp]
     public void SetUp()
@@ -43,7 +44,7 @@ public class FileContentsFilterTest
             .Select(c => c.Trim())
             .Where(c => !string.IsNullOrWhiteSpace(c))
             .ToList();
-
+        _clientConnectionId = Guid.NewGuid().ToString();
     }
 
     [Test]
@@ -76,10 +77,10 @@ public class FileContentsFilterTest
         zipHandler.SetNext(nextHandlerMock.Object);
 
         // Act
-        await zipHandler.Handle("somefile.zip", "application/zip");
+        await zipHandler.Handle(_clientConnectionId, "somefile.zip", "application/zip");
 
         // Assert
-        nextHandlerMock.Verify(x => x.Handle(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        nextHandlerMock.Verify(x => x.Handle(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
     [Test]
@@ -94,10 +95,10 @@ public class FileContentsFilterTest
         zipHandler.SetNext(nextHandlerMock.Object);
 
         // Act
-        await zipHandler.Handle("somefile.txt", "text/plain");
+        await zipHandler.Handle(_clientConnectionId, "somefile.txt", "text/plain");
 
         // Assert
-        nextHandlerMock.Verify(x => x.Handle("somefile.txt", "text/plain"), Times.Once);
+        nextHandlerMock.Verify(x => x.Handle(It.IsAny<string>(), "somefile.txt", "text/plain"), Times.Once);
     }
 
     [Test]
@@ -109,7 +110,7 @@ public class FileContentsFilterTest
         var zipHandler = new FileContentsFilter(_loggerMock.Object, _settingsMock.Object, new MockFileSystem(), commentChecker);
 
         // Act & Assert
-        Assert.DoesNotThrowAsync(async () => await zipHandler.Handle("somefile.txt", "text/plain"));
+        Assert.DoesNotThrowAsync(async () => await zipHandler.Handle(_clientConnectionId, "somefile.txt", "text/plain"));
     }
 
     [Test]
@@ -147,7 +148,7 @@ public class FileContentsFilterTest
         var fileContentsFilter = new FileContentsFilter(_loggerMock.Object, _settingsMock.Object, mockFs, commentChecker);
 
         // Act
-        await fileContentsFilter.Handle("/temp/somefile.zip", "application/zip");
+        await fileContentsFilter.Handle(_clientConnectionId, "/temp/somefile.zip", "application/zip");
 
         // Assert
         var fileExists = mockFs.FileExists("/some/temp/Output/somefile.zip");
@@ -214,7 +215,7 @@ public class FileContentsFilterTest
         var fileContentsFilter = new FileContentsFilter(_loggerMock.Object, _settingsMock.Object, mockFs, commentChecker);
 
         // Act
-        await fileContentsFilter.Handle("/temp/somefile.zip", "application/zip");
+        await fileContentsFilter.Handle(_clientConnectionId, "/temp/somefile.zip", "application/zip");
 
         // Assert
         var fileExists = mockFs.FileExists("/some/temp/Output/somefile.zip");
@@ -282,7 +283,7 @@ public class FileContentsFilterTest
         var fileContentsFilter = new FileContentsFilter(_loggerMock.Object, _settingsMock.Object, mockFs, commentChecker);
 
         // Act
-        await fileContentsFilter.Handle("/temp/somefile.zip", "application/zip");
+        await fileContentsFilter.Handle(_clientConnectionId, "/temp/somefile.zip", "application/zip");
 
         // Assert
         var fileExists = mockFs.FileExists("/some/temp/Output/somefile.zip");

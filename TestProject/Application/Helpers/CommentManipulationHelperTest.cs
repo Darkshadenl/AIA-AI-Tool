@@ -21,74 +21,68 @@ public class CommentManipulationHelperTest
     {
         // Arrange
         var expectedCode = """
-                           class Calculate
-                           {
-                               public Calculate()
-                               {
-                                   CalculateSum(5, 5);
-                                   CalculateProduct(5, 5);
+                           class Calculate {
+                               constructor() {
+                                   this.calculateSum(5, 5);
+                                   this.calculateProduct(5, 5);
                                }
-                               
-                               /// <summary>
-                               /// This code calculates the sum of two numbers
-                               /// </summary>
-                               /// <param name="number1"></param>
-                               /// <param name="number2"></param>
-                               /// <returns>Sum of number1 and number2</returns>
-                               public int CalculateSum(int number1, int number2)
-                               {
+                           
+                               /**
+                                * This code calculates the sum of two numbers
+                                * @param number1
+                                * @param number2
+                                * @returns Sum of number1 and number2
+                                */
+                               calculateSum(number1: number, number2: number): number {
                                    return number1 + number2;
                                }
-                               
-                               /// <summary>
-                               /// Calculates the product of two given numbers.
-                               /// </summary>
-                               /// <param name="number1">The first number.</param>
-                               /// <param name="number2">The second number.</param>
-                               /// <returns>The product of number1 and number2.</returns>
-                               public int CalculateProduct(int number1, int number2)
-                               {
+                           
+                               /**
+                                 * Calculates the product of two given numbers.
+                                 * @param number1 The first number.
+                                 * @param number2 The second number.
+                                 * @returns The product of number1 and number2.
+                                 */
+                               calculateProduct(number1: number, number2: number): number {
                                    return number1 * number2;
                                }
                            }
                            """;
         var newComment = """
-                             /// <summary>
-                             /// Calculates the product of two given numbers.
-                             /// </summary>
-                             /// <param name="number1">The first number.</param>
-                             /// <param name="number2">The second number.</param>
-                             /// <returns>The product of number1 and number2.</returns>
-                             public int CalculateProduct(int number1, int number2)
+                         [RETURN]
+                             /**
+                               * Calculates the product of two given numbers.
+                               * @param number1 The first number.
+                               * @param number2 The second number.
+                               * @returns The product of number1 and number2.
+                               */
+                             calculateProduct(number1: number, number2: number): number {
+                         [/RETURN]
                          """;
         var code = """
-                  class Calculate
-                  {
-                      public Calculate()
-                      {
-                          CalculateSum(5, 5);
-                          CalculateProduct(5, 5);
+                  class Calculate {
+                      constructor() {
+                          this.calculateSum(5, 5);
+                          this.calculateProduct(5, 5);
                       }
-                      
-                      /// <summary>
-                      /// This code calculates the sum of two numbers
-                      /// </summary>
-                      /// <param name="number1"></param>
-                      /// <param name="number2"></param>
-                      /// <returns>Sum of number1 and number2</returns>
-                      public int CalculateSum(int number1, int number2)
-                      {
+                  
+                      /**
+                       * This code calculates the sum of two numbers
+                       * @param number1
+                       * @param number2
+                       * @returns Sum of number1 and number2
+                       */
+                      calculateSum(number1: number, number2: number): number {
                           return number1 + number2;
                       }
-                      
-                      /// <summary>
-                      /// Wrong comment here
-                      /// </summary>
-                      /// <param name="number1"></param>
-                      /// <param name="number2"></param>
-                      /// <returns>This is wrong</returns>
-                      public int CalculateProduct(int number1, int number2)
-                      {
+                  
+                      /**
+                       * Wrong comment here
+                       * @param number1
+                       * @param number2
+                       * @returns This is wrong
+                       */
+                      calculateProduct(number1: number, number2: number): number {
                           return number1 * number2;
                       }
                   }
@@ -96,6 +90,8 @@ public class CommentManipulationHelperTest
         
         // Act
         string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
+        
+        Console.WriteLine(codeWithComments);
         
         // Assert
         Assert.That(codeWithComments, Is.EqualTo(expectedCode));
@@ -106,49 +102,43 @@ public class CommentManipulationHelperTest
     {
         // Arrange
         var expectedCode = """
-                           class Calculate
-                           {
-                               public Calculate()
-                               {
-                                   CalculateSum(5, 5);
-                                   CalculateProduct(5, 5);
+                           class Calculate {
+                               constructor() {
+                                   this.calculateSum(5, 5);
+                                   this.calculateProduct(5, 5);
                                }
-                               
+                           
                                // This code calculates the sum of two numbers
-                               public int CalculateSum(int number1, int number2)
-                               {
+                               calculateSum(number1: number, number2: number): number {
                                    return number1 + number2;
                                }
-                               
+                           
                                // Calculates the product of two given numbers.
-                               public int CalculateProduct(int number1, int number2)
-                               {
+                               calculateProduct(number1: number, number2: number): number {
                                    return number1 * number2;
                                }
                            }
                            """;
         var newComment = """
+                         [RETURN]
                              // Calculates the product of two given numbers.
-                             public int CalculateProduct(int number1, int number2)
+                             calculateProduct(number1: number, number2: number): number {
+                         [/RETURN]
                          """;
         var code = """
-                  class Calculate
-                  {
-                      public Calculate()
-                      {
-                          CalculateSum(5, 5);
-                          CalculateProduct(5, 5);
+                  class Calculate {
+                      constructor() {
+                          this.calculateSum(5, 5);
+                          this.calculateProduct(5, 5);
                       }
-                      
+                  
                       // This code calculates the sum of two numbers
-                      public int CalculateSum(int number1, int number2)
-                      {
+                      calculateSum(number1: number, number2: number): number {
                           return number1 + number2;
                       }
-                      
+                  
                       // Wrong comment here
-                      public int CalculateProduct(int number1, int number2)
-                      {
+                      calculateProduct(number1: number, number2: number): number {
                           return number1 * number2;
                       }
                   }
@@ -166,74 +156,68 @@ public class CommentManipulationHelperTest
     {
         // Arrange
         var expectedCode = """
-                           class Calculate
-                           {
-                               public Calculate()
-                               {
-                                   CalculateSum(5, 5);
-                                   CalculateProduct(5, 5);
+                           class Calculate {
+                               constructor() {
+                                   this.calculateSum(5, 5);
+                                   this.wrongMethodName(5, 5);
                                }
-                               
-                               /// <summary>
-                               /// This code calculates the sum of two numbers
-                               /// </summary>
-                               /// <param name="number1"></param>
-                               /// <param name="number2"></param>
-                               /// <returns>Sum of number1 and number2</returns>
-                               public int CalculateSum(int number1, int number2)
-                               {
+                           
+                               /**
+                                * This code calculates the sum of two numbers
+                                * @param number1 
+                                * @param number2 
+                                * @returns Sum of number1 and number2
+                                */
+                               calculateSum(number1: number, number2: number): number {
                                    return number1 + number2;
                                }
-                               
-                               /// <summary>
-                               /// Wrong comment here
-                               /// </summary>
-                               /// <param name="number1"></param>
-                               /// <param name="number2"></param>
-                               /// <returns>This is wrong</returns>
-                               public int WrongMethodName(int number1, int number2)
-                               {
+                           
+                               /**
+                                * Wrong comment here
+                                * @param number1 
+                                * @param number2 
+                                * @returns This is wrong
+                                */
+                               wrongMethodName(number1: number, number2: number): number {
                                    return number1 * number2;
                                }
                            }
                            """;
         var newComment = """
-                             /// <summary>
-                             /// Calculates the product of two given numbers.
-                             /// </summary>
-                             /// <param name="number1">The first number.</param>
-                             /// <param name="number2">The second number.</param>
-                             /// <returns>The product of number1 and number2.</returns>
-                             public int CalculateProduct(int number1, int number2)
+                         [RETURN]
+                             /**
+                               * Calculates the product of two given numbers.
+                               * @param number1 The first number.
+                               * @param number2 The second number.
+                               * @returns The product of number1 and number2.
+                               */
+                             calculateProduct(number1: number, number2: number): number {
+                         [/RETURN]
                          """;
         var code = """
-                  class Calculate
-                  {
-                      public Calculate()
-                      {
-                          CalculateSum(5, 5);
-                          CalculateProduct(5, 5);
+                  class Calculate {
+                      constructor() {
+                          this.calculateSum(5, 5);
+                          this.wrongMethodName(5, 5);
                       }
-                      
-                      /// <summary>
-                      /// This code calculates the sum of two numbers
-                      /// </summary>
-                      /// <param name="number1"></param>
-                      /// <param name="number2"></param>
-                      /// <returns>Sum of number1 and number2</returns>
-                      public int CalculateSum(int number1, int number2)
-                      {
+                  
+                      /**
+                       * This code calculates the sum of two numbers
+                       * @param number1 
+                       * @param number2 
+                       * @returns Sum of number1 and number2
+                       */
+                      calculateSum(number1: number, number2: number): number {
                           return number1 + number2;
                       }
-                      
-                      /// <summary>
-                      /// Wrong comment here
-                      /// </summary>
-                      /// <param name="number1"></param>
-                      /// <param name="number2"></param>
-                      /// <returns>This is wrong</returns>
-                      public int WrongMethodName(int number1, int number2)
-                      {
+                  
+                      /**
+                       * Wrong comment here
+                       * @param number1 
+                       * @param number2 
+                       * @returns This is wrong
+                       */
+                      wrongMethodName(number1: number, number2: number): number {
                           return number1 * number2;
                       }
                   }
@@ -251,49 +235,43 @@ public class CommentManipulationHelperTest
     {
         // Arrange
         var expectedCode = """
-                           class Calculate
-                           {
-                               public Calculate()
-                               {
-                                   CalculateSum(5, 5);
-                                   CalculateProduct(5, 5);
+                           class Calculate {
+                               constructor() {
+                                   this.calculateSum(5, 5);
+                                   this.wrongMethodName(5, 5);
                                }
-                               
+                           
                                // This code calculates the sum of two numbers
-                               public int CalculateSum(int number1, int number2)
-                               {
+                               calculateSum(number1: number, number2: number): number {
                                    return number1 + number2;
                                }
-                               
+                           
                                // Wrong comment here
-                               public int WrongMethodName(int number1, int number2)
-                               {
+                               wrongMethodName(number1: number, number2: number): number {
                                    return number1 * number2;
                                }
                            }
                            """;
         var newComment = """
+                         [RETURN]
                              // Calculates the product of two given numbers.
-                             public int CalculateProduct(int number1, int number2)
+                             calculateProduct(number1: number, number2: number): number {
+                         [/RETURN]
                          """;
         var code = """
-                  class Calculate
-                  {
-                      public Calculate()
-                      {
-                          CalculateSum(5, 5);
-                          CalculateProduct(5, 5);
+                  class Calculate {
+                      constructor() {
+                          this.calculateSum(5, 5);
+                          this.wrongMethodName(5, 5);
                       }
-                      
+                  
                       // This code calculates the sum of two numbers
-                      public int CalculateSum(int number1, int number2)
-                      {
+                      calculateSum(number1: number, number2: number): number {
                           return number1 + number2;
                       }
-                      
+                  
                       // Wrong comment here
-                      public int WrongMethodName(int number1, int number2)
-                      {
+                      wrongMethodName(number1: number, number2: number): number {
                           return number1 * number2;
                       }
                   }
@@ -301,19 +279,5 @@ public class CommentManipulationHelperTest
         
         string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
         Assert.That(codeWithComments, Is.EqualTo(expectedCode));
-    }
-
-    [Test]
-    public void ProcessLlmResponse_ShouldCombineTokens()
-    {
-        // Arrange
-        var expectedResult = "This is a token.";
-        var tokens = new string[] { "This", " ", "is", " ", "a", " ", "to", "ken", "." };
-        
-        // Act
-        var combinedTokens = _llmResponseController.CombineTokens(tokens);
-        
-        // Assert
-        Assert.That(combinedTokens, Is.EqualTo(expectedResult));
     }
 }

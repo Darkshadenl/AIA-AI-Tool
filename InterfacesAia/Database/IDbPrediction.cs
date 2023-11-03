@@ -9,7 +9,7 @@ public interface IDbPrediction
     [Required]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     int Id { get; }
-
+    string ClientConnectionId { get; set; }
     string ModelName { get; set; }
     string FileName { get; set; }
     string FileExtension { get; set; }
@@ -17,4 +17,5 @@ public interface IDbPrediction
     string Prompt { get; set; }
     string InputCode { get; set; }
     string? PredictionResponseText { get; set; }
+    string? EditedResponseText { get; set; }
 }

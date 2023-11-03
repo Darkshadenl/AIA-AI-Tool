@@ -18,7 +18,7 @@ public class AzureUploadHandler : AbstractFileHandler
         _azureService = azureService;
     }
 
-    public override async Task<IHandlerResult> Handle(string inputPath, string inputContentType)
+    public override async Task<IHandlerResult> Handle(string clientConnectionId, string inputPath, string inputContentType)
     {
         try
         {
@@ -36,9 +36,9 @@ public class AzureUploadHandler : AbstractFileHandler
         }
 
         if (Next == null)
-            return await base.Handle(inputPath, inputContentType);
+            return await base.Handle(clientConnectionId, inputPath, inputContentType);
 
-        return await Next.Handle(inputPath, inputContentType);
+        return await Next.Handle(clientConnectionId, inputPath, inputContentType);
     }
 
 }

@@ -11,7 +11,7 @@ public class DbPrediction : IDbPrediction
     [Required]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-
+    public string ClientConnectionId { get; set; }
     public string ModelName { get; set; }
     public string FileName { get; set; }
     public string FileExtension { get; set; }
@@ -19,4 +19,5 @@ public class DbPrediction : IDbPrediction
     public string Prompt { get; set; }
     public string InputCode { get; set; }
     public string? PredictionResponseText { get; set; }
+    public string? EditedResponseText { get; set; }
 }

@@ -24,7 +24,7 @@ IUploadHandler uploadHandler = app.Services.GetRequiredService<IUploadHandler>()
 IServiceBusService serviceBusService = app.Services.GetRequiredService<IServiceBusService>();
 HubConnection connection = await serviceBusService.ExecuteAsync();
 
-connection.On<string, string, byte[], int, int>("UploadChunk", uploadHandler.ReceiveFileChunk);
+connection.On<string, string, string, byte[], int, int>("UploadChunk", uploadHandler.ReceiveFileChunk);
 
 var api = app.MapGroup("/api");
 var db = app.MapGroup("/db");

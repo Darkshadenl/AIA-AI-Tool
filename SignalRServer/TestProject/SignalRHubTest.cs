@@ -15,15 +15,18 @@ public class SignalRHubTest
     private static string _base64;
     private static string _contentType;
     private static byte[] _byteArray;
+    private static string _clientConnectionId;
 
 
     [SetUp]
     public void Setup()
     {
+        _clientConnectionId = Guid.NewGuid().ToString();
         _mainHubMock = new Mock<IMainHub>();
         _mockClientsMock = new Mock<IHubCallerClients<IMainHub>>();
-        _mockClientsMock.Setup(_ => _.Others).Returns(_mainHubMock.Object);
-        _mockClientsMock.Setup(_ => _.Caller).Returns(_mainHubMock.Object);
+        _mockClientsMock.Setup(c => c.Others).Returns(_mainHubMock.Object);
+        _mockClientsMock.Setup(c => c.Caller).Returns(_mainHubMock.Object);
+        _mockClientsMock.Setup(c => c.Client(_clientConnectionId)).Returns(_mainHubMock.Object);
 
         var loggerMock = new Mock<ILogger<MainHub>>();
         _hub = new MainHub(loggerMock.Object)
@@ -46,23 +49,61 @@ public class SignalRHubTest
     [Test]
     public async Task MainHub_UploadZip_Success()
     {
-        await _hub.UploadChunk(_fileName, _contentType, _base64, 0, 1);
-        _mainHubMock.Verify(_ => _.UploadChunk(_fileName, _contentType, _byteArray, It.IsAny<int>(), It.IsAny<int>()));
+        await _hub.UploadChunk(_clientConnectionId, _fileName, _contentType, _base64, 0, 1);
+        _mainHubMock.Verify(h => h.UploadChunk(It.IsAny<string>(), _fileName, _contentType, _byteArray, It.IsAny<int>(), It.IsAny<int>()));
     }
 
     [Test]
     public async Task MainHub_UploadZip_Fail_Empty_Params()
     {
-        await _hub.UploadChunk("", "", "", 0, 1);
-        _mainHubMock.Verify(_ => _.ReceiveError("No file received or file is empty."));
+        await _hub.UploadChunk(_clientConnectionId, "", "", "", 0, 1);
+        _mainHubMock.Verify(h => h.ReceiveError(_clientConnectionId, "No file received or file is empty."));
     }
 
     [Test]
     public async Task MainHub_UploadZip_Fail_Unexpected_DataUri()
     {
-        string unexpectedDataUri = "Unexpected";
+        const string unexpectedDataUri = "Unexpected";
 
-        await _hub.UploadChunk(_fileName, _contentType, unexpectedDataUri, 0, 1);
-        _mainHubMock.Verify(_ => _.ReceiveError("The file is not converted to base64 correctly."));
+        await _hub.UploadChunk(_clientConnectionId, _fileName, _contentType, unexpectedDataUri, 0, 1);
+        _mainHubMock.Verify(h => h.ReceiveError(_clientConnectionId, "The file is not converted to base64 correctly."));
+    }
+    
+    [Test]
+    public async Task MainHub_ReturnLlmResponse_Success()
+    {
+        const string fileContent = "TestFileContent";
+        const string oldFileContent = "TestOldFileContent";
+        
+        await _hub.ReturnLlmResponse(_clientConnectionId, _fileName, _contentType, fileContent, oldFileContent);
+        _mainHubMock.Verify(h => h.ReceiveLlmResponse(_clientConnectionId, _fileName, _contentType, fileContent, oldFileContent));
+    }
+    
+    [Test]
+    public async Task MainHub_ReturnLlmResponse_Fail_Empty_FileContent()
+    {
+        const string fileContent = "";
+        const string oldFileContent = "TestOldFileContent";
+        
+        await _hub.ReturnLlmResponse(_clientConnectionId, _fileName, _contentType, fileContent, oldFileContent);
+        _mainHubMock.Verify(h => h.ReceiveError(_clientConnectionId, "No file received or file is empty."));
+    }
+    
+    [Test]
+    public async Task MainHub_ReturnProgressInformation_Success()
+    {
+        const string progressInformationMessage = "TestProgressInformationMessage";
+        
+        await _hub.ReturnProgressInformation(_clientConnectionId, progressInformationMessage);
+        _mainHubMock.Verify(h => h.ReceiveProgressInformation(_clientConnectionId, progressInformationMessage));
+    }
+    
+    [Test]
+    public async Task MainHub_ReturnError_Success()
+    {
+        const string errorMessage = "TestErrorMessage";
+        
+        await _hub.ReturnError(_clientConnectionId, errorMessage);
+        _mainHubMock.Verify(h => h.ReceiveError(_clientConnectionId, errorMessage));
     }
 }

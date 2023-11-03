@@ -2,7 +2,7 @@ namespace InterfacesAia.Services;
 
 public interface ISignalRService
 {
-    void SendLlmResponseToFrontend(string fileName, string fileExtension, string content);
-    Task InvokeSuccessMessage(string successMessage);
-    Task InvokeErrorMessage(string errorMessage);
+    void SendLlmResponseToFrontend(string connectionId, string fileName, string fileExtension, string content, string inputCode);
+    Task InvokeProgressInformationMessage(string connectionId, string progressInformationMessage);
+    Task InvokeErrorMessage(string connectionId, string errorMessage);
 }

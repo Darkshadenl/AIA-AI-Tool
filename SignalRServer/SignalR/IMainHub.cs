@@ -1,11 +1,11 @@
-﻿using System;
-namespace SignalR
+﻿namespace SignalR
 {
     public interface IMainHub
     {
-        public Task UploadChunk(string fileName, string contentType, byte[] chunk, int index, int totalChunks);
-        public Task ReturnLLMResponse(string fileName, string contentType, string fileContent);
-        public Task UploadSuccess(string successMessage);
-        public Task ReceiveError(string errorMessage);
+        public Task UploadChunk(string connectionId, string fileName, string contentType, byte[] chunk, int index, int totalChunks);
+        public Task ReceiveLlmResponse(string connectionId, string fileName, string contentType, string fileContent, string oldFileContent);
+        public Task ReceiveProgressInformation(string connectionId, string progressInformationMessage);
+        public Task ReceiveError(string connectionId, string errorMessage);
+        public Task<string> GetConnectionId();
     }
 }

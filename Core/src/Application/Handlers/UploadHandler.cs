@@ -14,6 +14,7 @@ public class UploadHandler : IUploadHandler
     private readonly IFileHandlerFactory _fileHandlerFactory;
     private readonly IFileSystemStorageService _fileSystemStorageService;
     private MemoryStream _memoryStream;
+    private string _clientConnectionId;
 
     public UploadHandler(ILogger<UploadHandler> logger, IOptions<Settings> settings, ISignalRService signalRService, 
         IFileHandlerFactory fileHandlerFactory, IFileSystemStorageService fileSystemStorageService)
@@ -26,59 +27,67 @@ public class UploadHandler : IUploadHandler
         _memoryStream = new MemoryStream();
     }
 
-    public async void ReceiveFileChunk(string fileName, string contentType, byte[] chunk, int index, int totalChunks)
+    public async void ReceiveFileChunk(string connectionId, string fileName, string contentType, byte[] chunk, int index, int totalChunks)
     {
-        _logger.LogInformation("Chunk {index} received", index);
+        _clientConnectionId = connectionId;
+        _logger.LogInformation("Chunk {index} received from client {connectionId}", index, _clientConnectionId);
         await _memoryStream.WriteAsync(chunk, 0, chunk.Length);
 
         if (index == totalChunks - 1)
         {
-            await _signalRService.InvokeSuccessMessage("File uploaded successfully.");
+            await _signalRService.InvokeProgressInformationMessage(connectionId, "File uploaded successfully.");
             _logger.LogInformation("File uploaded successfully.");
-            ZipHandler(fileName, contentType);
+            ZipHandler(connectionId, fileName, contentType);
             _memoryStream = new MemoryStream();
+            _clientConnectionId = string.Empty;
         }
     }
 
-    private async void ZipHandler(string fileName, string contentType)
+    private async void ZipHandler(string clientConnectionId, string fileName, string contentType)
     {
         if (ParamIsEmpty(fileName, "File name is empty.").Result) return;
         if (ParamIsEmpty(contentType, "Content type of file is empty.").Result) return;
+        if (ParamIsEmpty(clientConnectionId, "Client connection id is empty.").Result) return;
         if (_memoryStream.Length <= 0)
         {
-            await _signalRService.InvokeErrorMessage("No file received or file is empty.");
+            await _signalRService.InvokeErrorMessage(_clientConnectionId, "No file received or file is empty.");
             _logger.LogError("No file received or file is empty.");
             return;
         }
 
         if (!_settings.Value.SupportedContentTypes.Contains(contentType))
         {
-            await _signalRService.InvokeErrorMessage("Invalid file type. Only ZIP files are allowed.");
+            await _signalRService.InvokeErrorMessage(_clientConnectionId, "Invalid file type. Only ZIP files are allowed.");
             _logger.LogError("Invalid file type. Only ZIP files are allowed.");
             return;
         }
 
         var handlerStreet = _fileHandlerFactory.GetFileHandler();
-
+        
         try
         {
             var path = await _fileSystemStorageService.StoreInTemp(_memoryStream, fileName);
-            var result = await handlerStreet.Handle(path, contentType);
+            
+            await _signalRService.InvokeProgressInformationMessage(_clientConnectionId, 
+                "The AI is currently analysing the code and generating a response. This could take a while, please wait.");
+            
+            var result = await handlerStreet.Handle(clientConnectionId, path, contentType);
 
             if (result.Success)
             {
-                await _signalRService.InvokeSuccessMessage("File sent to the AI model.");
-                _logger.LogInformation("File sent to the AI model.");
+                await _signalRService.InvokeProgressInformationMessage(_clientConnectionId, 
+                    "Files that included comments were processed by the AI model.");
+                _logger.LogInformation("Files that included comments were processed by the AI model.");
             }
             else
             {
-                await _signalRService.InvokeErrorMessage(result.ErrorMessage);
+                await _signalRService.InvokeErrorMessage(_clientConnectionId, result.ErrorMessage);
                 _logger.LogError("Error: {error}", result.ErrorMessage);
             }
         }
         catch (Exception e)
         {
-            await _signalRService.InvokeErrorMessage("Something went wrong.");
+            await _signalRService.InvokeErrorMessage(_clientConnectionId, "Something went wrong.");
             _logger.LogCritical("Error: {message}, {stackTrace}", e.Message, e.StackTrace);
         }
     }
@@ -87,7 +96,7 @@ public class UploadHandler : IUploadHandler
     {
         if (string.IsNullOrEmpty(param))
         {
-            await _signalRService.InvokeErrorMessage(errorMessage);
+            await _signalRService.InvokeErrorMessage(_clientConnectionId, errorMessage);
             return true;
         }
         return false;
