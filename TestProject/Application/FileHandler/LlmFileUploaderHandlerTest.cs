@@ -80,7 +80,7 @@ public class LlmFileUploaderHandlerTest
 
         
         _inputPath = Path.Combine(InputPathFolder, FileName);
-        _clientConnectionId = "TestConnectionId";
+        _clientConnectionId = Guid.NewGuid().ToString();
     }
 
     [Test]
