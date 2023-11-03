@@ -9,7 +9,7 @@
 	const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
 
 	function registerSignalRCallbacks(connection) {
-		connection.on('ReceiveProgressInformation', (message) => {
+		connection.on('ReceiveProgressInformation', (_, message) => {
 			console.log(`Success: ${message}`);
 			progressInformationMessageStore.set(message);
 		});
@@ -19,8 +19,7 @@
 			errorMessageStore.set(message);
 		});
 
-		connection.on('ReceiveLlmResponse', (connectionId, fileName, contentType, fileContent, oldFileContent) => {
-			console.log("Message received:", connectionId);
+		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
 
 			oldCodeStore.update((value) => {
 				if (value) return [...value, { fileName: fileName, code: oldFileContent }];

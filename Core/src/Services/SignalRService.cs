@@ -23,19 +23,19 @@ public class SignalRService : ISignalRService
         await connection.InvokeAsync("ReturnLlmResponse", connectionId, fileName, fileExtension, content, inputCode);
     }
     
-    public async Task InvokeProgressInformationMessage(string progressInformationMessage)
+    public async Task InvokeProgressInformationMessage(string connectionId, string progressInformationMessage)
     {
         HubConnection connection = _serviceBusService.GetConnection();
         if (connection.State != HubConnectionState.Connected) return;
         
-        await connection.InvokeAsync("ReturnProgressInformation", progressInformationMessage);
+        await connection.InvokeAsync("ReturnProgressInformation", connectionId, progressInformationMessage);
     }
     
-    public async Task InvokeErrorMessage(string errorMessage)
+    public async Task InvokeErrorMessage(string connectionId, string errorMessage)
     {
         HubConnection connection = _serviceBusService.GetConnection();
         if (connection.State != HubConnectionState.Connected) return;
         
-        await connection.InvokeAsync("ReturnError", errorMessage);
+        await connection.InvokeAsync("ReturnError", connectionId, errorMessage);
     }
 }

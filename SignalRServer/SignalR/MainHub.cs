@@ -14,7 +14,7 @@ namespace SignalR
         public async Task UploadChunk(string connectionId, string fileName, string contentType, string chunkAsBase64, int index, int totalChunks)
         {
             Console.WriteLine(connectionId);
-            if (await SendErrorIfEmpty(chunkAsBase64)) return;
+            if (await SendErrorIfEmpty(connectionId, chunkAsBase64)) return;
 
             try
             {
@@ -24,28 +24,28 @@ namespace SignalR
             }
             catch (FormatException e)
             {
-                await Clients.Caller.ReceiveError("The file is not converted to base64 correctly.");
+                await Clients.Caller.ReceiveError(connectionId, "The file is not converted to base64 correctly.");
                 _logger.LogCritical("Error: {message}, stacktrace: {stackTrace}", e.Message, e.StackTrace);
             }
         }
 
         public async Task ReturnLlmResponse(string connectionId, string fileName, string contentType, string fileContent, string oldFileContent)
         {
-            if (await SendErrorIfEmpty(fileContent) || await SendErrorIfEmpty(oldFileContent)) return;
+            if (await SendErrorIfEmpty(connectionId, fileContent) || await SendErrorIfEmpty(connectionId, oldFileContent)) return;
 
             await Clients.Client(connectionId).ReceiveLlmResponse(connectionId, fileName, contentType, fileContent, oldFileContent);
             _logger.LogInformation("File {fileName} with contentType {contentType} send to client with id {connectionId}", fileName, contentType, connectionId);
         }
 
-        public async Task ReturnProgressInformation(string progressInformationMessage)
+        public async Task ReturnProgressInformation(string connectionId, string progressInformationMessage)
         {
-            await Clients.Others.ReceiveProgressInformation(progressInformationMessage);
+            await Clients.Client(connectionId).ReceiveProgressInformation(connectionId, progressInformationMessage);
             _logger.LogInformation("Progress information message send: {message}", progressInformationMessage);
         }
 
-        public async Task ReturnError(string errorMessage)
+        public async Task ReturnError(string connectionId, string errorMessage)
         {
-            await Clients.Others.ReceiveError(errorMessage);
+            await Clients.Client(connectionId).ReceiveError(connectionId, errorMessage);
             _logger.LogInformation("Received error: {message}", errorMessage);
         }
 
@@ -54,10 +54,10 @@ namespace SignalR
             return Context.ConnectionId;
         }
 
-        private async Task<bool> SendErrorIfEmpty(string base64)
+        private async Task<bool> SendErrorIfEmpty(string connectionId, string base64)
         {
             if (!string.IsNullOrEmpty(base64)) return false;
-            await Clients.Caller.ReceiveError("No file received or file is empty.");
+            await Clients.Caller.ReceiveError(connectionId, "No file received or file is empty.");
             return true;
         }
     }
