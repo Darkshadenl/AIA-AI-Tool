@@ -1,25 +1,33 @@
 <script>
   import Code from "$lib/+code.svelte";
   import { invalidateAll } from "$app/navigation";
+  import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore } from "../../store.js";
 
-  export let data;
+  let progressInformationMessage;
+  let errorMessage;
+  progressInformationMessageStore.subscribe((value) => progressInformationMessage = value);
+  errorMessageStore.subscribe((value) => errorMessage = value);
+
+
+  let oldCode;
+  let newCode;
+  oldCodeStore.subscribe((value) => oldCode = value);
+  newCodeStore.subscribe((value) => newCode = value);
 </script>
 
 <button on:click={async () => await invalidateAll()}>Refresh</button>
 
-{#if data.successMessage}
-  <p>{data.successMessage}</p>
-  <p>The AI is currently analysing the code and generating a response. This could take a while, please wait.</p>
+{#if progressInformationMessage && errorMessage === null}
+  <p>{progressInformationMessage}</p>
 {/if}
 
-{#if data.errorMessage}
-  <p>{data.errorMessage}</p>
-  <p>Please try again.</p>
+{#if errorMessage}
+  <p>An exception occurred: {errorMessage}</p>
 {/if}
 
 <div class="differences-container">
-  <Code title="Old Code" code="{data.oldCode}" />
-  <Code title="New Code" code="{data.newCode}" />
+  <Code title="Old Code" code="{oldCode}" />
+  <Code title="New Code" code="{newCode}" />
 </div>
 
 <style>

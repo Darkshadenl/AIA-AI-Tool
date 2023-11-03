@@ -1,6 +1,6 @@
-import { writable } from "svelte/store";
+import { persisted } from "svelte-local-storage-store";
 
-export const oldCodeStore = writable(null);
-export const newCodeStore = writable(null);
-export const successMessage = writable(null);
-export const errorMessage = writable(null);
+export const progressInformationMessageStore = persisted('progressInformationMessageStore', null);
+export const errorMessageStore = persisted('errorMessageStore', null);
+export const oldCodeStore = persisted('oldCodeStore', null);
+export const newCodeStore = persisted('newCodeStore', null);

@@ -34,7 +34,7 @@ public class UploadHandler : IUploadHandler
 
         if (index == totalChunks - 1)
         {
-            await _signalRService.InvokeSuccessMessage("File uploaded successfully.");
+            await _signalRService.InvokeProgressInformationMessage("File uploaded successfully.");
             _logger.LogInformation("File uploaded successfully.");
             ZipHandler(connectionId, fileName, contentType);
             _memoryStream = new MemoryStream();
@@ -61,16 +61,20 @@ public class UploadHandler : IUploadHandler
         }
 
         var handlerStreet = _fileHandlerFactory.GetFileHandler();
-
+        
         try
         {
             var path = await _fileSystemStorageService.StoreInTemp(_memoryStream, fileName);
+            
+            await _signalRService.InvokeProgressInformationMessage(
+                "The AI is currently analysing the code and generating a response. This could take a while, please wait.");
+            
             var result = await handlerStreet.Handle(clientConnectionId, path, contentType);
 
             if (result.Success)
             {
-                await _signalRService.InvokeSuccessMessage("File sent to the AI model.");
-                _logger.LogInformation("File sent to the AI model.");
+                await _signalRService.InvokeProgressInformationMessage("Files that included comments were processed by the AI model.");
+                _logger.LogInformation("Files that included comments were processed by the AI model.");
             }
             else
             {

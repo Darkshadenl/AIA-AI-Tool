@@ -32,18 +32,18 @@ namespace SignalR
             }
         }
 
-        public async Task ReturnLLMResponse(string connectionId, string fileName, string contentType, string fileContent, string oldFileContent)
+        public async Task ReturnLlmResponse(string connectionId, string fileName, string contentType, string fileContent, string oldFileContent)
         {
             if (await SendErrorIfEmpty(fileContent) || await SendErrorIfEmpty(oldFileContent)) return;
 
-            await Clients.Client(connectionId).ReturnLLMResponse(connectionId, fileName, contentType, fileContent, oldFileContent);
+            await Clients.Client(connectionId).ReceiveLlmResponse(connectionId, fileName, contentType, fileContent, oldFileContent);
             _logger.LogInformation("File {fileName} with contentType {contentType} send to client with id {connectionId}", fileName, contentType, connectionId);
         }
 
-        public async Task UploadSuccess(string successMessage)
+        public async Task ReturnProgressInformation(string progressInformationMessage)
         {
-            await Clients.Others.UploadSuccess(successMessage);
-            _logger.LogInformation("Success message send: {message}", successMessage);
+            await Clients.Others.ReceiveProgressInformation(progressInformationMessage);
+            _logger.LogInformation("Progress information message send: {message}", progressInformationMessage);
         }
 
         public async Task ReturnError(string errorMessage)

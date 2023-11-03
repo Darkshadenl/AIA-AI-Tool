@@ -1,8 +1,7 @@
 //@ts-check
 
 import { error } from '@sveltejs/kit';
-import { HubConnectionBuilder, HttpTransportType, HubConnection } from '@microsoft/signalr';
-import { oldCodeStore, newCodeStore, errorMessage, successMessage } from "./store.js";
+import { HubConnectionBuilder, HttpTransportType, HubConnection, HubConnectionState } from '@microsoft/signalr';
 
 const API_URL = "http://localhost:5195/uploadZip";
 
@@ -16,6 +15,7 @@ let connection;
  */
 export async function getConnection() {
   if (!connection) {
+    console.log("No connection found. Creating new connection...")
     connection = new HubConnectionBuilder()
       .withUrl(API_URL, {
         skipNegotiation: true,
@@ -25,12 +25,20 @@ export async function getConnection() {
       .build();
 
     // RegisterSignalRCallbacks();
+
+  }
+
+  if (connection && connection.state === HubConnectionState.Disconnected) {
     await connection.start().then(() => console.log("Connected!")).catch(err => console.log(err.toString()));
   }
 
   return connection;
 }
 
+/**
+ * Stops the SignalR connection if it does exist.
+ * @async
+ */
 async function stopConnection() {
   if (!connection) return console.log("No connection found to stop.");
 
@@ -54,29 +62,4 @@ export function uploadChunk(connectionId, chunk, fileName, contentType, index, t
 
   console.log(`Chunk ${index} send to API`);
   return connection.invoke('UploadChunk', connectionId, fileName, contentType, chunk, index, totalChunks);
-}
-
-function RegisterSignalRCallbacks() {
-  if (!connection) throw error(500, "No connection found");
-
-  connection.on('UploadSuccess', (message) => {
-    successMessage.set(message);
-    console.log(`Success: ${message}`);
-  });
-
-  connection.on('ReceiveError', (message) => {
-    errorMessage.set(message);
-    console.log(`ServerError: ${message}`);
-  });
-
-  connection.on("ReturnLLMResponse", (fileName, contentType, fileContent, oldFileContent) => {
-    oldCodeStore.update((value) => {
-      if (value) return [...value, { fileName: fileName, code: oldFileContent }];
-      return [{ fileName: fileName, code: oldFileContent }];
-    });
-    newCodeStore.update((value) => {
-      if (value) return [...value, { fileName: fileName, code: fileContent }];
-      return [{ fileName: fileName, code: fileContent }];
-    });
-  });
 }
