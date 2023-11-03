@@ -4,11 +4,11 @@
 </script>
 
 <div class={$$props.class}>
-  <h1>{title}</h1>
+  <h2>{title}</h2>
 
   {#if code}
     {#each code as codeBlock}
-      <h3>{codeBlock.fileName}</h3>
+      <h4>{codeBlock.fileName}</h4>
       <pre>
         {codeBlock.code}
       </pre>

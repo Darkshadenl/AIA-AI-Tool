@@ -1,6 +1,5 @@
 <script>
   import Code from "$lib/+code.svelte";
-  import { invalidateAll } from "$app/navigation";
   import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore } from "../../store.js";
 
   let progressInformationMessage;
@@ -15,7 +14,7 @@
   newCodeStore.subscribe((value) => newCode = value);
 </script>
 
-<button on:click={async () => await invalidateAll()}>Refresh</button>
+<h1>Differences</h1>
 
 {#if progressInformationMessage && errorMessage === null}
   <p>{progressInformationMessage}</p>
