@@ -33,6 +33,7 @@ public class LlmFileUploaderHandlerTest
     private IOptions<OpenAiSettings> _openAiSettings;
     private CommentManipulationHelper _commentManipulationHelper;
     private string _inputPath;
+    private string _clientConnectionId;
 
     [SetUp]
     public void Setup()
@@ -79,7 +80,7 @@ public class LlmFileUploaderHandlerTest
 
         
         _inputPath = Path.Combine(InputPathFolder, FileName);
-        
+        _clientConnectionId = "TestConnectionId";
     }
 
     [Test]
@@ -94,7 +95,7 @@ public class LlmFileUploaderHandlerTest
                                                     openAiApi, new FileSystem(), _predictionDatabaseService);
         
         // Act
-        var result = await handler.Handle(_inputPath, InputContentType);
+        var result = await handler.Handle(_clientConnectionId, _inputPath, InputContentType);
         
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -119,7 +120,7 @@ public class LlmFileUploaderHandlerTest
             openAiApi, new FileSystem(), _predictionDatabaseService);
         
         // Act
-        var result = await handler.Handle(_inputPath, InputContentType);
+        var result = await handler.Handle(_clientConnectionId, _inputPath, InputContentType);
     
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -143,7 +144,7 @@ public class LlmFileUploaderHandlerTest
             openAiApi, new FileSystem(), _predictionDatabaseService);
         
         // Act
-        await handler.Handle(_inputPath, InputContentType);
+        await handler.Handle(_clientConnectionId, _inputPath, InputContentType);
         var retrievedPredictions = _dbContext.Predictions.ToList();
     
         // Assert
@@ -164,7 +165,7 @@ public class LlmFileUploaderHandlerTest
             openAiApi, new FileSystem(), _predictionDatabaseService);
     
         // Act
-        await handler.Handle(_inputPath, InputContentType);
+        await handler.Handle(_clientConnectionId, _inputPath, InputContentType);
         var retrievedPredictions = _dbContext.Predictions.ToList();
     
         // Assert
