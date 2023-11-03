@@ -1,5 +1,4 @@
-﻿using System;
-namespace SignalR
+﻿namespace SignalR
 {
     public interface IMainHub
     {

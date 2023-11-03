@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Net.Mime;
-using System.Security.Claims;
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 
 namespace SignalR
 {
@@ -54,18 +51,14 @@ namespace SignalR
 
         public async Task<string> GetConnectionId()
         {
-            Console.WriteLine(Context.ConnectionId);
             return Context.ConnectionId;
         }
 
         private async Task<bool> SendErrorIfEmpty(string base64)
         {
-            if (string.IsNullOrEmpty(base64))
-            {
-                await Clients.Caller.ReceiveError("No file received or file is empty.");
-                return true;
-            }
-            return false;
+            if (!string.IsNullOrEmpty(base64)) return false;
+            await Clients.Caller.ReceiveError("No file received or file is empty.");
+            return true;
         }
     }
 }

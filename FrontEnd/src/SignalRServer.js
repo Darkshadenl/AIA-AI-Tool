@@ -23,26 +23,13 @@ export async function getConnection() {
       })
       .withAutomaticReconnect([5000, 5000, 5000, 5000, 5000])
       .build();
-
-    // RegisterSignalRCallbacks();
-
   }
 
   if (connection && connection.state === HubConnectionState.Disconnected) {
-    await connection.start().then(() => console.log("Connected!")).catch(err => console.log(err.toString()));
+    await connection.start().catch(err => console.log(err.toString()));
   }
 
   return connection;
-}
-
-/**
- * Stops the SignalR connection if it does exist.
- * @async
- */
-async function stopConnection() {
-  if (!connection) return console.log("No connection found to stop.");
-
-  await connection.stop().then(() => connection = undefined).catch(err => console.log(err.toString()));
 }
 
 /**
@@ -57,8 +44,8 @@ async function stopConnection() {
  * @throws {Error}
  */
 export function uploadChunk(connectionId, chunk, fileName, contentType, index, totalChunks) {
-  if (!connection) throw error(500, "No connection found");
-  if (connection.state !== "Connected") throw error(500, "Not connected to server");
+  if (!connection) throw error(503, "No SignalR connection found");
+  if (connection.state !== HubConnectionState.Connected) throw error(503, "Not connected to SignalR server");
 
   console.log(`Chunk ${index} send to API`);
   return connection.invoke('UploadChunk', connectionId, fileName, contentType, chunk, index, totalChunks);

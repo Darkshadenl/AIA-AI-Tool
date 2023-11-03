@@ -47,14 +47,10 @@
 		if (file.size > FILE_SIZE_LIMIT_IN_BYTES) return fail(413, { error: `File size of file "${file.name}" exceeded the limit of ${FILE_SIZE_LIMIT_IN_BYTES / 1000 / 1000} MB.` });
 
 		let connection = await getConnection();
-		console.log(connection.state)
+		registerSignalRCallbacks(connection);
 
 		if (connection.state === HubConnectionState.Connected) {
-			registerSignalRCallbacks(connection);
-
 			let connectionId = await connection.invoke("GetConnectionId")
-			console.log("id=" + connectionId);
-
 			const fileChunks = sliceFileIntoChunks(file);
 			await processFileChunks(connectionId, fileChunks, file.name, file.type);
 			await goto('/differences');
