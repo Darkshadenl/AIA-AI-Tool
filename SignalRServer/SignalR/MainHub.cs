@@ -13,7 +13,6 @@ namespace SignalR
         
         public async Task UploadChunk(string connectionId, string fileName, string contentType, string chunkAsBase64, int index, int totalChunks)
         {
-            Console.WriteLine(connectionId);
             if (await SendErrorIfEmpty(connectionId, chunkAsBase64)) return;
 
             try
