@@ -20,7 +20,6 @@
 		});
 
 		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
-
 			oldCodeStore.update((value) => {
 				if (value) return [...value, { fileName: fileName, code: oldFileContent }];
 				return [{ fileName: fileName, code: oldFileContent }];
@@ -45,11 +44,11 @@
 		if (file.size <= 0) return fail(400, { error: "No file received or file is empty." });
 		if (file.size > FILE_SIZE_LIMIT_IN_BYTES) return fail(413, { error: `File size of file "${file.name}" exceeded the limit of ${FILE_SIZE_LIMIT_IN_BYTES / 1000 / 1000} MB.` });
 
-		let connection = await getConnection();
+		const connection = await getConnection();
 		registerSignalRCallbacks(connection);
 
 		if (connection.state === HubConnectionState.Connected) {
-			let connectionId = await connection.invoke("GetConnectionId")
+			const connectionId = await connection.invoke("GetConnectionId");
 			const fileChunks = sliceFileIntoChunks(file);
 			await processFileChunks(connectionId, fileChunks, file.name, file.type);
 			await goto('/differences');
