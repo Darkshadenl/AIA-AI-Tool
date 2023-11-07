@@ -48,7 +48,7 @@
         {#if differences}
           {#each differences[index] as diff}
             {#if !diff.added}
-              <div class={diff.added ? 'added' : diff.removed ? 'removed' : 'unchanged'}>
+              <div class={diff.removed ? 'removed' : 'unchanged'}>
                 <pre>{diff.value}</pre>
               </div>
             {/if}
