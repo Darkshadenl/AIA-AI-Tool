@@ -15,13 +15,15 @@ public class OpenAiApi
     private readonly ISignalRService _signalRService;
     private readonly CommentManipulationHelper _commentManipulationHelper;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
+    private readonly FindFileDifferenceHelper _differenceHelper;
     
     public OpenAiApi(
         ILogger<OpenAiApi> logger,
         IOptions<OpenAiSettings> openAiSettings,
         ISignalRService signalRService,
         CommentManipulationHelper commentManipulationHelper,
-        IPredictionDatabaseService predictionDatabaseService
+        IPredictionDatabaseService predictionDatabaseService,
+        FindFileDifferenceHelper differenceHelper
         )
     {
         _logger = logger;
@@ -29,6 +31,7 @@ public class OpenAiApi
         _signalRService = signalRService;
         _commentManipulationHelper = commentManipulationHelper;
         _predictionDatabaseService = predictionDatabaseService;
+        _differenceHelper = differenceHelper;
     }
     
     public async Task<ChatChoice> SendOpenAiCompletion(IDbPrediction dbPrediction)
@@ -45,8 +48,12 @@ public class OpenAiApi
         string codeWithComments = 
             _commentManipulationHelper.ReplaceCommentInCode(openAiResponse.Message.Content, dbPrediction.InputCode);
         
+        
         _predictionDatabaseService.UpdatePredictionResponseText(dbPrediction, openAiResponse.Message.Content);
         _predictionDatabaseService.UpdatePredictionEditedResponseText(dbPrediction, codeWithComments);
+        
+        _differenceHelper.FindDifferences(dbPrediction.InputCode, dbPrediction.EditedResponseText);
+        
         _signalRService.SendLlmResponseToFrontend(dbPrediction.ClientConnectionId, dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments, dbPrediction.InputCode);
     }
 

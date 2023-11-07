@@ -1,16 +1,16 @@
 <script>
-  export let title;
-  export let code;
+  export let oldCode;
+  export let newCode;
 </script>
 
 <div class={$$props.class}>
-  <h2>{title}</h2>
+  <h2>New Code</h2>
 
-  {#if code}
-    {#each code as codeBlock}
-      <h4>{codeBlock.fileName}</h4>
+  {#if newCode}
+    {#each newCode as code}
+      <h4>{code.fileName}</h4>
       <pre>
-        {codeBlock.code}
+        {code.code}
       </pre>
     {/each}
   {/if}

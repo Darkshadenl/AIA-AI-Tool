@@ -39,7 +39,8 @@ public class CommentChecker
                 return FileHasComments(detectCommentsPattern, detectEslintCommentsPattern,
                     detectInlineCommentsPattern);
             default:
-                throw new ArgumentException("File extension not supported.");
+                // throw new ArgumentException("File extension not supported.");
+                return false;
         }
     }
 
