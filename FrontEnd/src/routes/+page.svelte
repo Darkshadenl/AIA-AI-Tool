@@ -9,7 +9,17 @@
 
 	const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
 
-	function registerSignalRCallbacks(connection) {
+	async function removeSignalRCallbacks() {
+		const connection = await getConnection();
+
+		connection.off('ReceiveProgressInformation');
+		connection.off('ReceiveError');
+		connection.off('ReceiveLlmResponse');
+	}
+
+	async function registerSignalRCallbacks() {
+		const connection = await getConnection();
+
 		connection.on('ReceiveProgressInformation', (_, message) => {
 			console.log(`Success: ${message}`);
 			progressInformationMessageStore.set(message);
@@ -39,6 +49,7 @@
 
 	async function submitForm(event) {
 		event.preventDefault();
+		await removeSignalRCallbacks();
 		resetStores();
 		const formData = new FormData(event.target);
 		const file = formData.get('file');
@@ -48,7 +59,7 @@
 		if (file.size > FILE_SIZE_LIMIT_IN_BYTES) return fail(413, { error: `File size of file "${file.name}" exceeded the limit of ${FILE_SIZE_LIMIT_IN_BYTES / 1000 / 1000} MB.` });
 
 		const connection = await getConnection();
-		registerSignalRCallbacks(connection);
+		await registerSignalRCallbacks();
 
 		if (connection.state === HubConnectionState.Connected) {
 			const connectionId = await connection.invoke("GetConnectionId");
