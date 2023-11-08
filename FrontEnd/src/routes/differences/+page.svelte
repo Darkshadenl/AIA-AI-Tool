@@ -26,16 +26,52 @@
 
 {#if oldCode && newCode}
   {#each oldCode as _, index (index)}
-    <div class="differences-container">
-      <Code codeFile="{oldCode[index]}" />
-      <Code codeFile="{newCode[index]}" />
-    </div>
+    <table>
+      <thead>
+        <tr>
+          <td><h3>{oldCode[index].fileName}</h3></td>
+          <td><h3>{oldCode[index].fileName}</h3></td>
+        </tr>
+      </thead>
+      <tbody>
+        {#each oldCode[index].diff as _, innerIndex (innerIndex)}
+          <tr>
+            <td>
+                <div class={oldCode[index].diff[innerIndex].added ? 'added' : oldCode[index].diff[innerIndex].removed ? 'removed' : 'unchanged'}>
+                  <pre>{oldCode[index].diff[innerIndex].value}</pre>
+                </div>
+            </td>
+            <td>
+              <div class={newCode[index].diff[innerIndex].added ? 'added' : newCode[index].diff[innerIndex].removed ? 'removed' : 'unchanged'}>
+                <pre>{newCode[index].diff[innerIndex].value}</pre>
+              </div>
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
   {/each}
 {/if}
 
 <style>
-    .differences-container {
-        display: flex;
-        justify-content: space-between;
+    pre {
+        white-space: pre-wrap;
+        margin: 0;
+    }
+
+    td {
+        vertical-align: bottom;
+    }
+
+    .added {
+        background-color: #e6ffed;
+        color: #24292e;
+        text-decoration: none;
+    }
+
+    .removed {
+        background-color: #ffeef0;
+        color: #24292e;
+        text-decoration: line-through;
     }
 </style>

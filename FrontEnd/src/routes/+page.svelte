@@ -25,7 +25,7 @@
 			progressInformationMessageStore.set(message);
 		});
 
-		connection.on('ReceiveError', (message) => {
+		connection.on('ReceiveError', (_, message) => {
 			console.log(`ServerError: ${message}`);
 			errorMessageStore.set(message);
 		});
