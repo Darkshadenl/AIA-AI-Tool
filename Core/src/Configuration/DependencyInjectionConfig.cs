@@ -74,7 +74,6 @@ public static class DependencyInjectionConfig
         services.AddSingleton<IFileHandlerFactory, FileHandlerFactory>();
         services.AddSingleton<IUploadHandler, UploadHandler>();
         services.AddSingleton<CommentManipulationHelper>();
-        services.AddSingleton<FindFileDifferenceHelper>();
         services.AddSingleton<OpenAiApi>();
     }
 }
