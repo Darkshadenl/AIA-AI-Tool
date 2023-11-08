@@ -5,6 +5,7 @@
 	import { goto } from "$app/navigation";
 	import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore } from "../store.js";
 	import * as stores from '../store.js';
+	import { diffLines } from "diff";
 
 	const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
 
@@ -20,13 +21,15 @@
 		});
 
 		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
+			const differences = diffLines(oldFileContent, fileContent);
+
 			oldCodeStore.update((value) => {
-				if (value) return [...value, { fileName: fileName, code: oldFileContent }];
-				return [{ fileName: fileName, code: oldFileContent }];
+				if (value) return [...value, { fileName: fileName, code: oldFileContent, diff: differences }];
+				return [{ fileName: fileName, code: oldFileContent, diff: differences }];
 			});
 			newCodeStore.update((value) => {
-				if (value) return [...value, { fileName: fileName, code: fileContent }];
-				return [{ fileName: fileName, code: fileContent }];
+				if (value) return [...value, { fileName: fileName, code: fileContent, diff: differences }];
+				return [{ fileName: fileName, code: fileContent, diff: differences }];
 			});
 
 			progressInformationMessageStore.set(null);

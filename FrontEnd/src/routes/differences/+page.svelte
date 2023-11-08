@@ -1,7 +1,4 @@
 <script>
-  import { diffLines } from 'diff';
-  import OldCode from "$lib/+oldCode.svelte";
-  import NewCode from "$lib/+newCode.svelte";
   import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore } from "../../store.js";
 
   let progressInformationMessage;
@@ -14,15 +11,6 @@
   let newCode;
   oldCodeStore.subscribe((value) => oldCode = value);
   newCodeStore.subscribe((value) => newCode = value);
-
-
-  let differences = [];
-  if (oldCode && newCode) {
-    for (let i = 0; i < oldCode.length; i++) {
-      const diff = diffLines(oldCode[i].code, newCode[i].code);
-      differences.push(diff);
-    }
-  }
 </script>
 
 <h1>Differences</h1>
@@ -35,45 +23,37 @@
   <p>An exception occurred: {errorMessage}</p>
 {/if}
 
-<!--<div class="differences-container">-->
-<!--  <OldCode title="Old Code" code="{oldCode}" />-->
-<!--  <NewCode title="New Code" code="{newCode}" />-->
-<!--</div>-->
 <div class="differences-container">
   <div class="code">
     {#if oldCode}
-      {#each oldCode as code, index (index)}
+      {#each oldCode as code}
         <h2>{code.fileName}</h2>
 
-        {#if differences}
-          {#each differences[index] as diff}
+          {#each code.diff as diff}
             {#if !diff.added}
               <div class={diff.removed ? 'removed' : 'unchanged'}>
                 <pre>{diff.value}</pre>
               </div>
             {/if}
           {/each}
-        {/if}
       {/each}
     {/if}
   </div>
 
   <div class="code">
-  {#if newCode}
-    {#each newCode as code, index (index)}
-      <h2>{code.fileName}</h2>
+    {#if newCode}
+      {#each newCode as code}
+        <h2>{code.fileName}</h2>
 
-      {#if differences}
-        {#each differences[index] as diff}
-          {#if !diff.removed}
-            <div class={diff.added ? 'added' : 'unchanged'}>
-              <pre>{diff.value}</pre>
-            </div>
-          {/if}
-        {/each}
-      {/if}
-    {/each}
-  {/if}
+          {#each code.diff as diff}
+            {#if !diff.removed}
+              <div class={diff.added ? 'added' : 'unchanged'}>
+                <pre>{diff.value}</pre>
+              </div>
+            {/if}
+          {/each}
+      {/each}
+    {/if}
   </div>
 </div>
 
@@ -103,5 +83,6 @@
 
     pre {
         white-space: pre-wrap;
+        margin: 0;
     }
 </style>
