@@ -1,5 +1,4 @@
 <script>
-  import Code from "$lib/+code.svelte";
   import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore } from "../../store.js";
 
   let progressInformationMessage;
@@ -25,13 +24,65 @@
 {/if}
 
 <div class="differences-container">
-  <Code title="Old Code" code="{oldCode}" />
-  <Code title="New Code" code="{newCode}" />
+  <div class="code">
+    {#if oldCode}
+      {#each oldCode as code}
+        <h2>{code.fileName}</h2>
+
+          {#each code.diff as diff}
+            {#if !diff.added}
+              <div class={diff.removed ? 'removed' : 'unchanged'}>
+                <pre>{diff.value}</pre>
+              </div>
+            {/if}
+          {/each}
+      {/each}
+    {/if}
+  </div>
+
+  <div class="code">
+    {#if newCode}
+      {#each newCode as code}
+        <h2>{code.fileName}</h2>
+
+          {#each code.diff as diff}
+            {#if !diff.removed}
+              <div class={diff.added ? 'added' : 'unchanged'}>
+                <pre>{diff.value}</pre>
+              </div>
+            {/if}
+          {/each}
+      {/each}
+    {/if}
+  </div>
 </div>
 
 <style>
     .differences-container {
         display: flex;
         justify-content: space-between;
+    }
+
+    .code {
+        width: 48%;
+    }
+
+    .added {
+        background-color: #e6ffed;
+        color: #24292e;
+        text-decoration: none;
+    }
+    .removed {
+        background-color: #ffeef0;
+        color: #24292e;
+        text-decoration: line-through;
+    }
+    .unchanged {
+        color: #24292e;
+    }
+
+    pre {
+        white-space: pre-wrap;
+        margin: 0;
     }
 </style>
