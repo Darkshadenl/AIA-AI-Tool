@@ -8,7 +8,7 @@ namespace aia_api.Application.Handlers.FileHandler;
 public abstract class AbstractFileHandler : IUploadedFileHandler
 {
     protected IUploadedFileHandler Next;
-    protected readonly Dictionary<string, int> ExtensionsCount = new();
+    protected Dictionary<string, int> ExtensionsCount = new();
     private readonly ILogger<AbstractFileHandler> _logger;
     private readonly Settings _supportedContentTypes;
 
@@ -68,5 +68,6 @@ public abstract class AbstractFileHandler : IUploadedFileHandler
     {
         var logs = string.Join("\n", ExtensionsCount.Select(x => $"{x.Key}: {x.Value}"));
         _logger.LogInformation(logs);
+        ExtensionsCount = new();
     }
 }
