@@ -32,14 +32,18 @@
 
 		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
 			const differences = diffLines(oldFileContent, fileContent);
+			const removed = differences.filter(diff => diff.removed === true);
+			const added = differences.filter(diff => diff.added === true);
+
+
 
 			oldCodeStore.update((value) => {
-				if (value) return [...value, { fileName: fileName, code: oldFileContent, diff: differences }];
-				return [{ fileName: fileName, code: oldFileContent, diff: differences }];
+				if (value) return [...value, { fileName: fileName, code: oldFileContent, diff: differences.filter(diff => !diff.added) }];
+				return [{ fileName: fileName, code: oldFileContent, diff: differences.filter(diff => !diff.added) }];
 			});
 			newCodeStore.update((value) => {
-				if (value) return [...value, { fileName: fileName, code: fileContent, diff: differences }];
-				return [{ fileName: fileName, code: fileContent, diff: differences }];
+				if (value) return [...value, { fileName: fileName, code: fileContent, diff: differences.filter(diff => !diff.removed) }];
+				return [{ fileName: fileName, code: fileContent, diff: differences.filter(diff => !diff.removed) }];
 			});
 
 			progressInformationMessageStore.set(null);

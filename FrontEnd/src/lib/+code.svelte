@@ -1,21 +1,15 @@
 <script>
-  export let code;
+  export let codeFile;
 </script>
 
 <div class="code">
-  {#if code}
-    {#each code as codeFile}
-      <h2>{codeFile.fileName}</h2>
+    <h2>{codeFile.fileName}</h2>
 
-      {#each codeFile.diff as diff}
-        {#if !diff.added}
-          <div class={diff.removed ? 'removed' : 'unchanged'}>
-            <pre>{diff.value}</pre>
-          </div>
-        {/if}
-      {/each}
+    {#each codeFile.diff as diff}
+      <div class={diff.added ? 'added' : diff.removed ? 'removed' : 'unchanged'}>
+        <pre>{diff.value}</pre>
+      </div>
     {/each}
-  {/if}
 </div>
 
 <style>
@@ -27,6 +21,12 @@
     .code {
         width: 100%;
         margin: 30px;
+    }
+
+    .added {
+        background-color: #e6ffed;
+        color: #24292e;
+        text-decoration: none;
     }
 
     .removed {

@@ -24,40 +24,18 @@
   <p>An exception occurred: {errorMessage}</p>
 {/if}
 
-<div class="differences-container">
-    <Code code="{oldCode}" />
-    <Code code="{newCode}" />
-
-<!--  <div class="code">-->
-<!--    {#if newCode}-->
-<!--      {#each newCode as code}-->
-<!--        <h2>{code.fileName}</h2>-->
-
-<!--          {#each code.diff as diff}-->
-<!--            {#if !diff.removed}-->
-<!--              <div class={diff.added ? 'added' : 'unchanged'}>-->
-<!--                <pre>{diff.value}</pre>-->
-<!--              </div>-->
-<!--            {/if}-->
-<!--          {/each}-->
-<!--      {/each}-->
-<!--    {/if}-->
-<!--  </div>-->
-</div>
+{#if oldCode && newCode}
+  {#each oldCode as _, index (index)}
+    <div class="differences-container">
+      <Code codeFile="{oldCode[index]}" />
+      <Code codeFile="{newCode[index]}" />
+    </div>
+  {/each}
+{/if}
 
 <style>
     .differences-container {
         display: flex;
         justify-content: space-between;
-    }
-
-    /*.code {*/
-    /*    width: 48%;*/
-    /*}*/
-
-    .added {
-        background-color: #e6ffed;
-        color: #24292e;
-        text-decoration: none;
     }
 </style>
