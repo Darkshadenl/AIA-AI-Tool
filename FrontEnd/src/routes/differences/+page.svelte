@@ -12,27 +12,6 @@
   let newCode;
   oldCodeStore.subscribe((value) => oldCode = value);
   newCodeStore.subscribe((value) => newCode = value);
-
-  const calculateLineNumbers = (diff) => {
-    let lineNumber = 1;
-    return diff.map((chunk) => {
-      return chunk.value.split('\n').map((line) => ({
-        line: lineNumber++,
-        content: line,
-        added: chunk.added,
-        removed: chunk.removed,
-      }));
-    }).flat();
-  };
-
-  if (oldCode && newCode) {
-    oldCode.forEach(code => {
-      code.diffWithLineNumbers = calculateLineNumbers(code.diff);
-    });
-    newCode.forEach(code => {
-      code.diffWithLineNumbers = calculateLineNumbers(code.diff);
-    });
-  }
 </script>
 
 <h1>Differences</h1>
@@ -55,16 +34,18 @@
         </tr>
       </thead>
       <tbody>
-        {#each oldCode[index].diffWithLineNumbers as _, innerIndex (innerIndex)}
-          <tr>
-            <td>
-              <Code code="{oldCode[index].diffWithLineNumbers[innerIndex]}" />
-            </td>
-            <td>
-              <Code code="{newCode[index].diffWithLineNumbers[innerIndex]}" />
-            </td>
-          </tr>
-        {/each}
+        {#if oldCode[index].diff && newCode[index].diff}
+          {#each oldCode[index].diff as _, innerIndex (innerIndex)}
+            <tr>
+              <td>
+                <Code code="{oldCode[index].diff[innerIndex]}" />
+              </td>
+              <td>
+                <Code code="{newCode[index].diff[innerIndex]}" />
+              </td>
+            </tr>
+          {/each}
+        {/if}
       </tbody>
     </table>
   {/each}
