@@ -1,5 +1,4 @@
 <script>
-  import Code from '$lib/+code.svelte';
   import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore } from '../../store.js';
 
   let progressInformationMessage;
@@ -54,6 +53,10 @@
 {/if}
 
 <style>
+    table {
+        width: 100%;
+    }
+
     pre {
         white-space: pre-wrap;
         margin: 0;
