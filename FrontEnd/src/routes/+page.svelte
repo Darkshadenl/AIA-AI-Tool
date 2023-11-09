@@ -32,10 +32,6 @@
 
 		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
 			const differences = diffLines(oldFileContent, fileContent);
-			const removed = differences.filter(diff => diff.removed === true);
-			const added = differences.filter(diff => diff.added === true);
-
-
 
 			oldCodeStore.update((value) => {
 				if (value) return [...value, { fileName: fileName, code: oldFileContent, diff: differences.filter(diff => !diff.added) }];

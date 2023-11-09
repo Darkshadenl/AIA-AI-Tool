@@ -1,5 +1,6 @@
 <script>
-  import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore } from '../../store.js';
+  import Code from '$lib/+code.svelte';
+  import { errorMessageStore, newCodeStore, oldCodeStore, progressInformationMessageStore } from "../../store.js";
 
   let progressInformationMessage;
   let errorMessage;
@@ -11,6 +12,27 @@
   let newCode;
   oldCodeStore.subscribe((value) => oldCode = value);
   newCodeStore.subscribe((value) => newCode = value);
+
+  const calculateLineNumbers = (diff) => {
+    let lineNumber = 1;
+    return diff.map((chunk) => {
+      return chunk.value.split('\n').map((line) => ({
+        line: lineNumber++,
+        content: line,
+        added: chunk.added,
+        removed: chunk.removed,
+      }));
+    }).flat();
+  };
+
+  if (oldCode && newCode) {
+    oldCode.forEach(code => {
+      code.diffWithLineNumbers = calculateLineNumbers(code.diff);
+    });
+    newCode.forEach(code => {
+      code.diffWithLineNumbers = calculateLineNumbers(code.diff);
+    });
+  }
 </script>
 
 <h1>Differences</h1>
@@ -23,27 +45,23 @@
   <p>An exception occurred: {errorMessage}</p>
 {/if}
 
-{#if oldCode && newCode}
+{#if oldCode && newCode && oldCode.length === newCode.length}
   {#each oldCode as _, index (index)}
     <table>
       <thead>
         <tr>
           <td><h3>{oldCode[index].fileName}</h3></td>
-          <td><h3>{oldCode[index].fileName}</h3></td>
+          <td><h3>{newCode[index].fileName}</h3></td>
         </tr>
       </thead>
       <tbody>
-        {#each oldCode[index].diff as _, innerIndex (innerIndex)}
+        {#each oldCode[index].diffWithLineNumbers as _, innerIndex (innerIndex)}
           <tr>
             <td>
-                <div class={oldCode[index].diff[innerIndex].added ? 'added' : oldCode[index].diff[innerIndex].removed ? 'removed' : 'unchanged'}>
-                  <pre>{oldCode[index].diff[innerIndex].value}</pre>
-                </div>
+              <Code code="{oldCode[index].diffWithLineNumbers[innerIndex]}" />
             </td>
             <td>
-              <div class={newCode[index].diff[innerIndex].added ? 'added' : newCode[index].diff[innerIndex].removed ? 'removed' : 'unchanged'}>
-                <pre>{newCode[index].diff[innerIndex].value}</pre>
-              </div>
+              <Code code="{newCode[index].diffWithLineNumbers[innerIndex]}" />
             </td>
           </tr>
         {/each}
@@ -57,24 +75,7 @@
         width: 100%;
     }
 
-    pre {
-        white-space: pre-wrap;
-        margin: 0;
-    }
-
     td {
         vertical-align: bottom;
-    }
-
-    .added {
-        background-color: #e6ffed;
-        color: #24292e;
-        text-decoration: none;
-    }
-
-    .removed {
-        background-color: #ffeef0;
-        color: #24292e;
-        text-decoration: line-through;
     }
 </style>

@@ -1,26 +1,17 @@
 <script>
-  export let codeFile;
+  export let code;
 </script>
 
-<div class="code">
-    <h2>{codeFile.fileName}</h2>
-
-    {#each codeFile.diff as diff}
-      <div class={diff.added ? 'added' : diff.removed ? 'removed' : 'unchanged'}>
-        <pre>{diff.value}</pre>
-      </div>
-    {/each}
-</div>
+{#if code}
+  <div class={code.added ? 'added' : code.removed ? 'removed' : 'unchanged'}>
+    <pre>{code.line} {code.content}</pre>
+  </div>
+{/if}
 
 <style>
     pre {
         white-space: pre-wrap;
         margin: 0;
-    }
-
-    .code {
-        width: 100%;
-        margin: 30px;
     }
 
     .added {
