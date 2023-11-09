@@ -12,7 +12,7 @@
 	const calculateLineNumbers = (diff) => {
 		let lineNumber = 1;
 		return diff.map((chunk) => {
-			return chunk.value.split('\n').map((line) => ({
+			return chunk.value.trimEnd('\n').split('\n').map((line) => ({
 				line: lineNumber++,
 				content: line,
 				added: chunk.added,
