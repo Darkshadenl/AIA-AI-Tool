@@ -1,11 +1,11 @@
 <script>
-  import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore } from "../../store.js";
+  import Code from '$lib/+code.svelte';
+  import { errorMessageStore, newCodeStore, oldCodeStore, progressInformationMessageStore } from "../../store.js";
 
   let progressInformationMessage;
   let errorMessage;
   progressInformationMessageStore.subscribe((value) => progressInformationMessage = value);
   errorMessageStore.subscribe((value) => errorMessage = value);
-
 
   let oldCode;
   let newCode;
@@ -23,66 +23,45 @@
   <p>An exception occurred: {errorMessage}</p>
 {/if}
 
-<div class="differences-container">
-  <div class="code">
-    {#if oldCode}
-      {#each oldCode as code}
-        <h2>{code.fileName}</h2>
+{#if oldCode && newCode && oldCode.length === newCode.length}
+  {#each oldCode as _, index (index)}
+    <!--Header of each file-->
+    <div class="column-container">
+      <div class="column">
+        <div class="fileName-container"><h3>{oldCode[index].fileName}</h3></div>
+      </div>
+      <div class="column">
+        <div class="fileName-container"><h3>{oldCode[index].fileName}</h3></div>
+      </div>
+    </div>
 
-          {#each code.diff as diff}
-            {#if !diff.added}
-              <div class={diff.removed ? 'removed' : 'unchanged'}>
-                <pre>{diff.value}</pre>
-              </div>
-            {/if}
-          {/each}
+
+    <!--Content of each file-->
+    {#if oldCode[index].diff && newCode[index].diff}
+      {#each oldCode[index].diff as _, innerIndex (innerIndex)}
+        <div class="column-container">
+          <div class="column">
+            <Code code="{oldCode[index].diff[innerIndex]}" />
+          </div>
+          <div class="column">
+            <Code code="{newCode[index].diff[innerIndex]}" />
+          </div>
+        </div>
       {/each}
     {/if}
-  </div>
-
-  <div class="code">
-    {#if newCode}
-      {#each newCode as code}
-        <h2>{code.fileName}</h2>
-
-          {#each code.diff as diff}
-            {#if !diff.removed}
-              <div class={diff.added ? 'added' : 'unchanged'}>
-                <pre>{diff.value}</pre>
-              </div>
-            {/if}
-          {/each}
-      {/each}
-    {/if}
-  </div>
-</div>
+  {/each}
+{/if}
 
 <style>
-    .differences-container {
-        display: flex;
-        justify-content: space-between;
+    .column-container {
+        column-count: 2;
+        column-gap: 20px;
     }
 
-    .code {
-        width: 48%;
-    }
-
-    .added {
-        background-color: #e6ffed;
-        color: #24292e;
-        text-decoration: none;
-    }
-    .removed {
-        background-color: #ffeef0;
-        color: #24292e;
-        text-decoration: line-through;
-    }
-    .unchanged {
-        color: #24292e;
-    }
-
-    pre {
-        white-space: pre-wrap;
+    .column {
         margin: 0;
+    }
+    .column .fileName-container {
+        display: flex;
     }
 </style>
