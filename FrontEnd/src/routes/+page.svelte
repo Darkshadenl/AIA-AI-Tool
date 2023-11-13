@@ -9,6 +9,18 @@
 
 	const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
 
+	const calculateLineNumbers = (diff) => {
+		let lineNumber = 1;
+		return diff.map((chunk) => {
+			return chunk.value.trimEnd('\n').split('\n').map((line) => ({
+				line: lineNumber++,
+				content: line,
+				added: chunk.added,
+				removed: chunk.removed,
+			}));
+		}).flat();
+	};
+
 	async function removeSignalRCallbacks() {
 		const connection = await getConnection();
 
@@ -25,7 +37,7 @@
 			progressInformationMessageStore.set(message);
 		});
 
-		connection.on('ReceiveError', (message) => {
+		connection.on('ReceiveError', (_, message) => {
 			console.log(`ServerError: ${message}`);
 			errorMessageStore.set(message);
 		});
@@ -34,12 +46,14 @@
 			const differences = diffLines(oldFileContent, fileContent);
 
 			oldCodeStore.update((value) => {
-				if (value) return [...value, { fileName: fileName, code: oldFileContent, diff: differences }];
-				return [{ fileName: fileName, code: oldFileContent, diff: differences }];
+				const oldCode = { fileName: fileName, code: oldFileContent, diff: calculateLineNumbers(differences.filter(diff => !diff.added)) };
+				if (value) return [...value, oldCode];
+				return [oldCode];
 			});
 			newCodeStore.update((value) => {
-				if (value) return [...value, { fileName: fileName, code: fileContent, diff: differences }];
-				return [{ fileName: fileName, code: fileContent, diff: differences }];
+				const newCode = { fileName: fileName, code: fileContent, diff: calculateLineNumbers(differences.filter(diff => !diff.removed)) };
+				if (value) return [...value, newCode];
+				return [newCode];
 			});
 
 			progressInformationMessageStore.set(null);
