@@ -56,7 +56,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         var fileName = _fileSystem.Path.GetFileName(inputPath);
         var outputFilePath = _fileSystem.Path.Combine(_settings.TempFolderPath + "Output/", fileName);
         var zipArchive = GetZipArchive(outputFilePath);
-        
+
         await ProcessFiles(zipArchive);
         return CreateHandlerResult();
     }
@@ -96,7 +96,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         foreach (var file in zipArchive.Entries)
         {
             number++;
-            _logger.LogInformation("Uploading {number} of {Count} files... \nFilename: {FullName}", number, zipArchive.Entries.Count, file.FullName);
+            _logger.LogDebug("Uploading {number} of {Count} files... \nFilename: {FullName}", number, zipArchive.Entries.Count, file.FullName);
             await ProcessFile(file);
         }
     }
@@ -111,10 +111,10 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             var openAiResponse = await _openAiApi.SendOpenAiCompletion(dbPrediction);
             var newTime = DateTime.Now;
             _logger.LogDebug($"Duration: {newTime - time} - Finish reason: {openAiResponse.FinishReason}");
-            
+
             CheckIfErrors(openAiResponse, file);
             if (_errors.Count > 0) return;
-            
+
             _openAiApi.ProcessApiResponse(openAiResponse, dbPrediction);
             _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.FileName, dbPrediction.Id);
         }
@@ -122,7 +122,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
     private void CheckIfErrors(ChatChoice openAiResponse, ZipArchiveEntry file)
     {
-        if (openAiResponse.Message.Content.Length <= 0) 
+        if (openAiResponse.Message.Content.Length <= 0)
             _errors.Add($"File: {file.FullName}, Error: No content received from LLM.");
         if (openAiResponse.FinishReason == CompletionsFinishReason.TokenLimitReached)
             _errors.Add($"File {file.FullName}, Error: Token limit reached for message.");
