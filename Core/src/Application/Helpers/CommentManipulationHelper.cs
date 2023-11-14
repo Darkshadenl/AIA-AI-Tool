@@ -37,7 +37,7 @@ public class CommentManipulationHelper
             string methodSignature = commentLines.Last();
 
             string specificCommentPattern = 
-                $@"[^\S\r\n]*((?<=\s|^)\/\/[^\n]*|\/\*(?:(?!\*\/)[\s\S])*\*\/|\/\*\*(?:(?!\*\/)[\s\S])*\*\/)\n*\s*{Regex.Escape(methodSignature)}";
+                $@"[^\S\r\n]*((?<=\s|^)\/\/[^\n]*|\/\*(?:(?!\*\/)[\s\S])*\*\/|\/\*\*(?:(?!\*\/)[\s\S])*\*\/)\n*\s*(?:@.*\n*\W*)*{Regex.Escape(methodSignature)}";
             inputCode = Regex.Replace(inputCode, specificCommentPattern, methodSignature);
         }
 
