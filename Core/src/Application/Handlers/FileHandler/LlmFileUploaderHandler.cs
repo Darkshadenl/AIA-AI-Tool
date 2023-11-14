@@ -110,7 +110,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             var time = DateTime.Now;
             var openAiResponse = await _openAiApi.SendOpenAiCompletion(dbPrediction);
             var newTime = DateTime.Now;
-            _logger.LogDebug($"Duration: {newTime - time} - Finish reason: {openAiResponse.FinishReason}");
+            _logger.LogDebug("Duration: {time} - Finish reason: {finishReason}", newTime - time, openAiResponse.FinishReason);
             
             CheckIfErrors(openAiResponse, file);
             if (_errors.Count > 0) return;
