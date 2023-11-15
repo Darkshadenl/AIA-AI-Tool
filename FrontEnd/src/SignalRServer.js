@@ -3,7 +3,7 @@
 import { error } from '@sveltejs/kit';
 import { HubConnectionBuilder, HttpTransportType, HubConnection, HubConnectionState } from '@microsoft/signalr';
 
-const API_URL = "http://localhost:5195/uploadZip";
+const API_URL = "http://localhost:5000/uploadZip";
 
 /** @type {HubConnection} */
 let connection;

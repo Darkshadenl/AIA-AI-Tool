@@ -1,6 +1,5 @@
 using aia_api.Application.Helpers;
 using aia_api.Configuration.Records;
-using Azure;
 using Azure.AI.OpenAI;
 using InterfacesAia.Database;
 using InterfacesAia.Services;
@@ -52,6 +51,7 @@ public class OpenAiApi
     public void ProcessApiResponse(ChatChoice openAiResponse, IDbPrediction dbPrediction)
     {
         _logger.LogDebug("LLM response for {fileName} was {response}", dbPrediction.FileName, openAiResponse.Message.Content);
+        _logger.LogDebug("End of llm response for {fileName}", dbPrediction.FileName);
         string codeWithComments =
             _commentManipulationHelper.ReplaceCommentInCode(openAiResponse.Message.Content, dbPrediction.InputCode);
 
