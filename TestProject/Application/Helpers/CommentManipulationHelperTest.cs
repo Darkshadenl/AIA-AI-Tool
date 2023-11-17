@@ -89,7 +89,7 @@ public class CommentManipulationHelperTest
                   """;
         
         // Act
-        string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
+        string codeWithComments = _llmResponseController.ReplaceCommentsInCode(newComment, code);
         
         Console.WriteLine(codeWithComments);
         
@@ -145,7 +145,7 @@ public class CommentManipulationHelperTest
                   """;
         
         // Act
-        string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
+        string codeWithComments = _llmResponseController.ReplaceCommentsInCode(newComment, code);
         
         // Assert
         Assert.That(codeWithComments, Is.EqualTo(expectedCode));
@@ -224,7 +224,7 @@ public class CommentManipulationHelperTest
                   """;
 
         // Act
-        string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
+        string codeWithComments = _llmResponseController.ReplaceCommentsInCode(newComment, code);
         
         // Assert
         Assert.That(codeWithComments, Is.EqualTo(expectedCode));
@@ -277,7 +277,7 @@ public class CommentManipulationHelperTest
                   }
                   """;
         
-        string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
+        string codeWithComments = _llmResponseController.ReplaceCommentsInCode(newComment, code);
         Assert.That(codeWithComments, Is.EqualTo(expectedCode));
     }
 }

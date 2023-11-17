@@ -43,7 +43,7 @@ public class OpenAiApi
     public void ProcessApiResponse(ChatChoice openAiResponse, IDbPrediction dbPrediction)
     {
         string codeWithComments = 
-            _commentManipulationHelper.ReplaceCommentInCode(openAiResponse.Message.Content, dbPrediction.InputCode);
+            _commentManipulationHelper.ReplaceCommentsInCode(openAiResponse.Message.Content, dbPrediction.InputCode);
         
         
         _predictionDatabaseService.UpdatePredictionResponseText(dbPrediction, openAiResponse.Message.Content);
