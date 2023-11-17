@@ -43,7 +43,7 @@
 		});
 
 		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
-			const differences = diffLines(oldFileContent, fileContent);
+			const differences = diffLines(oldFileContent, fileContent, { ignoreWhitespace: true });
 
 			oldCodeStore.update((value) => {
 				const oldCode = { fileName: fileName, code: oldFileContent, diff: calculateLineNumbers(differences.filter(diff => !diff.added)) };
