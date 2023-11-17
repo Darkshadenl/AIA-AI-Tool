@@ -1,41 +1,23 @@
 <script>
-  import Code from '$lib/+code.svelte';
-  import { errorMessageStore, newCodeStore, oldCodeStore, progressInformationMessageStore } from "../../store.js";
+  import { errorMessageStore, newCodeStore, progressInformationMessageStore } from "../../store.js";
 
     let progressInformationMessage;
     let errorMessage;
     progressInformationMessageStore.subscribe((value) => progressInformationMessage = value);
     errorMessageStore.subscribe((value) => errorMessage = value);
 
-    let oldCode;
-    let newCode;
-    oldCodeStore.subscribe((value) => oldCode = value);
-    newCodeStore.subscribe((value) => newCode = value);
+    let code;
+    newCodeStore.subscribe((value) => code = value);
 
-    let newCodeSelection = [];
-    let oldCodeSelection = [];
+    let selection = [];
 
-    console.log("oldcode:");
-    console.log(oldCode)
     console.log("newcode")
-    console.log(newCode)
+    console.log(code)
 
-    $: if (newCode) {
-        newCode.forEach(code => {
+    $: if (code) {
+        code.forEach(code => {
             code.diff.forEach(diff => {
-                if (!diff.removed) {
-                    newCodeSelection[diff.value] = newCodeSelection[diff.value] || false;
-                }
-            });
-        });
-    }
-
-    $: if (oldCode) {
-        oldCode.forEach(code => {
-            code.diff.forEach(diff => {
-                if (!diff.added && diff.removed) {
-                    newCodeSelection[diff.value] = newCodeSelection[diff.value] || false;
-                }
+                selection[diff.value] = selection[diff.value] || false;
             });
         });
     }
@@ -43,26 +25,13 @@
     /**
      * @param {{removed: any, added: any, value:string}} val
      */
-    const addToNewCodeSelection = (val) => {
+    const addToCodeSelection = (val) => {
         if (val.added) {
-            if (val.value in newCodeSelection) {
-                newCodeSelection[val.value] = !newCodeSelection[val.value];
-                console.log(newCodeSelection[val.value])
+            if (val.value in selection) {
+                selection[val.value] = !selection[val.value];
+                console.log(selection[val.value])
             }
-            newCodeSelection = {...newCodeSelection};
-        }
-    }
-
-    /**
-     * @param {{removed: any, added: any, value:string}} val
-     */
-    const addToOldCodeSelection = (val) => {
-        if (!val.added) {
-            if (val.value in newCodeSelection) {
-                oldCodeSelection[val.value] = !oldCodeSelection[val.value];
-                console.log(oldCodeSelection[val.value])
-            }
-            oldCodeSelection = {...oldCodeSelection};
+            selection = {...selection};
         }
     }
 
@@ -103,9 +72,9 @@
         <!--        {#each newCode.diff as diff}-->
         <!--            {#if !diff.removed}-->
         <!--                <div class={diff.added ? 'added' : 'unchanged'} role="button"-->
-        <!--                     class:selected-new={newCodeSelection[diff.value]}-->
-        <!--                     on:click={() => addToNewCodeSelection(diff)}-->
-        <!--                     on:keydown={() => addToNewCodeSelection(diff)} tabindex="0">-->
+        <!--                     class:selected-new={selection[diff.value]}-->
+        <!--                     on:click={() => addToCodeSelection(diff)}-->
+        <!--                     on:keydown={() => addToCodeSelection(diff)} tabindex="0">-->
         <!--                    <pre>{diff.value}</pre>-->
         <!--                </div>-->
         <!--            {/if}-->
