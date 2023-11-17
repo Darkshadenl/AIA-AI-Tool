@@ -1,5 +1,5 @@
 <script>
-  import { errorMessageStore, newCodeStore, progressInformationMessageStore } from "../../store.js";
+    import {errorMessageStore, newCodeStore, oldCodeStore, progressInformationMessageStore} from "../../store.js";
 
     let progressInformationMessage;
     let errorMessage;
@@ -7,12 +7,11 @@
     errorMessageStore.subscribe((value) => errorMessage = value);
 
     let code;
+    let oldcode;
     newCodeStore.subscribe((value) => code = value);
+    oldCodeStore.subscribe((value) => oldcode = value);
 
     let selection = [];
-
-    console.log("newcode")
-    console.log(code)
 
     $: if (code) {
         code.forEach(code => {
@@ -21,6 +20,8 @@
             });
         });
     }
+
+  console.info("selection", selection)
 
     /**
      * @param {{removed: any, added: any, value:string}} val
@@ -49,27 +50,31 @@
 
 <div class="differences-container">
     <div class="code">
-        <!--{#if oldCode}-->
-        <!--        <h2>{oldCode.fileName}</h2>-->
+        {#if code}
+            {console.log(code)}
+            {#each code as file}
+                <h2>{file.fileName}</h2>
 
-        <!--        {#each oldCode.diff as diff}-->
-        <!--            {#if !diff.added}-->
-        <!--                <div class={diff.removed ? 'removed' : 'unchanged'} role="button"-->
-        <!--                     class:selected-old={oldCodeSelection[diff.value]}-->
-        <!--                     on:click={() => addToOldCodeSelection(diff)}-->
-        <!--                     on:keydown={() => addToOldCodeSelection(diff)} tabindex="0">-->
-        <!--                    <pre>{diff.value}</pre>-->
-        <!--                </div>-->
-        <!--            {/if}-->
-        <!--        {/each}-->
-        <!--{/if}-->
+                {#each file.diff as diff}
+
+                    {#if !diff.added}
+                        <div class={diff.removed ? 'removed' : 'unchanged'} role="button"
+                             class:selected-old={selection[diff.value]}
+                             on:click={() => addToCodeSelection(diff)}
+                             on:keydown={() => addToCodeSelection(diff)} tabindex="0">
+                            <pre>{diff.value}</pre>
+                        </div>
+                    {/if}
+                {/each}
+            {/each}
+        {/if}
     </div>
 
     <div class="code">
-        <!--{#if newCode}-->
-        <!--        <h2>{newCode.fileName}</h2>-->
+        <!--{#if code}-->
+        <!--        <h2>{code.fileName}</h2>-->
 
-        <!--        {#each newCode.diff as diff}-->
+        <!--        {#each code.diff as diff}-->
         <!--            {#if !diff.removed}-->
         <!--                <div class={diff.added ? 'added' : 'unchanged'} role="button"-->
         <!--                     class:selected-new={selection[diff.value]}-->
