@@ -41,17 +41,17 @@ public class CommentManipulationHelper
     /// </summary>
     /// <param name="comment">The comment to replace the existing comments with.</param>
     /// <param name="methodSignature">The signature of the method to replace comments for.</param>
-    /// <param name="inputCode">The input code containing the comments to replace.</param>
+    /// <param name="code">The input code containing the comments to replace.</param>
     /// <returns>The input code with the comments replaced by the specific comment pattern.</returns>
-    private string ReplaceComment(string comment, string methodSignature, string inputCode)
+    private string ReplaceComment(string comment, string methodSignature, string code)
     {
-        string specificCommentPattern = $"{FindCommentsRegex}";
+        string specificCommentPattern = FindCommentsRegex;
         foreach (string signatureLine in methodSignature.Split(Environment.NewLine))
         {
             specificCommentPattern += $@"\s*{Regex.Escape(signatureLine)}";
         }
-        
-        return Regex.Replace(inputCode, specificCommentPattern, comment);
+
+        return Regex.Replace(code, specificCommentPattern, comment);
     }
 
     private MatchCollection GetComments(string content, string pattern)
