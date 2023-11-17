@@ -45,7 +45,7 @@ public class CommentManipulationHelper
     /// <returns>The input code with the comments replaced by the specific comment pattern.</returns>
     private string ReplaceComment(string comment, string methodSignature, string inputCode)
     {
-        string specificCommentPattern = $@"{FindCommentsRegex}\s*(?:@.*\n*\W*)*";
+        string specificCommentPattern = $"{FindCommentsRegex}";
         foreach (string signatureLine in methodSignature.Split(Environment.NewLine))
         {
             specificCommentPattern += $@"\s*{Regex.Escape(signatureLine)}";
