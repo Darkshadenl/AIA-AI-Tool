@@ -57,7 +57,7 @@ public class CommentManipulationHelper
         Match match = Regex.Match(code, specificCommentPattern);
         if (!match.Success)
         {
-            _logger.LogDebug("Could not find comment, possibly because the LLM changed some code: {comment}", comment);
+            _logger.LogDebug("Could not find comment, possibly because the LLM changed some code:\n{comment}", comment);
             return code;
         }
         
