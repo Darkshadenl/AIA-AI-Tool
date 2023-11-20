@@ -35,7 +35,7 @@ public class CommentChecker
                 var detectEslintCommentsPattern =
                     @"(\/\/.*eslint-.*|\/\*[\s\S]*?eslint-[\s\S]*?\*\/|\/\*\*[\s\S]*?eslint-[\s\S]*?\*\/)";
                 var detectInlineCommentsPattern =
-                    @"(?<=\S{1,3}\s{0,2})\/\/[^\n]*|(?<=\S{1,3}\s{0,2})\/\*[\s\S]*?\*\/|(?<=\S{1,3}\s{0,2})\/\*\*[\s\S]*?\*\/";
+                    @"(?<!\S)\/\/[^\n]*|(?<=\S{1,3}\s{0,2})\/\*[\s\S]*?\*\/|(?<=\S{1,3}\s{0,2})\/\*\*[\s\S]*?\*\/";
                 return FileHasComments(detectCommentsPattern, detectEslintCommentsPattern,
                     detectInlineCommentsPattern);
             default:
@@ -74,18 +74,7 @@ public class CommentChecker
             return false;
         }
 
-        var nonEssentialCommentCount = _eslintComments.Count + _inlineComments.Count;
-
-        if (nonEssentialCommentCount == _allComments.Count)
-        {
-            Log($"{_file.Name} contains only eslint or inline comments. Skipping.");
-            return false;
-        }
-
         if (IsOnlyTypeOfComment(_eslintComments, "eslint"))
-            return false;
-
-        if (IsOnlyTypeOfComment(_inlineComments, "inline"))
             return false;
 
         LogComments(_allComments);
