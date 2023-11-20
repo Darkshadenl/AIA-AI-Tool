@@ -50,13 +50,13 @@ public class CommentManipulationHelperTest
                            """;
         var newComment = """
                          [RETURN]
-                             /**
-                               * Calculates the product of two given numbers.
-                               * @param number1 The first number.
-                               * @param number2 The second number.
-                               * @returns The product of number1 and number2.
-                               */
-                             calculateProduct(number1: number, number2: number): number {
+                         /**
+                           * Calculates the product of two given numbers.
+                           * @param number1 The first number.
+                           * @param number2 The second number.
+                           * @returns The product of number1 and number2.
+                           */
+                         calculateProduct(number1: number, number2: number): number {
                          [/RETURN]
                          """;
         var code = """
@@ -121,8 +121,8 @@ public class CommentManipulationHelperTest
                            """;
         var newComment = """
                          [RETURN]
-                             // Calculates the product of two given numbers.
-                             calculateProduct(number1: number, number2: number): number {
+                         // Calculates the product of two given numbers.
+                         calculateProduct(number1: number, number2: number): number {
                          [/RETURN]
                          """;
         var code = """
@@ -185,13 +185,13 @@ public class CommentManipulationHelperTest
                            """;
         var newComment = """
                          [RETURN]
-                             /**
-                               * Calculates the product of two given numbers.
-                               * @param number1 The first number.
-                               * @param number2 The second number.
-                               * @returns The product of number1 and number2.
-                               */
-                             calculateProduct(number1: number, number2: number): number {
+                         /**
+                           * Calculates the product of two given numbers.
+                           * @param number1 The first number.
+                           * @param number2 The second number.
+                           * @returns The product of number1 and number2.
+                           */
+                         calculateProduct(number1: number, number2: number): number {
                          [/RETURN]
                          """;
         var code = """
@@ -254,8 +254,8 @@ public class CommentManipulationHelperTest
                            """;
         var newComment = """
                          [RETURN]
-                             // Calculates the product of two given numbers.
-                             calculateProduct(number1: number, number2: number): number {
+                         // Calculates the product of two given numbers.
+                         calculateProduct(number1: number, number2: number): number {
                          [/RETURN]
                          """;
         var code = """
