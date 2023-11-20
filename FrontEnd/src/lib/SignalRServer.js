@@ -2,6 +2,7 @@
 
 import { error } from '@sveltejs/kit';
 import { HubConnectionBuilder, HttpTransportType, HubConnection, HubConnectionState } from '@microsoft/signalr';
+import {toBase64} from "$lib";
 
 const API_URL = "http://localhost:5000/uploadZip";
 
@@ -49,4 +50,56 @@ export function uploadChunk(connectionId, chunk, fileName, contentType, index, t
 
   console.log(`Chunk ${index} send to API`);
   return connection.invoke('UploadChunk', connectionId, fileName, contentType, chunk, index, totalChunks);
+}
+
+
+/**
+ * Upload each chunk of the zip file to the API using SignalR.
+ * @async
+ * @param {string} connectionId - The id of the connection with the SignalR server.
+ * @param {Blob[]} fileChunks - The list of chunks.
+ * @param {string} fileName - The name of the file before it was sliced into chunks.
+ * @param {string} contentType - The content type of the file before it was sliced into chunks.
+ */
+export async function processFileChunks(connectionId, fileChunks, fileName, contentType) {
+  for (let i = 0; i < fileChunks.length; i++) {
+    const byteArray = await chunkToByteArray(fileChunks[i]);
+    const base64 = toBase64(byteArray);
+    uploadChunk(connectionId, base64, fileName, contentType, i, fileChunks.length).catch((err) => {
+      console.error(err);
+    });
+  }
+}
+
+
+/**
+ * Convert chunk of the zip file into a ByteArray (Uint8Array).
+ * @async
+ * @param {Blob} chunk - The chunk to convert.
+ */
+export async function chunkToByteArray(chunk) {
+  const arrayBuffer = await chunk.arrayBuffer();
+  return new Uint8Array(arrayBuffer);
+}
+
+
+/**
+ * Slices the zip file into mutiple smaller chunks.
+ * @param {File} file - Zip file to slice.
+ * @returns {Blob[]} Returns a list of chunks.
+ */
+export function sliceFileIntoChunks(file) {
+  const fileChunks = [];
+  const chunkSize = 1024 * 1024;
+  const totalChunks = Math.ceil(file.size / chunkSize);
+  console.log(`Total amount of chunks being created: ${totalChunks}`);
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * chunkSize;
+    const end = (i + 1) * chunkSize;
+    const chunk = file.slice(start, end);
+    fileChunks.push(chunk);
+  }
+
+  return fileChunks;
 }

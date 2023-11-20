@@ -6,39 +6,23 @@
     progressInformationMessageStore.subscribe((value) => progressInformationMessage = value);
     errorMessageStore.subscribe((value) => errorMessage = value);
 
-    let code;
-    let oldcode;
-    newCodeStore.subscribe((value) => code = value);
-    oldCodeStore.subscribe((value) => oldcode = value);
+    let newCode;
+    let oldCode;
+    newCodeStore.subscribe((value) => newCode = value);
+    oldCodeStore.subscribe((value) => oldCode = value);
 
-    let selection = [];
-
-    $: if (code) {
-        code.forEach(code => {
-            code.diff.forEach(diff => {
-                selection[diff.value] = selection[diff.value] || false;
-            });
-        });
-    }
-
-  console.info("selection", selection)
-
-    /**
-     * @param {{removed: any, added: any, value:string}} val
-     */
-    const addToCodeSelection = (val) => {
-        if (val.added) {
-            if (val.value in selection) {
-                selection[val.value] = !selection[val.value];
-                console.log(selection[val.value])
-            }
-            selection = {...selection};
-        }
-    }
+    let newSelection = {};
+    let oldSelection = {};
 
 </script>
 
-<h1>Differences</h1>
+<div>
+    <h1>Differences</h1>
+</div>
+
+<div class="submit-button">
+    <button type="submit">submit</button>
+</div>
 
 {#if progressInformationMessage && errorMessage === null}
     <p>{progressInformationMessage}</p>
@@ -48,21 +32,17 @@
     <p>An exception occurred: {errorMessage}</p>
 {/if}
 
-<div class="differences-container">
+<div class="column-container">
     <div class="code">
-        {#if code}
-            {console.log(code)}
-            {#each code as file}
+        {#if oldCode}
+            {#each oldCode as file}
                 <h2>{file.fileName}</h2>
 
                 {#each file.diff as diff}
-
                     {#if !diff.added}
-                        <div class={diff.removed ? 'removed' : 'unchanged'} role="button"
-                             class:selected-old={selection[diff.value]}
-                             on:click={() => addToCodeSelection(diff)}
-                             on:keydown={() => addToCodeSelection(diff)} tabindex="0">
-                            <pre>{diff.value}</pre>
+                        <div class="code-diff {diff.removed ? 'removed' : 'unchanged'} {oldSelection[diff.content] ? 'selected-old' : ''}" role="button"
+                             class:selected-old={oldSelection[diff.content]}>
+                            <pre>{diff.content}</pre>
                         </div>
                     {/if}
                 {/each}
@@ -71,31 +51,46 @@
     </div>
 
     <div class="code">
-        <!--{#if code}-->
-        <!--        <h2>{code.fileName}</h2>-->
+        {#if newCode}
+            {#each newCode as file}
+                <h2>{file.fileName}</h2>
 
-        <!--        {#each code.diff as diff}-->
-        <!--            {#if !diff.removed}-->
-        <!--                <div class={diff.added ? 'added' : 'unchanged'} role="button"-->
-        <!--                     class:selected-new={selection[diff.value]}-->
-        <!--                     on:click={() => addToCodeSelection(diff)}-->
-        <!--                     on:keydown={() => addToCodeSelection(diff)} tabindex="0">-->
-        <!--                    <pre>{diff.value}</pre>-->
-        <!--                </div>-->
-        <!--            {/if}-->
-        <!--        {/each}-->
-        <!--{/if}-->
+                {#each file.diff as diff}
+                    {#if !diff.removed}
+                        <div class="code-diff {diff.added ? 'added' : 'unchanged'} {newSelection[diff.content] ? 'selected-new' : ''}"
+                             role="button">
+                            <pre>{diff.content}</pre>
+                        </div>
+
+                    {/if}
+                {/each}
+            {/each}
+        {/if}
     </div>
 </div>
 
 <style>
+    .submit-button {
+        display: flex;
+        justify-content: center;
+        position: fixed;
+        bottom: 95%;
+        width: 100%;
+    }
+
     .column-container {
         column-count: 2;
-        column-gap: 20px;
+        column-gap: 30px;
     }
 
     .code {
-        width: 48%;
+        display: flex;
+        width: 99%;
+        flex-direction: column;
+    }
+
+    .code-diff {
+        margin: 0 0 3px 0;
     }
 
     .selected-new {
@@ -114,15 +109,16 @@
         text-decoration: none;
     }
 
+    .unchanged {
+        color: #24292e;
+    }
+
     .removed {
         background-color: rgba(241, 113, 130, 0.65);
         color: #24292e;
         text-decoration: line-through;
     }
 
-    .unchanged {
-        color: #24292e;
-    }
 
     pre {
         white-space: pre-wrap;

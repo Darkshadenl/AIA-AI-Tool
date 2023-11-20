@@ -74,21 +74,20 @@ public class CommentChecker
             return false;
         }
 
-        var nonEssentialCommentCount = _eslintComments.Count + _inlineComments.Count;
+        var nonEssentialCommentCount = _eslintComments.Count;
 
-        if (nonEssentialCommentCount == _allComments.Count)
+        if (nonEssentialCommentCount == (_allComments.Count + _inlineComments.Count))
         {
-            Log($"{_file.Name} contains only eslint or inline comments. Skipping.");
+            Log($"{_file.Name} contains only eslint comments. Skipping.");
             return false;
         }
 
         if (IsOnlyTypeOfComment(_eslintComments, "eslint"))
             return false;
 
-        if (IsOnlyTypeOfComment(_inlineComments, "inline"))
-            return false;
-
         LogComments(_allComments);
+        LogComments(_inlineComments);
+
         return true;
     }
 
