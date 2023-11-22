@@ -1,9 +1,9 @@
 <script>
 	import { fail, redirect } from "@sveltejs/kit";
-	import { getConnection, sliceFileIntoChunks, processFileChunks } from '$lib';
+	import {getConnection, sliceFileIntoChunks, processFileChunks, CreateDiffDataStructure} from '$lib';
 	import { HubConnectionState } from "@microsoft/signalr";
 	import { goto } from "$app/navigation";
-	import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore } from "../store.js";
+	import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore, anotherStore } from "../store.js";
 	import { resetStores } from "$lib";
 	import { diffLines } from "diff";
 
@@ -44,6 +44,16 @@
 
 		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
 			const differences = diffLines(oldFileContent, fileContent, { ignoreWhitespace: true });
+			const diffDataStructure = CreateDiffDataStructure(oldFileContent, fileContent, { ignoreWhitespace: true });
+			console.log('diffDataStructure in routes/page')
+			console.log(diffDataStructure);
+
+			anotherStore.update((value) => {
+				const diffStruct = { fileName: fileName, diff: null };
+				console.log('diffStruct in routes/page')
+				if (value) return [...value, diffStruct];
+				return [diffStruct];
+			});
 
 			oldCodeStore.update((value) => {
 				const oldCode = { fileName: fileName, code: oldFileContent, diff: calculateLineNumbers(differences.filter(diff => !diff.added)) };
