@@ -21,7 +21,7 @@ export class DiffItem {
  * @param {object} options - The options.
  * @returns {DiffItem[]} - The list of items.
  */
-export function SetupDiffDataStructure(oldFileContent, newFileContent, options) {
+export function CreateDiffDataStructure(oldFileContent, newFileContent, options) {
     const res = diffLines(oldFileContent, newFileContent, options);
     const objects = createIntelligentDiffs(res);
     return linkObjects(objects);
