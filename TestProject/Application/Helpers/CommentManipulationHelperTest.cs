@@ -50,13 +50,13 @@ public class CommentManipulationHelperTest
                            """;
         var newComment = """
                          [RETURN]
-                             /**
-                               * Calculates the product of two given numbers.
-                               * @param number1 The first number.
-                               * @param number2 The second number.
-                               * @returns The product of number1 and number2.
-                               */
-                             calculateProduct(number1: number, number2: number): number {
+                         /**
+                           * Calculates the product of two given numbers.
+                           * @param number1 The first number.
+                           * @param number2 The second number.
+                           * @returns The product of number1 and number2.
+                           */
+                         calculateProduct(number1: number, number2: number): number {
                          [/RETURN]
                          """;
         var code = """
@@ -89,7 +89,7 @@ public class CommentManipulationHelperTest
                   """;
         
         // Act
-        string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
+        string codeWithComments = _llmResponseController.ReplaceCommentsInCode(newComment, code);
         
         Console.WriteLine(codeWithComments);
         
@@ -121,8 +121,8 @@ public class CommentManipulationHelperTest
                            """;
         var newComment = """
                          [RETURN]
-                             // Calculates the product of two given numbers.
-                             calculateProduct(number1: number, number2: number): number {
+                         // Calculates the product of two given numbers.
+                         calculateProduct(number1: number, number2: number): number {
                          [/RETURN]
                          """;
         var code = """
@@ -145,7 +145,7 @@ public class CommentManipulationHelperTest
                   """;
         
         // Act
-        string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
+        string codeWithComments = _llmResponseController.ReplaceCommentsInCode(newComment, code);
         
         // Assert
         Assert.That(codeWithComments, Is.EqualTo(expectedCode));
@@ -185,13 +185,13 @@ public class CommentManipulationHelperTest
                            """;
         var newComment = """
                          [RETURN]
-                             /**
-                               * Calculates the product of two given numbers.
-                               * @param number1 The first number.
-                               * @param number2 The second number.
-                               * @returns The product of number1 and number2.
-                               */
-                             calculateProduct(number1: number, number2: number): number {
+                         /**
+                           * Calculates the product of two given numbers.
+                           * @param number1 The first number.
+                           * @param number2 The second number.
+                           * @returns The product of number1 and number2.
+                           */
+                         calculateProduct(number1: number, number2: number): number {
                          [/RETURN]
                          """;
         var code = """
@@ -224,7 +224,7 @@ public class CommentManipulationHelperTest
                   """;
 
         // Act
-        string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
+        string codeWithComments = _llmResponseController.ReplaceCommentsInCode(newComment, code);
         
         // Assert
         Assert.That(codeWithComments, Is.EqualTo(expectedCode));
@@ -254,8 +254,8 @@ public class CommentManipulationHelperTest
                            """;
         var newComment = """
                          [RETURN]
-                             // Calculates the product of two given numbers.
-                             calculateProduct(number1: number, number2: number): number {
+                         // Calculates the product of two given numbers.
+                         calculateProduct(number1: number, number2: number): number {
                          [/RETURN]
                          """;
         var code = """
@@ -277,7 +277,7 @@ public class CommentManipulationHelperTest
                   }
                   """;
         
-        string codeWithComments = _llmResponseController.ReplaceCommentInCode(newComment, code);
+        string codeWithComments = _llmResponseController.ReplaceCommentsInCode(newComment, code);
         Assert.That(codeWithComments, Is.EqualTo(expectedCode));
     }
 }
