@@ -3,7 +3,7 @@
 	import {getConnection, sliceFileIntoChunks, processFileChunks, CreateDiffDataStructure} from '$lib';
 	import { HubConnectionState } from "@microsoft/signalr";
 	import { goto } from "$app/navigation";
-	import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore, anotherStore } from "../store.js";
+	import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore, diffStore } from "../store.js";
 	import { resetStores } from "$lib";
 	import { diffLines } from "diff";
 
@@ -44,24 +44,29 @@
 
 		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
 			const differences = diffLines(oldFileContent, fileContent, { ignoreWhitespace: true });
-			const diffDataStructure = CreateDiffDataStructure(oldFileContent, fileContent, { ignoreWhitespace: true });
+			let diffDataStructure = CreateDiffDataStructure(oldFileContent, fileContent, { ignoreWhitespace: true });
 			console.log('diffDataStructure in routes/page')
-			console.log(diffDataStructure);
 
-			anotherStore.update((value) => {
-				const diffStruct = { fileName: fileName, diff: null };
-				console.log('diffStruct in routes/page')
-				if (value) return [...value, diffStruct];
-				return [diffStruct];
+			diffStore.update((value) => {
+				const diff = {
+					id: value ? value.length : 0,
+					fileName: fileName,
+					diffs: diffDataStructure
+				};
+
+				if (value) return [...value, diff];
+				return [diff];
 			});
 
 			oldCodeStore.update((value) => {
 				const oldCode = { fileName: fileName, code: oldFileContent, diff: calculateLineNumbers(differences.filter(diff => !diff.added)) };
+				console.log('inside oldCodeStore update');
 				if (value) return [...value, oldCode];
 				return [oldCode];
 			});
 			newCodeStore.update((value) => {
 				const newCode = { fileName: fileName, code: fileContent, diff: calculateLineNumbers(differences.filter(diff => !diff.removed)) };
+				console.log('inside newCodeStore update');
 				if (value) return [...value, newCode];
 				return [newCode];
 			});

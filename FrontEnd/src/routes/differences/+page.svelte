@@ -1,18 +1,31 @@
 <script>
-    import {errorMessageStore, newCodeStore, oldCodeStore, progressInformationMessageStore} from "../../store.js";
+    import {errorMessageStore, diffStore, progressInformationMessageStore} from "../../store.js";
 
     let progressInformationMessage;
     let errorMessage;
     progressInformationMessageStore.subscribe((value) => progressInformationMessage = value);
     errorMessageStore.subscribe((value) => errorMessage = value);
 
-    let newCode;
-    let oldCode;
-    newCodeStore.subscribe((value) => newCode = value);
-    oldCodeStore.subscribe((value) => oldCode = value);
+    let diffDataStruct;
+    diffStore.subscribe((value) => diffDataStruct = value);
+    if (diffDataStruct) {
+        console.log(diffDataStruct)
+    }
+    let selection = [];
 
-    let newSelection = {};
-    let oldSelection = {};
+    const handleClick = (diffId, diffItemId, old) => {
+        let item = diffDataStruct[diffItemId].diffs[diffId];
+        if (!(item.old && item.new))
+            return;
+
+        if (old) {
+            diffDataStruct[diffItemId].diffs[diffId].selected =
+                diffDataStruct[diffItemId].diffs[diffId].selected === "old" ? undefined : "old";
+        } else if (!old) {
+            diffDataStruct[diffItemId].diffs[diffId].selected =
+                diffDataStruct[diffItemId].diffs[diffId].selected === "new" ? undefined : "new";
+        }
+    }
 
 </script>
 
@@ -33,40 +46,47 @@
 {/if}
 
 <div class="column-container">
-    <div class="code">
-        {#if oldCode}
-            {#each oldCode as file}
-                <h2>{file.fileName}</h2>
+    {#if diffDataStruct}
+        <div class="code">
+            {#each diffDataStruct as diffItem}
+                <h2>{diffItem.fileName}</h2>
 
-                {#each file.diff as diff}
-                    {#if !diff.added}
-                        <div class="code-diff {diff.removed ? 'removed' : 'unchanged'} {oldSelection[diff.content] ? 'selected-old' : ''}" role="button"
-                             class:selected-old={oldSelection[diff.content]}>
-                            <pre>{diff.content}</pre>
-                        </div>
-                    {/if}
+                {#each diffItem.diffs as diff}
+                    <div class="code-diff {diff.old && diff.new ? 'removed' : 'unchanged'}"
+                         tabindex="0"
+                         class:selected-old={diff.selected === "old"}
+                         on:click={handleClick(diff.id, diffItem.id, true)}
+                         on:keydown={handleClick(diff.id, diffItem.id, true)}
+                         role="button">
+                        <pre>{diff.old}</pre>
+                    </div>
                 {/each}
             {/each}
-        {/if}
-    </div>
+        </div>
 
-    <div class="code">
-        {#if newCode}
-            {#each newCode as file}
-                <h2>{file.fileName}</h2>
+        <div class="code">
+            {#each diffDataStruct as diffItem}
+                <h2>{diffItem.fileName}</h2>
 
-                {#each file.diff as diff}
-                    {#if !diff.removed}
-                        <div class="code-diff {diff.added ? 'added' : 'unchanged'} {newSelection[diff.content] ? 'selected-new' : ''}"
+                {#each diffItem.diffs as diff}
+                    {#if diff.old && diff.new}
+                        <div class="code-diff {diff.old && diff.new ? 'added' : 'unchanged'}"
+                             tabindex="0"
+                             class:selected-new={diff.selected === "new"}
+                             on:click={handleClick(diff.id, diffItem.id, false)}
+                             on:keydown={handleClick(diff.id, diffItem.id, false)}
                              role="button">
-                            <pre>{diff.content}</pre>
+                            <pre>{diff.new}</pre>
                         </div>
-
+                    {:else}
+                        <div class="code-diff unchanged" role="button">
+                            <pre>{diff.old}</pre>
+                        </div>
                     {/if}
                 {/each}
             {/each}
-        {/if}
-    </div>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -81,10 +101,15 @@
     .column-container {
         column-count: 2;
         column-gap: 30px;
+        display: flex;
+        justify-content: space-between;
     }
 
     .code {
+        flex: 1;
         display: flex;
+        flex-wrap: nowrap;
+        height: 100%;
         width: 99%;
         flex-direction: column;
     }
