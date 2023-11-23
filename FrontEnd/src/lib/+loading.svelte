@@ -36,11 +36,7 @@
 
       {#if jokeSetup && jokeDelivery}
         <p>{jokeSetup}</p>
-        {#if jokeSetup.endsWith('?')}
-          <button on:click={displayDelivery}>I don't know, tell me!</button>
-          {:else}
-          <button on:click={displayDelivery}>Why?!</button>
-        {/if}
+        <button on:click={displayDelivery}>Tell me!</button>
 
         {#if showDelivery}
           <p>{jokeDelivery}</p>
