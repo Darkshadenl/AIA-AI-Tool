@@ -6,24 +6,52 @@
     progressInformationMessageStore.subscribe((value) => progressInformationMessage = value);
     errorMessageStore.subscribe((value) => errorMessage = value);
 
+    /**
+     * @type {Array.<{id: number, fileName: string,
+     * diffs: Array.<{id: number, oldValue?: {value: string, selected?: string},
+     * newValue?: {value: string, selected?: string}}>}>}
+     */
     let diffDataStruct;
+    let mergedStruct;
     diffStore.subscribe((value) => diffDataStruct = value);
+
     if (diffDataStruct) {
         console.log(diffDataStruct)
+        mergedStruct = diffDataStruct.map(chunk => ({ ...chunk }));
+        mergedStruct.forEach(diffItem => {
+            diffItem.diffs.forEach(diff => {
+                if (diff.newValue)
+                    diff.merged = []
+            })
+        })
+        console.log('mergedStruct')
+        console.log(mergedStruct)
     }
     let selection = [];
 
-    const handleClick = (diffId, diffItemId, old) => {
-        let item = diffDataStruct[diffItemId].diffs[diffId];
-        if (!(item.old && item.new))
-            return;
+    const handleClick = (diffId, diffItemId, index, old) => {
+        let item = diffDataStruct[diffItemId];
+        let diff = item.diffs[diffId];
 
+        if (!(diff.oldValue && diff.newValue)){
+            console.log('returning. No new AND old found')
+            return;
+        }
+        console.log(`click diffid:${diffId} diffitemid:${diffItemId} index:${index} old:${old}`)
+        console.log(item)
+        console.log(diff);
+
+        const correctValue = old === true ? diffDataStruct[diffItemId].diffs[diffId].oldValue[index] :
+            diffDataStruct[diffItemId].diffs[diffId].newValue[index];
+
+        console.log(correctValue[index]);
         if (old) {
-            diffDataStruct[diffItemId].diffs[diffId].selected =
-                diffDataStruct[diffItemId].diffs[diffId].selected === "old" ? undefined : "old";
+            console.log('entering old')
+            diffDataStruct[diffItemId].diffs[diffId].oldValue[index].selected =
+                correctValue.selected === "old" ? undefined : "old";
         } else if (!old) {
-            diffDataStruct[diffItemId].diffs[diffId].selected =
-                diffDataStruct[diffItemId].diffs[diffId].selected === "new" ? undefined : "new";
+            diffDataStruct[diffItemId].diffs[diffId].newValue[index].selected =
+                correctValue.selected === "new" ? undefined : "new";
         }
     }
 
@@ -52,14 +80,16 @@
                 <h2>{diffItem.fileName}</h2>
 
                 {#each diffItem.diffs as diff}
-                    <div class="code-diff {diff.old && diff.new ? 'removed' : 'unchanged'}"
-                         tabindex="0"
-                         class:selected-old={diff.selected === "old"}
-                         on:click={handleClick(diff.id, diffItem.id, true)}
-                         on:keydown={handleClick(diff.id, diffItem.id, true)}
-                         role="button">
-                        <pre>{diff.old}</pre>
-                    </div>
+                    {#each diff.oldValue as oldCode, oldIndex}
+                        <div class="code-diff {diff.oldValue && diff.newValue ? 'removed' : 'unchanged'}"
+                             tabindex="0"
+                             class:selected-old={oldCode.selected === "old"}
+                             on:click={handleClick(diff.id, diffItem.id, oldIndex, true)}
+                             on:keydown={handleClick(diff.id, diffItem.id, oldIndex, true)}
+                             role="button">
+                            <pre>{oldCode.value}</pre>
+                        </div>
+                    {/each}
                 {/each}
             {/each}
         </div>
@@ -69,23 +99,58 @@
                 <h2>{diffItem.fileName}</h2>
 
                 {#each diffItem.diffs as diff}
-                    {#if diff.old && diff.new}
-                        <div class="code-diff {diff.old && diff.new ? 'added' : 'unchanged'}"
-                             tabindex="0"
-                             class:selected-new={diff.selected === "new"}
-                             on:click={handleClick(diff.id, diffItem.id, false)}
-                             on:keydown={handleClick(diff.id, diffItem.id, false)}
-                             role="button">
-                            <pre>{diff.new}</pre>
-                        </div>
+                    {#if diff.newValue}
+                        {#each diff.newValue as newCode, newIndex}
+                            <div class="code-diff {diff.oldValue && diff.newValue ? 'added' : 'unchanged'}"
+                                 tabindex="0"
+                                 class:selected-new={newCode.selected === "new"}
+                                 on:click={handleClick(diff.id, diffItem.id, newIndex, false)}
+                                 on:keydown={handleClick(diff.id, diffItem.id, newIndex, false)}
+                                 role="button">
+                                <pre>{newCode.value}</pre>
+                            </div>
+                        {/each}
                     {:else}
-                        <div class="code-diff unchanged" role="button">
-                            <pre>{diff.old}</pre>
-                        </div>
+                        {#each diff.oldValue as old}
+                            <div class="code-diff unchanged" role="button">
+                                <pre>{old.value}</pre>
+                            </div>
+                        {/each}
                     {/if}
                 {/each}
             {/each}
         </div>
+
+<!--        <div class="code">-->
+<!--            {#each mergedStruct as diffItem}-->
+<!--                <h2>{diffItem.fileName}</h2>-->
+<!--                {#each diffItem.diffs as diff}-->
+<!--                    {#if diff.merged}-->
+<!--                        {#if diff.merged.length > 0}-->
+<!--                            {#each diff.merged as mergedCode}-->
+<!--                                <div class="code-diff"-->
+<!--                                     tabindex="0"-->
+<!--                                     role="button">-->
+<!--                                    <pre>{mergedCode}</pre>-->
+<!--                                </div>-->
+<!--                            {/each}-->
+<!--                        {:else}-->
+<!--                            <div class="code-diff merged-item"-->
+<!--                                 tabindex="0"-->
+<!--                                 role="button">-->
+<!--                                <pre> </pre>-->
+<!--                            </div>-->
+<!--                        {/if}-->
+<!--                    {:else}-->
+<!--                        {#each diff.oldValue as old}-->
+<!--                            <div class="code-diff unchanged" role="button">-->
+<!--                                <pre>{old}</pre>-->
+<!--                            </div>-->
+<!--                        {/each}-->
+<!--                    {/if}-->
+<!--                {/each}-->
+<!--            {/each}-->
+<!--        </div>-->
     {/if}
 </div>
 
@@ -125,6 +190,11 @@
 
     .selected-old {
         background-color: #ff1414 !important;
+        font-weight: bold;
+    }
+
+    .merged-item {
+        background-color: #ff5b14 !important;
         font-weight: bold;
     }
 

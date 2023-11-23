@@ -10,8 +10,8 @@ import { diffLines } from "diff";
 function createDiffItem(id, oldString, newString) {
     return {
         id: id,
-        old: oldString,
-        new: newString,
+        oldValue: oldString,
+        newValue: newString,
     };
 }
 
@@ -50,7 +50,7 @@ function createIntelligentDiffs(res) {
                 console.error("Error: previousItem is null");
                 return;
             }
-            previousObjectItem.new = currentItem.value;
+            previousObjectItem.newValue = currentItem.value;
             previousObjectItem = null;
         } else {
             // no change
