@@ -1,5 +1,6 @@
 <script>
   import Code from '$lib/+code.svelte';
+  import Loading from '$lib/+loading.svelte';
   import { errorMessageStore, newCodeStore, oldCodeStore, progressInformationMessageStore } from "../../store.js";
 
   let progressInformationMessage;
@@ -23,6 +24,7 @@
   <p>An exception occurred: {errorMessage}</p>
 {/if}
 
+<div class="differences-container">
 {#if oldCode && newCode && oldCode.length === newCode.length}
   {#each oldCode as _, index (index)}
     <!--Header of each file-->
@@ -50,7 +52,10 @@
       {/each}
     {/if}
   {/each}
+{:else}
+  <Loading />
 {/if}
+</div>
 
 <style>
     .column-container {
