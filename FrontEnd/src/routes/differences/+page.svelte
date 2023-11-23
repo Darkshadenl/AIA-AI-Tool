@@ -29,30 +29,44 @@
     }
     let selection = [];
 
-    const handleClick = (diffId, diffItemId, index, old) => {
-        let item = diffDataStruct[diffItemId];
-        let diff = item.diffs[diffId];
+    const changeLineColor = (lineObject, old, diffId, diffItemId, index) => {
+        if (old) {
+            diffDataStruct[diffItemId].diffs[diffId].oldValue[index].selected =
+                lineObject.selected === "old" ? undefined : "old";
+        } else if (!old) {
+            diffDataStruct[diffItemId].diffs[diffId].newValue[index].selected =
+                lineObject.selected === "new" ? undefined : "new";
+        }
+    }
 
+    const moveToAndFromMerged = (lineObject, diffId, diffItemId) => {
+        let diffs = mergedStruct[diffItemId].diffs;
+        const merged = diffs[diffId].merged;
+        const contains = merged.some(item => item.value === lineObject.value);
+
+        if (!contains) {
+            diffs[diffId].merged = [...merged, lineObject]; // Voeg toe met nieuwe referentie
+        } else {
+            diffs[diffId].merged = merged.filter(item => item.value !== lineObject.value); // Verwijder met nieuwe referentie
+        }
+
+        // Svelte's reactivity werkt door toewijzing, update de mergedStruct met een nieuwe referentie
+        mergedStruct[diffItemId].diffs = diffs;
+        mergedStruct = [...mergedStruct]; // Trigger reactivity door toewijzing op het hoogste niveau
+    };
+
+
+    const handleClick = (diffId, diffItemId, index, old) => {
+        let diff = diffDataStruct[diffItemId].diffs[diffId];
         if (!(diff.oldValue && diff.newValue)){
             console.log('returning. No new AND old found')
             return;
         }
-        console.log(`click diffid:${diffId} diffitemid:${diffItemId} index:${index} old:${old}`)
-        console.log(item)
-        console.log(diff);
-
-        const correctValue = old === true ? diffDataStruct[diffItemId].diffs[diffId].oldValue[index] :
+        console.log(`click diffitemid:${diffItemId} diffid:${diffId} index:${index} old:${old}`)
+        const lineObject = old === true ? diffDataStruct[diffItemId].diffs[diffId].oldValue[index] :
             diffDataStruct[diffItemId].diffs[diffId].newValue[index];
-
-        console.log(correctValue[index]);
-        if (old) {
-            console.log('entering old')
-            diffDataStruct[diffItemId].diffs[diffId].oldValue[index].selected =
-                correctValue.selected === "old" ? undefined : "old";
-        } else if (!old) {
-            diffDataStruct[diffItemId].diffs[diffId].newValue[index].selected =
-                correctValue.selected === "new" ? undefined : "new";
-        }
+        changeLineColor(lineObject, old, diffId, diffItemId, index)
+        moveToAndFromMerged(lineObject, diffId, diffItemId)
     }
 
 </script>
@@ -121,36 +135,36 @@
             {/each}
         </div>
 
-<!--        <div class="code">-->
-<!--            {#each mergedStruct as diffItem}-->
-<!--                <h2>{diffItem.fileName}</h2>-->
-<!--                {#each diffItem.diffs as diff}-->
-<!--                    {#if diff.merged}-->
-<!--                        {#if diff.merged.length > 0}-->
-<!--                            {#each diff.merged as mergedCode}-->
-<!--                                <div class="code-diff"-->
-<!--                                     tabindex="0"-->
-<!--                                     role="button">-->
-<!--                                    <pre>{mergedCode}</pre>-->
-<!--                                </div>-->
-<!--                            {/each}-->
-<!--                        {:else}-->
-<!--                            <div class="code-diff merged-item"-->
-<!--                                 tabindex="0"-->
-<!--                                 role="button">-->
-<!--                                <pre> </pre>-->
-<!--                            </div>-->
-<!--                        {/if}-->
-<!--                    {:else}-->
-<!--                        {#each diff.oldValue as old}-->
-<!--                            <div class="code-diff unchanged" role="button">-->
-<!--                                <pre>{old}</pre>-->
-<!--                            </div>-->
-<!--                        {/each}-->
-<!--                    {/if}-->
-<!--                {/each}-->
-<!--            {/each}-->
-<!--        </div>-->
+        <div class="code">
+            {#each mergedStruct as diffItem}
+                <h2>{diffItem.fileName}</h2>
+                {#each diffItem.diffs as diff}
+                    {#if diff.merged}
+                        {#if diff.merged.length > 0}
+                            {#each diff.merged as mergedCode}
+                                <div class="code-diff merged-item"
+                                     tabindex="0"
+                                     role="button">
+                                    <pre>{mergedCode.value}</pre>
+                                </div>
+                            {/each}
+                        {:else}
+                            <div class="code-diff merged-item"
+                                 tabindex="0"
+                                 role="button">
+                                <pre> </pre>
+                            </div>
+                        {/if}
+                    {:else}
+                        {#each diff.oldValue as old}
+                            <div class="code-diff unchanged" role="button">
+                                <pre>{old.value}</pre>
+                            </div>
+                        {/each}
+                    {/if}
+                {/each}
+            {/each}
+        </div>
     {/if}
 </div>
 
