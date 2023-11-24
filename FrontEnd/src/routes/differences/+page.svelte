@@ -58,6 +58,8 @@
 
         if (!contains) {
             diffs[diffId].merged = [...merged, JSON.parse(JSON.stringify(lineObject))]; // Voeg toe met nieuwe referentie
+            console.log(diffs[diffId].merged) //correct
+            console.log(JSON.parse(JSON.stringify(lineObject))) //correct
         } else {
             diffs[diffId].merged = merged.filter(item => item.value !== lineObject.value); // Verwijder met nieuwe referentie
         }
