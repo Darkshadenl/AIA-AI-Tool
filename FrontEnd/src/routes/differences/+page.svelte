@@ -106,6 +106,10 @@
         console.info('mergedStruct', mergedStruct);
     }
 
+    function autoGrow(event) {
+        event.target.style.height = '1rem';
+        event.target.style.height = `${event.target.scrollHeight}px`;
+    }
 </script>
 
 <div>
@@ -126,7 +130,7 @@
 
 <div class="column-container">
     {#if diffDataStruct}
-        <div class="code">
+        <div class="code maxxed">
             {#each diffDataStruct as diffItem}
                 <h2>{diffItem.fileName}</h2>
 
@@ -145,7 +149,7 @@
             {/each}
         </div>
 
-        <div class="code">
+        <div class="code maxxed">
             {#each diffDataStruct as diffItem}
                 <h2>{diffItem.fileName}</h2>
 
@@ -184,9 +188,11 @@
                                      role="button">
                                     <span>X</span>
                                     <textarea class="merge-input"
+                                              bind:value={mergedCode.value}
                                               on:input={(event) => handleTextEdit(diff.id, diffItem.id, mergedIndex, event)}
-                                              on:blur={(event) => handleTextBlur(diff.id, diffItem.id, mergedIndex, event)}>
-                                    </textarea>
+                                              on:input={autoGrow}
+                                              on:blur={(event) => handleTextBlur(diff.id, diffItem.id, mergedIndex, event)}
+                                    />
                                 </div>
                             {/each}
                         {:else}
@@ -224,9 +230,7 @@
         max-width: 100%;
     }
 
-    .maxxed {
-        max-width: 40rem;
-    }
+
 
     .column-container {
         column-count: 2;
@@ -252,10 +256,9 @@
         font-family: monospace;
     }
 
-    /* Adjust the height as needed */
     .removable-merge-item > textarea {
         height: 1rem;
-        overflow: hidden; /* Optional, for appearance */
+        overflow-y: hidden;
     }
 
     .code {
@@ -265,6 +268,10 @@
         width: 99%;
         flex-direction: column;
         margin: 0 2px 0 5px;
+    }
+
+    .maxxed {
+        max-width: 70rem;
     }
 
     .code-diff {
