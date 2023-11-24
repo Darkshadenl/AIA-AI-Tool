@@ -1,5 +1,5 @@
 <script>
-    import {errorMessageStore, diffStore, progressInformationMessageStore} from "../../store.js";
+    import {diffStore, errorMessageStore, progressInformationMessageStore} from "../../store.js";
 
     let progressInformationMessage;
     let errorMessage;
@@ -7,25 +7,37 @@
     errorMessageStore.subscribe((value) => errorMessage = value);
 
     /**
-     * @type {Array.<{id: number, fileName: string,
-     * diffs: Array.<{id: number, oldValue?: {value: string, selected?: string},
-     * newValue?: {value: string, selected?: string}}>}>}
+     * @type {
+     * Array.<{id: number, fileName: string,
+     * diffs: Array.<{id: number,
+     * oldValue?: Array.<{value: string, selected?: string}>,
+     * newValue?: Array.<{value: string, selected?: string}>}>}>
+     * }
      */
     let diffDataStruct;
+    /**
+     * @type {
+     * Array.<{id: number, fileName: string,
+     * diffs: Array.<{id: number,
+     * merged?: Array.<{value: string, selected?: string}>,
+     * oldValue?: Array.<{value: string, selected?: string}>,
+     * newValue?: Array.<{value: string, selected?: string}>}>}>
+     * }
+     */
     let mergedStruct;
     diffStore.subscribe((value) => diffDataStruct = value);
 
     if (diffDataStruct) {
-        console.log(diffDataStruct)
-        mergedStruct = diffDataStruct.map(chunk => ({ ...chunk }));
+        mergedStruct = JSON.parse(JSON.stringify(diffDataStruct));
+
         mergedStruct.forEach(diffItem => {
             diffItem.diffs.forEach(diff => {
                 if (diff.newValue)
                     diff.merged = []
             })
         })
-        console.log('mergedStruct')
-        console.log(mergedStruct)
+        console.info('diffDataStruct', diffDataStruct)
+        console.info('mergedStruct', mergedStruct)
     }
     let selection = [];
 
@@ -45,7 +57,7 @@
         const contains = merged.some(item => item.value === lineObject.value);
 
         if (!contains) {
-            diffs[diffId].merged = [...merged, lineObject]; // Voeg toe met nieuwe referentie
+            diffs[diffId].merged = [...merged, JSON.parse(JSON.stringify(lineObject))]; // Voeg toe met nieuwe referentie
         } else {
             diffs[diffId].merged = merged.filter(item => item.value !== lineObject.value); // Verwijder met nieuwe referentie
         }
@@ -53,6 +65,8 @@
         // Svelte's reactivity werkt door toewijzing, update de mergedStruct met een nieuwe referentie
         mergedStruct[diffItemId].diffs = diffs;
         mergedStruct = [...mergedStruct]; // Trigger reactivity door toewijzing op het hoogste niveau
+        console.info('diffDataStruct', diffDataStruct)
+        console.info('mergedStruct', mergedStruct);
     };
 
 
@@ -67,6 +81,29 @@
             diffDataStruct[diffItemId].diffs[diffId].newValue[index];
         changeLineColor(lineObject, old, diffId, diffItemId, index)
         moveToAndFromMerged(lineObject, diffId, diffItemId)
+    }
+
+    let localMergedStruct = mergedStruct;
+
+    /**
+     * Handles text edits on an input element.
+     *
+     * @param {number} diffId - The ID of the current diff.
+     * @param {number} diffItemId - The ID of the current diff item.
+     * @param {number} index - The index of the merged code in the diff.
+     * @param {InputEvent} event - The input event from the contenteditable element.
+     */
+    function handleTextEdit(diffId, diffItemId, index, event) {
+        // Werk de lokale kopie bij zonder de originele mergedStruct aan te raken
+        localMergedStruct[diffItemId].diffs[diffId].merged[index].value = event.target.value;
+        console.log()
+    }
+
+    function handleTextBlur(diffId, diffItemId, index, event) {
+        mergedStruct[diffItemId].diffs[diffId].merged[index].value = event.target.value;
+        mergedStruct = [...mergedStruct];
+        console.info('diffDataStruct', diffDataStruct)
+        console.info('mergedStruct', mergedStruct);
     }
 
 </script>
@@ -95,7 +132,7 @@
 
                 {#each diffItem.diffs as diff}
                     {#each diff.oldValue as oldCode, oldIndex}
-                        <div class="code-diff {diff.oldValue && diff.newValue ? 'removed' : 'unchanged'}"
+                        <div class="code-diff wrap {diff.oldValue && diff.newValue ? 'removed' : 'unchanged'}"
                              tabindex="0"
                              class:selected-old={oldCode.selected === "old"}
                              on:click={handleClick(diff.id, diffItem.id, oldIndex, true)}
@@ -115,7 +152,7 @@
                 {#each diffItem.diffs as diff}
                     {#if diff.newValue}
                         {#each diff.newValue as newCode, newIndex}
-                            <div class="code-diff {diff.oldValue && diff.newValue ? 'added' : 'unchanged'}"
+                            <div class="code-diff wrap {diff.oldValue && diff.newValue ? 'added' : 'unchanged'}"
                                  tabindex="0"
                                  class:selected-new={newCode.selected === "new"}
                                  on:click={handleClick(diff.id, diffItem.id, newIndex, false)}
@@ -126,7 +163,7 @@
                         {/each}
                     {:else}
                         {#each diff.oldValue as old}
-                            <div class="code-diff unchanged" role="button">
+                            <div class="code-diff unchanged wrap" role="button">
                                 <pre>{old.value}</pre>
                             </div>
                         {/each}
@@ -135,17 +172,21 @@
             {/each}
         </div>
 
-        <div class="code">
+        <div class="code maxxed">
             {#each mergedStruct as diffItem}
                 <h2>{diffItem.fileName}</h2>
                 {#each diffItem.diffs as diff}
                     {#if diff.merged}
                         {#if diff.merged.length > 0}
-                            {#each diff.merged as mergedCode}
-                                <div class="code-diff merged-item"
+                            {#each diff.merged as mergedCode, mergedIndex}
+                                <div class="code-diff merged-item removable-merge-item"
                                      tabindex="0"
                                      role="button">
-                                    <pre>{mergedCode.value}</pre>
+                                    <span>X</span>
+                                    <textarea class="merge-input"
+                                              on:input={(event) => handleTextEdit(diff.id, diffItem.id, mergedIndex, event)}
+                                              on:blur={(event) => handleTextBlur(diff.id, diffItem.id, mergedIndex, event)}>
+                                    </textarea>
                                 </div>
                             {/each}
                         {:else}
@@ -157,7 +198,7 @@
                         {/if}
                     {:else}
                         {#each diff.oldValue as old}
-                            <div class="code-diff unchanged" role="button">
+                            <div class="code-diff unchanged wrap" role="button">
                                 <pre>{old.value}</pre>
                             </div>
                         {/each}
@@ -177,6 +218,16 @@
         width: 100%;
     }
 
+    .wrap {
+        /*white-space: pre-wrap;*/
+        word-break: break-word;
+        max-width: 100%;
+    }
+
+    .maxxed {
+        max-width: 40rem;
+    }
+
     .column-container {
         column-count: 2;
         column-gap: 30px;
@@ -184,13 +235,36 @@
         justify-content: space-between;
     }
 
+    .removable-merge-item {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .removable-merge-item > span {
+       margin: 2px 10px 0 5px;
+    }
+
+    .merge-input {
+        border: none;
+        width: 100%;
+        background-color: #ff5b14;
+        color: wheat;
+        font-family: monospace;
+    }
+
+    /* Adjust the height as needed */
+    .removable-merge-item > textarea {
+        height: 1rem;
+        overflow: hidden; /* Optional, for appearance */
+    }
+
     .code {
         flex: 1;
         display: flex;
-        flex-wrap: nowrap;
         height: 100%;
         width: 99%;
         flex-direction: column;
+        margin: 0 2px 0 5px;
     }
 
     .code-diff {
