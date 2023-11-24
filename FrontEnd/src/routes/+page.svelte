@@ -15,21 +15,23 @@
 	 * @returns {Array} - An array of line objects with line numbers, content, and added/removed flags.
 	 */
 	const calculateLineNumbers = (diff) => {
-		let lineNumber = 1;
+		let lineNumber = 0;
 		const diffCopy = diff.map(chunk => ({ ...chunk })); // Copy for debugging purposes
 		return diffCopy.map((chunk) => {
 			if (chunk.oldValue) {
 				chunk.oldValue = chunk.oldValue.trimEnd('\n').split('\n').map(el => {
+					lineNumber++;
 					return {
-						value: el,
+						value: lineNumber + el,
 						selected: undefined
 					}
 				});
 			}
 			if (chunk.newValue) {
 				chunk.newValue = chunk.newValue.trimEnd('\n').split('\n').map(el => {
+					lineNumber++;
 					return {
-						value: el,
+						value: lineNumber + el,
 						selected: undefined
 					}
 				});
@@ -62,12 +64,13 @@
 
 		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
 			let diffDataStructure = CreateDiffDataStructure(oldFileContent, fileContent, { ignoreWhitespace: true });
+			let calculated = calculateLineNumbers(diffDataStructure);
 
 			diffStore.update((value) => {
 				const diff = {
 					id: value ? value.length : 0,
 					fileName: fileName,
-					diffs: diffDataStructure
+					diffs: calculated
 				};
 
 				if (value) return [...value, diff];

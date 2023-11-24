@@ -27,7 +27,7 @@
     let mergedStruct;
     diffStore.subscribe((value) => diffDataStruct = value);
 
-    if (diffDataStruct) {
+    $: if (diffDataStruct) {
         mergedStruct = JSON.parse(JSON.stringify(diffDataStruct));
 
         mergedStruct.forEach(diffItem => {
@@ -129,7 +129,7 @@
 {/if}
 
 <div class="column-container">
-    {#if diffDataStruct}
+    {#if diffDataStruct && mergedStruct}
         <div class="code maxxed">
             {#each diffDataStruct as diffItem}
                 <h2>{diffItem.fileName}</h2>
@@ -139,8 +139,8 @@
                         <div class="code-diff wrap {diff.oldValue && diff.newValue ? 'removed' : 'unchanged'}"
                              tabindex="0"
                              class:selected-old={oldCode.selected === "old"}
-                             on:click={handleClick(diff.id, diffItem.id, oldIndex, true)}
-                             on:keydown={handleClick(diff.id, diffItem.id, oldIndex, true)}
+                             on:click={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
+                             on:keydown={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                              role="button">
                             <pre>{oldCode.value}</pre>
                         </div>
@@ -159,8 +159,8 @@
                             <div class="code-diff wrap {diff.oldValue && diff.newValue ? 'added' : 'unchanged'}"
                                  tabindex="0"
                                  class:selected-new={newCode.selected === "new"}
-                                 on:click={handleClick(diff.id, diffItem.id, newIndex, false)}
-                                 on:keydown={handleClick(diff.id, diffItem.id, newIndex, false)}
+                                 on:click={() => handleClick(diff.id, diffItem.id, newIndex, false)}
+                                 on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
                                  role="button">
                                 <pre>{newCode.value}</pre>
                             </div>

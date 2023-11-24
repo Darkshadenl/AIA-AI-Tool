@@ -3,8 +3,9 @@
 import { error } from '@sveltejs/kit';
 import { HubConnectionBuilder, HttpTransportType, HubConnection, HubConnectionState } from '@microsoft/signalr';
 import {toBase64} from "$lib";
+import { PUBLIC_API_URL } from "$env/static/public";
 
-const API_URL = "http://localhost:5000/uploadZip";
+const API_URL = PUBLIC_API_URL || "http://localhost:5000/uploadZip";
 
 /** @type {HubConnection} */
 let connection;
