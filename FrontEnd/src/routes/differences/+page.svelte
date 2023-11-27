@@ -1,30 +1,17 @@
 <script>
-    import { v4 as uuidv4 } from "uuid";
+    import {v4 as uuidv4} from "uuid";
     import {diffStore, errorMessageStore, progressInformationMessageStore} from "../../store.js";
+    import JSZip from "jszip";
+    import AutoGrowingTextArea from "$lib/components/AutoGrowingTextArea.svelte";
 
     let progressInformationMessage;
     let errorMessage;
     progressInformationMessageStore.subscribe((value) => progressInformationMessage = value);
     errorMessageStore.subscribe((value) => errorMessage = value);
 
-    /**
-     * @type {
-     * Array.<{id: number, fileName: string,
-     * diffs: Array.<{id: number,
-     * oldValue?: Array.<{value: string, selected?: string}>,
-     * newValue?: Array.<{value: string, selected?: string}>}>}>
-     * }
-     */
+    /** @type {Array<DiffData>}*/
     let diffDataStruct;
-    /**
-     * @type {
-     * Array.<{id: number, fileName: string,
-     * diffs: Array.<{id: number,
-     * merged?: Array.<{value: string, selected?: string}>,
-     * oldValue?: Array.<{value: string, selected?: string}>,
-     * newValue?: Array.<{value: string, selected?: string}>}>}>
-     * }
-     */
+    /** @type {Array<DiffData>}*/
     let mergedStruct;
     diffStore.subscribe((value) => {
         diffDataStruct = value;
@@ -37,7 +24,6 @@
                         diff.merged = [];
                 });
             });
-
         }
     });
 
@@ -86,7 +72,7 @@
 
     const handleClick = (diffId, diffItemId, index, old) => {
         let diff = diffDataStruct[diffItemId].diffs[diffId];
-        if (!(diff.oldValue && diff.newValue)){
+        if (!(diff.oldValue && diff.newValue)) {
             console.log('returning. No new AND old found');
             return;
         }
@@ -110,20 +96,81 @@
     function handleTextEdit(diffId, diffItemId, index, event) {
         // Werk de lokale kopie bij zonder de originele mergedStruct aan te raken
         localMergedStruct[diffItemId].diffs[diffId].merged[index].value = event.target.value;
-        console.log()
     }
 
+    /**
+     * Handles text edits on an input element.
+     *
+     * @param {number} diffId - The ID of the current diff.
+     * @param {number} diffItemId - The ID of the current diff item.
+     * @param {number} index - The index of the merged code in the diff.
+     * @param {InputEvent} event - The input event from the contenteditable element.
+     */
     function handleTextBlur(diffId, diffItemId, index, event) {
         mergedStruct[diffItemId].diffs[diffId].merged[index].value = event.target.value;
         mergedStruct = [...mergedStruct];
-        console.info('diffDataStruct', diffDataStruct)
-        console.info('mergedStruct', mergedStruct);
     }
 
     function autoGrow(event) {
         event.target.style.height = '1rem';
         event.target.style.height = `${event.target.scrollHeight}px`;
     }
+
+    function submit() {
+        console.log(mergedStruct);
+        let showError = false;
+        const download = {}
+        mergedStruct.forEach(current => {
+            let dataString = "";
+
+            current.diffs.forEach(current => {
+                if (current.merged && current.merged.length > 0) {
+                    // use merged values
+                    let mergedValues = ""
+                    current.merged.forEach(data => mergedValues = mergedValues === "" ? `${data.value}` :`${mergedValues}\n${data.value}`);
+                    dataString = dataString === "" ? `${mergedValues}` : `${dataString}\n${mergedValues}`;
+                } else if (current.oldValue && current.newValue) {
+                    // if both oldValue and newValue exist, user forgot to select an option
+                    showError = true;
+                } else {
+                    // just take oldValue
+                    let mergedValues = ""
+                    current.oldValue.forEach(data => mergedValues = mergedValues === "" ? `${data.value}` :`${mergedValues}\n${data.value}`);
+                    dataString = dataString === "" ? `${mergedValues}` : `${dataString}\n${mergedValues}`;
+                }
+            })
+            download[current.fileName] = dataString;
+        });
+        if (showError) {
+            alert("You forgot to select one or more old/new options.");
+        }
+        createZip(download);
+        console.log(download);
+    }
+
+    function createZip(dataToZip) {
+        const zip = new JSZip();
+        for (const [fileName, content] of Object.entries(dataToZip)) {
+            const blob = createBlob(content);
+            zip.file(fileName, blob);
+        }
+
+        zip.generateAsync({ type: "blob" }).then((zipBlob) => {
+            const zipUrl = URL.createObjectURL(zipBlob);
+            const link = document.createElement("a");
+            link.href = zipUrl;
+            link.download = "bestanden.zip";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(zipUrl);
+        });
+    }
+
+    function createBlob(textContent) {
+        return new Blob([textContent], { type: "text/plain" });
+    }
+
 </script>
 
 <div>
@@ -131,7 +178,7 @@
 </div>
 
 <div class="submit-button">
-    <button type="submit">submit</button>
+    <button type="submit" on:click={submit}>submit</button>
 </div>
 
 {#if progressInformationMessage && errorMessage === null}
@@ -157,6 +204,8 @@
                              on:keydown={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                              role="button">
                             <p>{oldCode.oldLineNumber}</p> <pre>{oldCode.value}</pre>
+                            <span>{oldCode.lineNumber}</span>
+                            <pre>{oldCode.value}</pre>
                         </div>
                     {/each}
                 {/each}
@@ -175,22 +224,27 @@
                                  on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
                                  role="button">
                                  <p>{newCode.newLineNumber}</p> <pre>{newCode.value}</pre>
+                                <span>{newCode.lineNumber}</span>
+                                <pre>{newCode.value}</pre>
                             </div>
                         {/each}
                     {:else}
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
                                 <p>{oldCode.newLineNumber}</p> <pre>{oldCode.value}</pre>
+                                <span>{oldCode.lineNumber}</span>
+                                <pre>{oldCode.value}</pre>
+
                             </div>
                         {/each}
                     {/if}
                 {/each}
             </div>
-
+            
             <div class="code maxxed">
                 <h2>{mergedStruct[index].fileName}</h2>
 
-                {#each mergedStruct[index].diffs as diff, diffIndex}
+                {#each mergedStruct[index].diffs as diff}
                     {#if diff.merged}
                         {#if diff.merged.length > 0}
                             {#each diff.merged as mergedCode, mergedIndex}
@@ -205,6 +259,8 @@
                                               on:focus={autoGrow}
                                               on:blur={(event) => handleTextBlur(diff.id, diffItem.id, mergedIndex, event)}
                                     />
+                                    <span>{mergedCode.lineNumber}</span>
+                                    <AutoGrowingTextArea textValue="{mergedCode.value}" parentFunc="{(event) => handleTextBlur(diff.id, diffItem.id, mergedIndex, event)}" />
                                 </div>
                             {/each}
                         {:else}
@@ -218,6 +274,8 @@
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
                                 <p>{oldCode.oldLineNumber}</p><pre>{oldCode.value}</pre>
+                                <span>{oldCode.lineNumber}</span>
+                                <pre>{oldCode.value}</pre>
                             </div>
                         {/each}
                     {/if}
@@ -266,7 +324,6 @@
         height: 1rem;
         resize: vertical;
         overflow-y: hidden;
-    }
 
     .code {
         flex: 1;
@@ -327,8 +384,8 @@
         cursor: pointer;
     }
 
-    pre {
-        white-space: pre-wrap;
-        margin: 0;
-    }
+    /*pre {*/
+    /*    white-space: pre-wrap;*/
+    /*    margin: 0;*/
+    /*}*/
 </style>

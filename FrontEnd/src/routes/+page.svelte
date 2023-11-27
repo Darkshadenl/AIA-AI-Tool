@@ -8,12 +8,14 @@
 	const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
 
 
-	/**
-	 * Calculates line numbers for each line in a given diff.
-	 *
-	 * @param {Array.<{id: number, newValue: object, oldValue: object}>} diff - The diff to calculate line numbers for.
-	 * @returns {Array} - An array of line objects with line numbers, content, and added/removed flags.
-	 */
+    /**
+     * Calculates line numbers for each line in a given diff.
+     *
+     * @param {Array.<{id: number, newValue: undefined | string | Array, oldValue: string | Array}>} diff - The diff to calculate line numbers for.
+     * @returns {Array.<{id: number,
+     * newValue: Array.<{lineNumber: number, selected: undefined | string, value: string}>,
+     * oldValue: Array.<lineNumber: number, selected: undefined | string, value: string>}>} - An array of line objects with line numbers, content, and added/removed flags.
+     */
 	const calculateLineNumbers = (diff) => {
 		let oldLineNumber = 0;
 		let newLineNumber = 0;
@@ -46,7 +48,6 @@
 		});
 	};
 
-
 	async function removeSignalRCallbacks() {
 		const connection = await getConnection();
 
@@ -69,7 +70,7 @@
 		});
 
 		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
-			let diffDataStructure = CreateDiffDataStructure(oldFileContent, fileContent, { ignoreWhitespace: true });
+			let diffDataStructure = CreateDiffDataStructure(oldFileContent, fileContent, { ignoreWhitespace: false });
 			let calculated = calculateLineNumbers(diffDataStructure);
 
 			diffStore.update((value) => {
