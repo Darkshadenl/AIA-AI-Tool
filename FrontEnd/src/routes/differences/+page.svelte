@@ -54,7 +54,7 @@
     }
 
     const moveToAndFromMerged = (lineObject, diffId, diffItemId) => {
-        let diffs = mergedStruct[diffItemId].diffs;
+        const diffs = mergedStruct[diffItemId].diffs;
         const merged = diffs[diffId].merged;
 
         let contains;
@@ -201,7 +201,6 @@
                                      tabindex="0"
                                      role="button">
                                     <p>{mergedCode.lineNumber}</p>
-                                    <button on:click={() => handleClick(diff.id, diffItem.id, mergedIndex, false)}>X</button>
                                     <textarea class="merge-input"
                                               bind:value={mergedCode.value}
                                               on:input={(event) => handleTextEdit(diff.id, diffItem.id, mergedIndex, event)}
@@ -255,10 +254,6 @@
     .removable-merge-item {
         display: flex;
         flex-direction: row;
-    }
-
-    .removable-merge-item > span {
-       margin: 2px 10px 0 5px;
     }
 
     .merge-input {
