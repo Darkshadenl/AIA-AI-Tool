@@ -30,9 +30,12 @@ public class CommentManipulationHelper
         {
             string comment = match.Groups[1].Value.Trim(Environment.NewLine.ToCharArray());
             string methodSignature = Regex.Replace(comment, FindCommentsRegex, "");
+            _logger.LogDebug("Generated comment:\n{comment}", comment);
+            
             updatedCode = ReplaceComment(comment, methodSignature, updatedCode);
         }
 
+        _logger.LogDebug("Updated code with comments:\n{updatedCode}", updatedCode);
         return updatedCode;
     }
     
@@ -51,7 +54,28 @@ public class CommentManipulationHelper
             specificCommentPattern += $@"\s*{Regex.Escape(signatureLine)}";
         }
 
-        return Regex.Replace(code, specificCommentPattern, comment);
+        Match match = Regex.Match(code, specificCommentPattern);
+        if (!match.Success)
+        {
+            _logger.LogDebug("Could not find comment, possibly because the LLM changed some code:\n{comment}", comment);
+            return code;
+        }
+        
+        string updatedCommentWithFormatting = ApplyFormatting(match, comment);
+        return Regex.Replace(code, Regex.Escape(match.Value), updatedCommentWithFormatting);
+    }
+
+    private string ApplyFormatting(Match match, string comment)
+    {
+        string inputCommentFormatting = GetCommentFormatting(match.Value);
+        return string.Join(Environment.NewLine, comment.Split(Environment.NewLine)
+            .Select(line => inputCommentFormatting + line));
+    }
+    
+    private string GetCommentFormatting(string commentLine)
+    {
+        int indentCount = commentLine.TakeWhile(c => c is ' ' or '\t').Count();
+        return new string(' ', indentCount);
     }
 
     private MatchCollection GetComments(string content, string pattern)
