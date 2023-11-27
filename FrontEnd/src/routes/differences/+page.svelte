@@ -232,8 +232,6 @@
         max-width: 100%;
     }
 
-
-
     .column-container {
         column-count: 2;
         column-gap: 30px;
