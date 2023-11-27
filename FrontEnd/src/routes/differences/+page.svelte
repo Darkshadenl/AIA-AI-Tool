@@ -142,10 +142,10 @@
     <p>An exception occurred: {errorMessage}</p>
 {/if}
 
-<div class="column-container">
-    {#if diffDataStruct && mergedStruct}
-        <div class="code maxxed">
-            {#each diffDataStruct as diffItem}
+{#if diffDataStruct && mergedStruct}
+    {#each diffDataStruct as diffItem, index}
+        <div class="column-container">
+            <div class="code maxxed">
                 <h2>{diffItem.fileName}</h2>
 
                 {#each diffItem.diffs as diff}
@@ -160,11 +160,9 @@
                         </div>
                     {/each}
                 {/each}
-            {/each}
-        </div>
+            </div>
 
-        <div class="code maxxed">
-            {#each diffDataStruct as diffItem}
+            <div class="code maxxed">
                 <h2>{diffItem.fileName}</h2>
 
                 {#each diffItem.diffs as diff}
@@ -187,13 +185,12 @@
                         {/each}
                     {/if}
                 {/each}
-            {/each}
-        </div>
+            </div>
 
-        <div class="code maxxed">
-            {#each mergedStruct as diffItem}
-                <h2>{diffItem.fileName}</h2>
-                {#each diffItem.diffs as diff, diffIndex}
+            <div class="code maxxed">
+                <h2>{mergedStruct[index].fileName}</h2>
+
+                {#each mergedStruct[index].diffs as diff, diffIndex}
                     {#if diff.merged}
                         {#if diff.merged.length > 0}
                             {#each diff.merged as mergedCode, mergedIndex}
@@ -225,10 +222,10 @@
                         {/each}
                     {/if}
                 {/each}
-            {/each}
+            </div>
         </div>
-    {/if}
-</div>
+    {/each}
+{/if}
 
 <style>
     .submit-button {
