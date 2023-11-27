@@ -11,13 +11,14 @@
 	/**
 	 * Calculates line numbers for each line in a given diff.
 	 *
-	 * @param {Array.<{id: number, newValue: undefined | string, oldValue: string}>} diff - The diff to calculate line numbers for.
-	 * @returns {Array.<{id: number, newValue: undefined | string, oldValue: string}>} - An array of line objects with line numbers, content, and added/removed flags.
+	 * @param {Array.<{id: number, newValue: undefined | string | Array, oldValue: string | Array}>} diff - The diff to calculate line numbers for.
+	 * @returns {Array.<{id: number,
+	 * newValue: Array.<{lineNumber: number, selected: undefined | string, value: string}>,
+	 * oldValue: Array.<lineNumber: number, selected: undefined | string, value: string>}>} - An array of line objects with line numbers, content, and added/removed flags.
 	 */
 	const calculateLineNumbers = (diff) => {
 		let lineNumber = 0;
-		const diffCopy = diff.map(chunk => ({ ...chunk })); // Copy for debugging purposes
-		return diffCopy.map((chunk) => {
+		return diff.map((chunk) => {
 			if (chunk.oldValue) {
 				chunk.oldValue = chunk.oldValue.trimEnd('\n').split('\n').map(line => {
 					lineNumber++;
