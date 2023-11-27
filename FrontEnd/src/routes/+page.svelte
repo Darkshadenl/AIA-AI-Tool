@@ -19,19 +19,21 @@
 		const diffCopy = diff.map(chunk => ({ ...chunk })); // Copy for debugging purposes
 		return diffCopy.map((chunk) => {
 			if (chunk.oldValue) {
-				chunk.oldValue = chunk.oldValue.trimEnd('\n').split('\n').map(el => {
+				chunk.oldValue = chunk.oldValue.trimEnd('\n').split('\n').map(line => {
 					lineNumber++;
 					return {
-						value: lineNumber + el,
+						lineNumber: lineNumber,
+						value: line,
 						selected: undefined
 					}
 				});
 			}
 			if (chunk.newValue) {
-				chunk.newValue = chunk.newValue.trimEnd('\n').split('\n').map(el => {
+				chunk.newValue = chunk.newValue.trimEnd('\n').split('\n').map(line => {
 					lineNumber++;
 					return {
-						value: lineNumber + el,
+						lineNumber: lineNumber,
+						value: line,
 						selected: undefined
 					}
 				});

@@ -1,4 +1,5 @@
 <script>
+    import { v4 as uuidv4 } from "uuid";
     import {diffStore, errorMessageStore, progressInformationMessageStore} from "../../store.js";
 
     let progressInformationMessage;
@@ -34,7 +35,7 @@
                 diffItem.diffs.forEach(diff => {
                     if (diff.newValue)
                         diff.merged = []
-                })
+                });
             });
         }
     });
@@ -56,9 +57,14 @@
         const merged = diffs[diffId].merged;
 
         let contains;
-        if (merged) contains = merged.some(item => item.value === lineObject.value);
-        if (!contains) diffs[diffId].merged = [...merged, JSON.parse(JSON.stringify(lineObject))];
-        else diffs[diffId].merged = merged.filter(item => item.value !== lineObject.value);
+        if (merged) contains = merged.some(item => item.id === lineObject.id);
+
+        if (!contains) {
+            lineObject.id = uuidv4();
+            diffs[diffId].merged = [...merged, JSON.parse(JSON.stringify(lineObject))];
+        } else {
+            diffs[diffId].merged = merged.filter(item => item.id !== lineObject.id);
+        }
 
         mergedStruct = [...mergedStruct];
     };
@@ -67,14 +73,14 @@
     const handleClick = (diffId, diffItemId, index, old) => {
         let diff = diffDataStruct[diffItemId].diffs[diffId];
         if (!(diff.oldValue && diff.newValue)){
-            console.log('returning. No new AND old found')
+            console.log('returning. No new AND old found');
             return;
         }
         console.log(`click diffitemid:${diffItemId} diffid:${diffId} index:${index} old:${old}`)
         const lineObject = old === true ? diffDataStruct[diffItemId].diffs[diffId].oldValue[index] :
             diffDataStruct[diffItemId].diffs[diffId].newValue[index];
-        changeLineColor(lineObject, old, diffId, diffItemId, index)
-        moveToAndFromMerged(lineObject, diffId, diffItemId)
+        changeLineColor(lineObject, old, diffId, diffItemId, index);
+        moveToAndFromMerged(lineObject, diffId, diffItemId);
     }
 
     let localMergedStruct = mergedStruct;
@@ -136,7 +142,7 @@
                              on:click={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                              on:keydown={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                              role="button">
-                            <pre>{oldCode.value}</pre>
+                            <p>{oldCode.lineNumber}</p> <pre>{oldCode.value}</pre>
                         </div>
                     {/each}
                 {/each}
@@ -156,13 +162,13 @@
                                  on:click={() => handleClick(diff.id, diffItem.id, newIndex, false)}
                                  on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
                                  role="button">
-                                <pre>{newCode.value}</pre>
+                                 <p>{newCode.lineNumber}</p> <pre>{newCode.value}</pre>
                             </div>
                         {/each}
                     {:else}
-                        {#each diff.oldValue as old}
+                        {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
-                                <pre>{old.value}</pre>
+                                <p>{oldCode.lineNumber}</p> <pre>{oldCode.value}</pre>
                             </div>
                         {/each}
                     {/if}
@@ -180,6 +186,7 @@
                                 <div class="code-diff merged-item removable-merge-item"
                                      tabindex="0"
                                      role="button">
+                                    <p>{mergedCode.lineNumber}</p>
                                     <span>X</span>
                                     <textarea class="merge-input"
                                               bind:value={mergedCode.value}
@@ -197,9 +204,9 @@
                             </div>
                         {/if}
                     {:else}
-                        {#each diff.oldValue as old}
+                        {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
-                                <pre>{old.value}</pre>
+                                <p>{oldCode.lineNumber}</p><pre>{oldCode.value}</pre>
                             </div>
                         {/each}
                     {/if}
@@ -268,6 +275,13 @@
 
     .code-diff {
         margin: 0 0 3px 0;
+        display: flex;
+    }
+
+    .code-diff p {
+        margin: 0;
+        padding-right: 10px;
+        word-break: keep-all;
     }
 
     .selected-new {
