@@ -1,9 +1,9 @@
 <script>
-	import {fail, redirect} from "@sveltejs/kit";
-	import {CreateDiffDataStructure, getConnection, processFileChunks, resetStores, sliceFileIntoChunks} from '$lib';
-	import {HubConnectionState} from "@microsoft/signalr";
-	import {goto} from "$app/navigation";
-	import {diffStore, errorMessageStore, progressInformationMessageStore} from "../store.js";
+	import { fail, redirect } from "@sveltejs/kit";
+	import { CreateDiffDataStructure, getConnection, processFileChunks, resetStores, sliceFileIntoChunks } from "$lib";
+	import { HubConnectionState } from "@microsoft/signalr";
+	import { goto } from "$app/navigation";
+	import { diffStore, errorMessageStore, progressInformationMessageStore } from "../store.js";
 
 	const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
 
@@ -11,18 +11,21 @@
 	/**
 	 * Calculates line numbers for each line in a given diff.
 	 *
-	 * @param {Array.<{id: number, newValue: string, oldValue: string}>} diff - The diff to calculate line numbers for.
+	 * @param {Array.<{id: number, newValue: object, oldValue: object}>} diff - The diff to calculate line numbers for.
 	 * @returns {Array} - An array of line objects with line numbers, content, and added/removed flags.
 	 */
 	const calculateLineNumbers = (diff) => {
-		let lineNumber = 0;
+		let oldLineNumber = 0;
+		let newLineNumber = 0;
 		const diffCopy = diff.map(chunk => ({ ...chunk })); // Copy for debugging purposes
 		return diffCopy.map((chunk) => {
 			if (chunk.oldValue) {
 				chunk.oldValue = chunk.oldValue.trimEnd('\n').split('\n').map(line => {
-					lineNumber++;
+					oldLineNumber++;
+					if (!chunk.newValue) newLineNumber++;
 					return {
-						lineNumber: lineNumber,
+						oldLineNumber: oldLineNumber,
+						newLineNumber: newLineNumber,
 						value: line,
 						selected: undefined
 					}
@@ -30,12 +33,13 @@
 			}
 			if (chunk.newValue) {
 				chunk.newValue = chunk.newValue.trimEnd('\n').split('\n').map(line => {
-					lineNumber++;
+					newLineNumber++;
 					return {
-						lineNumber: lineNumber,
+						oldLineNumber: oldLineNumber,
+						newLineNumber: newLineNumber,
 						value: line,
 						selected: undefined
-					}
+					};
 				});
 			}
 			return chunk;

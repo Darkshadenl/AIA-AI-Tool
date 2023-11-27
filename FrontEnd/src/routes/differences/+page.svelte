@@ -142,7 +142,7 @@
                              on:click={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                              on:keydown={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                              role="button">
-                            <p>{oldCode.lineNumber}</p> <pre>{oldCode.value}</pre>
+                            <p>{oldCode.oldLineNumber}</p> <pre>{oldCode.value}</pre>
                         </div>
                     {/each}
                 {/each}
@@ -162,13 +162,13 @@
                                  on:click={() => handleClick(diff.id, diffItem.id, newIndex, false)}
                                  on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
                                  role="button">
-                                 <p>{newCode.lineNumber}</p> <pre>{newCode.value}</pre>
+                                 <p>{newCode.newLineNumber}</p> <pre>{newCode.value}</pre>
                             </div>
                         {/each}
                     {:else}
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
-                                <p>{oldCode.lineNumber}</p> <pre>{oldCode.value}</pre>
+                                <p>{oldCode.newLineNumber}</p> <pre>{oldCode.value}</pre>
                             </div>
                         {/each}
                     {/if}
@@ -186,7 +186,7 @@
                                 <div class="code-diff merged-item removable-merge-item"
                                      tabindex="0"
                                      role="button">
-                                    <p>{mergedCode.lineNumber}</p>
+                                    <p>{mergedCode.oldLineNumber}</p>
                                     <span>X</span>
                                     <textarea class="merge-input"
                                               bind:value={mergedCode.value}
@@ -206,7 +206,7 @@
                     {:else}
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
-                                <p>{oldCode.lineNumber}</p><pre>{oldCode.value}</pre>
+                                    <p>{oldCode.oldLineNumber}</p><pre>{oldCode.value}</pre>
                             </div>
                         {/each}
                     {/if}
