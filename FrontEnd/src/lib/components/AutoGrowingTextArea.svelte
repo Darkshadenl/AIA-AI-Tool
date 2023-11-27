@@ -16,12 +16,11 @@
     }
     function autoGrow() {
         textArea.style.height = 'auto';
-        console.log(textValue.length);
         textArea.style.height = textValue.length < 3 ? `${minHeight}px` : `${textArea.scrollHeight}px`;
     }
 </script>
 
-<textarea class="merge-input"
+<textarea class="resizeable-textarea"
           bind:this={textArea} {textValue}
           on:input={autoGrow}
           on:click={autoGrow}
@@ -30,7 +29,7 @@
 />
 
 <style>
-    .merge-input {
+    .resizeable-textarea {
         border: none;
         width: 100%;
         background-color: #ff5b14;

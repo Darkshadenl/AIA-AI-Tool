@@ -2,23 +2,16 @@
     import {v4 as uuidv4} from "uuid";
     import {diffStore, errorMessageStore, progressInformationMessageStore} from "../../store.js";
     import JSZip from "jszip";
+    import AutoGrowingTextArea from "$lib/components/AutoGrowingTextArea.svelte";
 
     let progressInformationMessage;
     let errorMessage;
     progressInformationMessageStore.subscribe((value) => progressInformationMessage = value);
     errorMessageStore.subscribe((value) => errorMessage = value);
 
-    /**
-     * An array of DiffData objects.
-     *
-     * @type {Array<DiffData>}
-     */
+    /** @type {Array<DiffData>}*/
     let diffDataStruct;
-    /**
-     * An array of DiffData objects.
-     *
-     * @type {Array<DiffData>}
-     */
+    /** @type {Array<DiffData>}*/
     let mergedStruct;
     diffStore.subscribe((value) => {
         diffDataStruct = value;
@@ -90,7 +83,6 @@
     function handleTextEdit(diffId, diffItemId, index, event) {
         // Werk de lokale kopie bij zonder de originele mergedStruct aan te raken
         localMergedStruct[diffItemId].diffs[diffId].merged[index].value = event.target.value;
-        console.log()
     }
 
     /**
@@ -104,13 +96,6 @@
     function handleTextBlur(diffId, diffItemId, index, event) {
         mergedStruct[diffItemId].diffs[diffId].merged[index].value = event.target.value;
         mergedStruct = [...mergedStruct];
-        console.info('diffDataStruct', diffDataStruct)
-        console.info('mergedStruct', mergedStruct);
-    }
-
-    function autoGrow(event) {
-        event.target.style.height = '1rem';
-        event.target.style.height = `${event.target.scrollHeight}px`;
     }
 
     function submit() {
@@ -153,19 +138,12 @@
         }
 
         zip.generateAsync({ type: "blob" }).then((zipBlob) => {
-            // Creëer een URL voor de zip-blob
             const zipUrl = URL.createObjectURL(zipBlob);
-
-            // Maak een link voor het downloaden van de zip
             const link = document.createElement("a");
             link.href = zipUrl;
             link.download = "bestanden.zip";
-
-            // Voeg de link toe aan de DOM en klik erop om te downloaden
             document.body.appendChild(link);
             link.click();
-
-            // Verwijder de link en de URL
             document.body.removeChild(link);
             URL.revokeObjectURL(zipUrl);
         });
@@ -207,7 +185,7 @@
                              on:click={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                              on:keydown={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                              role="button">
-                            <p>{oldCode.lineNumber}</p>
+                            <span>{oldCode.lineNumber}</span>
                             <pre>{oldCode.value}</pre>
                         </div>
                     {/each}
@@ -225,14 +203,14 @@
                                  on:click={() => handleClick(diff.id, diffItem.id, newIndex, false)}
                                  on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
                                  role="button">
-                                <p>{newCode.lineNumber}</p>
+                                <span>{newCode.lineNumber}</span>
                                 <pre>{newCode.value}</pre>
                             </div>
                         {/each}
                     {:else}
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
-                                <p>{oldCode.lineNumber}</p>
+                                <span>{oldCode.lineNumber}</span>
                                 <pre>{oldCode.value}</pre>
                             </div>
                         {/each}
@@ -249,14 +227,9 @@
                                 <div class="code-diff merged-item removable-merge-item"
                                      tabindex="0"
                                      role="button">
-                                    <p>{mergedCode.lineNumber}</p>
+                                    <span>{mergedCode.lineNumber}</span>
                                     <span>X</span>
-                                    <textarea class="merge-input"
-                                              bind:value={mergedCode.value}
-                                              on:input={(event) => handleTextEdit(diff.id, diffItem.id, mergedIndex, event)}
-                                              on:input={autoGrow}
-                                              on:blur={(event) => handleTextBlur(diff.id, diffItem.id, mergedIndex, event)}
-                                    />
+                                    <AutoGrowingTextArea textValue="{mergedCode.value}" parentFunc="{(event) => handleTextBlur(diff.id, diffItem.id, mergedIndex, event)}" />
                                 </div>
                             {/each}
                         {:else}
@@ -269,7 +242,7 @@
                     {:else}
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
-                                <p>{oldCode.lineNumber}</p>
+                                <span>{oldCode.lineNumber}</span>
                                 <pre>{oldCode.value}</pre>
                             </div>
                         {/each}
@@ -310,19 +283,6 @@
 
     .removable-merge-item > span {
         margin: 2px 10px 0 5px;
-    }
-
-    .merge-input {
-        border: none;
-        width: 100%;
-        background-color: #ff5b14;
-        color: wheat;
-        font-family: monospace;
-    }
-
-    .removable-merge-item > textarea {
-        height: 1rem;
-        overflow-y: hidden;
     }
 
     .code {

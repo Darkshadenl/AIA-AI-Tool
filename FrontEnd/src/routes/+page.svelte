@@ -65,7 +65,7 @@
 		});
 
 		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
-			let diffDataStructure = CreateDiffDataStructure(oldFileContent, fileContent, { ignoreWhitespace: true });
+			let diffDataStructure = CreateDiffDataStructure(oldFileContent, fileContent, { ignoreWhitespace: false });
 			let calculated = calculateLineNumbers(diffDataStructure);
 
 			diffStore.update((value) => {
