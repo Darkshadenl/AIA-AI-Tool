@@ -36,5 +36,6 @@
         color: wheat;
         font-family: monospace;
         overflow-y: hidden;
+        resize: none;
     }
 </style>

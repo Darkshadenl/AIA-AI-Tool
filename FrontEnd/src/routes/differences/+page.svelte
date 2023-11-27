@@ -111,11 +111,6 @@
         mergedStruct = [...mergedStruct];
     }
 
-    function autoGrow(event) {
-        event.target.style.height = '1rem';
-        event.target.style.height = `${event.target.scrollHeight}px`;
-    }
-
     function submit() {
         console.log(mergedStruct);
         let showError = false;
@@ -203,8 +198,8 @@
                              on:click={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                              on:keydown={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                              role="button">
-                            <p>{oldCode.oldLineNumber}</p> <pre>{oldCode.value}</pre>
-                            <span>{oldCode.lineNumber}</span>
+
+                            <span>{oldCode.oldLineNumber}</span>
                             <pre>{oldCode.value}</pre>
                         </div>
                     {/each}
@@ -223,16 +218,14 @@
                                  on:click={() => handleClick(diff.id, diffItem.id, newIndex, false)}
                                  on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
                                  role="button">
-                                 <p>{newCode.newLineNumber}</p> <pre>{newCode.value}</pre>
-                                <span>{newCode.lineNumber}</span>
+                                <span>{newCode.newLineNumber}</span>
                                 <pre>{newCode.value}</pre>
                             </div>
                         {/each}
                     {:else}
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
-                                <p>{oldCode.newLineNumber}</p> <pre>{oldCode.value}</pre>
-                                <span>{oldCode.lineNumber}</span>
+                                <span>{oldCode.newLineNumber}</span>
                                 <pre>{oldCode.value}</pre>
 
                             </div>
@@ -251,14 +244,6 @@
                                 <div class="code-diff merged-item removable-merge-item"
                                      tabindex="0"
                                      role="button">
-                                    <p>{mergedCode.lineNumber}</p>
-                                    <textarea class="merge-input"
-                                              bind:value={mergedCode.value}
-                                              on:input={(event) => handleTextEdit(diff.id, diffItem.id, mergedIndex, event)}
-                                              on:input={autoGrow}
-                                              on:focus={autoGrow}
-                                              on:blur={(event) => handleTextBlur(diff.id, diffItem.id, mergedIndex, event)}
-                                    />
                                     <span>{mergedCode.lineNumber}</span>
                                     <AutoGrowingTextArea textValue="{mergedCode.value}" parentFunc="{(event) => handleTextBlur(diff.id, diffItem.id, mergedIndex, event)}" />
                                 </div>
@@ -273,8 +258,7 @@
                     {:else}
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
-                                <p>{oldCode.oldLineNumber}</p><pre>{oldCode.value}</pre>
-                                <span>{oldCode.lineNumber}</span>
+                                <span>{oldCode.oldLineNumber}</span>
                                 <pre>{oldCode.value}</pre>
                             </div>
                         {/each}
@@ -295,7 +279,6 @@
     }
 
     .wrap {
-        /*white-space: pre-wrap;*/
         word-break: break-word;
         max-width: 100%;
     }
@@ -311,19 +294,6 @@
         display: flex;
         flex-direction: row;
     }
-
-    .merge-input {
-        border: none;
-        width: 100%;
-        background-color: #ff5b14;
-        color: wheat;
-        font-family: monospace;
-    }
-
-    .removable-merge-item > textarea {
-        height: 1rem;
-        resize: vertical;
-        overflow-y: hidden;
 
     .code {
         flex: 1;
@@ -343,7 +313,7 @@
         display: flex;
     }
 
-    .code-diff p {
+    .code-diff span {
         margin: 0;
         padding-right: 10px;
         word-break: keep-all;
@@ -379,13 +349,13 @@
         color: #24292e;
         text-decoration: line-through;
     }
-    
+
     .added:hover, .removed:hover {
         cursor: pointer;
     }
 
-    /*pre {*/
-    /*    white-space: pre-wrap;*/
-    /*    margin: 0;*/
-    /*}*/
+    pre {
+        white-space: pre-wrap;
+        margin: 0;
+    }
 </style>
