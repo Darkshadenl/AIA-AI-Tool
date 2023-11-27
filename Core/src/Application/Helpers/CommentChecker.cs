@@ -8,7 +8,7 @@ public class CommentChecker
     private readonly ILogger<CommentChecker> _logger;
     private readonly List<string> _logs;
     private ZipArchiveEntry _file;
-    private MatchCollection _allComments;
+    private MatchCollection _notInlineComments;
     private MatchCollection _eslintComments;
     private MatchCollection _inlineComments;
 
@@ -48,7 +48,7 @@ public class CommentChecker
         string detectInlineCommentPattern)
     {
         var fileContent = ReadFileContent(_file);
-        _allComments = FindMatches(fileContent, allCommentPattern);
+        _notInlineComments = FindMatches(fileContent, allCommentPattern);
         _eslintComments = FindMatches(fileContent, eslintCommentPattern);
         _inlineComments = FindMatches(fileContent, detectInlineCommentPattern);
 
@@ -68,22 +68,30 @@ public class CommentChecker
 
     private bool AnalyzeComments()
     {
-        if (_allComments.Count == 0)
+        if (_notInlineComments.Count + _inlineComments.Count == 0)
         {
             Log($"{_file.Name} does not contain comments.");
+            return false;
+        }
+
+        var nonEssentialCommentCount = _eslintComments.Count;
+
+        if (nonEssentialCommentCount == _notInlineComments.Count + _inlineComments.Count)
+        {
+            Log($"{_file.Name} contains only eslint. Skipping.");
             return false;
         }
 
         if (IsOnlyTypeOfComment(_eslintComments, "eslint"))
             return false;
 
-        LogComments(_allComments);
+        LogComments(_notInlineComments);
         return true;
     }
 
     private bool IsOnlyTypeOfComment(MatchCollection specificComments, string commentType)
     {
-        if (_allComments.Count <= specificComments.Count)
+        if (_notInlineComments.Count + _inlineComments.Count <= specificComments.Count)
         {
             Log($"Found only {commentType} comment in {_file.FullName}. Skipping.");
             return true;
