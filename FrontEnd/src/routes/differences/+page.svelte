@@ -1,5 +1,5 @@
 <script>
-    import { v4 as uuidv4 } from "uuid";
+    import {v4 as uuidv4} from "uuid";
     import {diffStore, errorMessageStore, progressInformationMessageStore} from "../../store.js";
 
     let progressInformationMessage;
@@ -8,22 +8,15 @@
     errorMessageStore.subscribe((value) => errorMessage = value);
 
     /**
-     * @type {
-     * Array.<{id: number, fileName: string,
-     * diffs: Array.<{id: number,
-     * oldValue?: Array.<{value: string, selected?: string}>,
-     * newValue?: Array.<{value: string, selected?: string}>}>}>
-     * }
+     * An array of DiffData objects.
+     *
+     * @type {Array<DiffData>}
      */
     let diffDataStruct;
     /**
-     * @type {
-     * Array.<{id: number, fileName: string,
-     * diffs: Array.<{id: number,
-     * merged?: Array.<{value: string, selected?: string}>,
-     * oldValue?: Array.<{value: string, selected?: string}>,
-     * newValue?: Array.<{value: string, selected?: string}>}>}>
-     * }
+     * An array of DiffData objects.
+     *
+     * @type {Array<DiffData>}
      */
     let mergedStruct;
     diffStore.subscribe((value) => {
@@ -72,7 +65,7 @@
 
     const handleClick = (diffId, diffItemId, index, old) => {
         let diff = diffDataStruct[diffItemId].diffs[diffId];
-        if (!(diff.oldValue && diff.newValue)){
+        if (!(diff.oldValue && diff.newValue)) {
             console.log('returning. No new AND old found');
             return;
         }
@@ -99,6 +92,14 @@
         console.log()
     }
 
+    /**
+     * Handles text edits on an input element.
+     *
+     * @param {number} diffId - The ID of the current diff.
+     * @param {number} diffItemId - The ID of the current diff item.
+     * @param {number} index - The index of the merged code in the diff.
+     * @param {InputEvent} event - The input event from the contenteditable element.
+     */
     function handleTextBlur(diffId, diffItemId, index, event) {
         mergedStruct[diffItemId].diffs[diffId].merged[index].value = event.target.value;
         mergedStruct = [...mergedStruct];
@@ -110,6 +111,38 @@
         event.target.style.height = '1rem';
         event.target.style.height = `${event.target.scrollHeight}px`;
     }
+
+    function submit() {
+        console.log(mergedStruct);
+        let showError = false;
+        const download = {}
+        mergedStruct.forEach(current => {
+            let dataString = "";
+
+            current.diffs.forEach(current => {
+                if (current.merged && current.merged.length > 0) {
+                    // use merged values
+                    let mergedValues = ""
+                    current.merged.forEach(data => mergedValues = `${mergedValues}\n${data.value}`)
+                    dataString = `${dataString}\n${mergedValues}`;
+                } else if (current.oldValue && current.newValue) {
+                    // if both oldValue and newValue exist, user forgot to select an option
+                    showError = true;
+                } else {
+                    // just take oldValue
+                    let mergedValues = ""
+                    current.oldValue.forEach(data => mergedValues = `${mergedValues}\n${data.value}`)
+                    dataString = `${dataString}\n${mergedValues}`;
+                }
+            })
+            download[current.fileName] = dataString;
+        });
+        if (showError) {
+            alert("You forgot to select one or more old/new options.");
+        }
+        console.log(download["admin.controller.ts"]);
+    }
+
 </script>
 
 <div>
@@ -117,7 +150,7 @@
 </div>
 
 <div class="submit-button">
-    <button type="submit">submit</button>
+    <button type="submit" on:click={submit}>submit</button>
 </div>
 
 {#if progressInformationMessage && errorMessage === null}
@@ -128,10 +161,10 @@
     <p>An exception occurred: {errorMessage}</p>
 {/if}
 
-<div class="column-container">
-    {#if diffDataStruct && mergedStruct}
-        <div class="code maxxed">
-            {#each diffDataStruct as diffItem}
+{#if diffDataStruct && mergedStruct}
+    {#each diffDataStruct as diffItem, index}
+        <div class="column-container">
+            <div class="code maxxed">
                 <h2>{diffItem.fileName}</h2>
 
                 {#each diffItem.diffs as diff}
@@ -142,15 +175,13 @@
                              on:click={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                              on:keydown={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                              role="button">
-                            <p>{oldCode.lineNumber}</p> <pre>{oldCode.value}</pre>
+                            <p>{oldCode.lineNumber}</p>
+                            <pre>{oldCode.value}</pre>
                         </div>
                     {/each}
                 {/each}
-            {/each}
-        </div>
-
-        <div class="code maxxed">
-            {#each diffDataStruct as diffItem}
+            </div>
+            <div class="code maxxed">
                 <h2>{diffItem.fileName}</h2>
 
                 {#each diffItem.diffs as diff}
@@ -162,24 +193,24 @@
                                  on:click={() => handleClick(diff.id, diffItem.id, newIndex, false)}
                                  on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
                                  role="button">
-                                 <p>{newCode.lineNumber}</p> <pre>{newCode.value}</pre>
+                                <p>{newCode.lineNumber}</p>
+                                <pre>{newCode.value}</pre>
                             </div>
                         {/each}
                     {:else}
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
-                                <p>{oldCode.lineNumber}</p> <pre>{oldCode.value}</pre>
+                                <p>{oldCode.lineNumber}</p>
+                                <pre>{oldCode.value}</pre>
                             </div>
                         {/each}
                     {/if}
                 {/each}
-            {/each}
-        </div>
+            </div>
+            <div class="code maxxed">
+                <h2>{mergedStruct[index].fileName}</h2>
 
-        <div class="code maxxed">
-            {#each mergedStruct as diffItem}
-                <h2>{diffItem.fileName}</h2>
-                {#each diffItem.diffs as diff}
+                {#each mergedStruct[index].diffs as diff}
                     {#if diff.merged}
                         {#if diff.merged.length > 0}
                             {#each diff.merged as mergedCode, mergedIndex}
@@ -206,15 +237,17 @@
                     {:else}
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
-                                <p>{oldCode.lineNumber}</p><pre>{oldCode.value}</pre>
+                                <p>{oldCode.lineNumber}</p>
+                                <pre>{oldCode.value}</pre>
                             </div>
                         {/each}
                     {/if}
                 {/each}
-            {/each}
+            </div>
         </div>
-    {/if}
-</div>
+    {/each}
+
+{/if}
 
 <style>
     .submit-button {
@@ -244,7 +277,7 @@
     }
 
     .removable-merge-item > span {
-       margin: 2px 10px 0 5px;
+        margin: 2px 10px 0 5px;
     }
 
     .merge-input {

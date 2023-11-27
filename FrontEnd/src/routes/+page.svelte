@@ -43,7 +43,6 @@
 		});
 	};
 
-
 	async function removeSignalRCallbacks() {
 		const connection = await getConnection();
 
