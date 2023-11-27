@@ -1,6 +1,7 @@
 <script>
     import {v4 as uuidv4} from "uuid";
     import {diffStore, errorMessageStore, progressInformationMessageStore} from "../../store.js";
+    import JSZip from "jszip";
 
     let progressInformationMessage;
     let errorMessage;
@@ -123,16 +124,16 @@
                 if (current.merged && current.merged.length > 0) {
                     // use merged values
                     let mergedValues = ""
-                    current.merged.forEach(data => mergedValues = `${mergedValues}\n${data.value}`)
-                    dataString = `${dataString}\n${mergedValues}`;
+                    current.merged.forEach(data => mergedValues = mergedValues === "" ? `${data.value}` :`${mergedValues}\n${data.value}`);
+                    dataString = dataString === "" ? `${mergedValues}` : `${dataString}\n${mergedValues}`;
                 } else if (current.oldValue && current.newValue) {
                     // if both oldValue and newValue exist, user forgot to select an option
                     showError = true;
                 } else {
                     // just take oldValue
                     let mergedValues = ""
-                    current.oldValue.forEach(data => mergedValues = `${mergedValues}\n${data.value}`)
-                    dataString = `${dataString}\n${mergedValues}`;
+                    current.oldValue.forEach(data => mergedValues = mergedValues === "" ? `${data.value}` :`${mergedValues}\n${data.value}`);
+                    dataString = dataString === "" ? `${mergedValues}` : `${dataString}\n${mergedValues}`;
                 }
             })
             download[current.fileName] = dataString;
@@ -140,7 +141,38 @@
         if (showError) {
             alert("You forgot to select one or more old/new options.");
         }
-        console.log(download["admin.controller.ts"]);
+        createZip(download);
+        console.log(download);
+    }
+
+    function createZip(dataToZip) {
+        const zip = new JSZip();
+        for (const [fileName, content] of Object.entries(dataToZip)) {
+            const blob = createBlob(content);
+            zip.file(fileName, blob);
+        }
+
+        zip.generateAsync({ type: "blob" }).then((zipBlob) => {
+            // Creëer een URL voor de zip-blob
+            const zipUrl = URL.createObjectURL(zipBlob);
+
+            // Maak een link voor het downloaden van de zip
+            const link = document.createElement("a");
+            link.href = zipUrl;
+            link.download = "bestanden.zip";
+
+            // Voeg de link toe aan de DOM en klik erop om te downloaden
+            document.body.appendChild(link);
+            link.click();
+
+            // Verwijder de link en de URL
+            document.body.removeChild(link);
+            URL.revokeObjectURL(zipUrl);
+        });
+    }
+
+    function createBlob(textContent) {
+        return new Blob([textContent], { type: "text/plain" });
     }
 
 </script>
