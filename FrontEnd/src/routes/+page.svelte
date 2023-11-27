@@ -11,7 +11,7 @@
 	/**
 	 * Calculates line numbers for each line in a given diff.
 	 *
-	 * @param {Array} diff - The diff to calculate line numbers for.
+	 * @param {Array.<{id: number, newValue: string, oldValue: string}>} diff - The diff to calculate line numbers for.
 	 * @returns {Array} - An array of line objects with line numbers, content, and added/removed flags.
 	 */
 	const calculateLineNumbers = (diff) => {
