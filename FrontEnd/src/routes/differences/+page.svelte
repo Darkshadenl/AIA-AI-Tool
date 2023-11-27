@@ -205,6 +205,7 @@
                                               bind:value={mergedCode.value}
                                               on:input={(event) => handleTextEdit(diff.id, diffItem.id, mergedIndex, event)}
                                               on:input={autoGrow}
+                                              on:focus={autoGrow}
                                               on:blur={(event) => handleTextBlur(diff.id, diffItem.id, mergedIndex, event)}
                                     />
                                 </div>
@@ -266,6 +267,7 @@
 
     .removable-merge-item > textarea {
         height: 1rem;
+        resize: vertical;
         overflow-y: hidden;
     }
 
@@ -323,7 +325,10 @@
         color: #24292e;
         text-decoration: line-through;
     }
-
+    
+    .added:hover, .removed:hover {
+        cursor: pointer;
+    }
 
     pre {
         white-space: pre-wrap;
