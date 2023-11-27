@@ -25,20 +25,20 @@
      * }
      */
     let mergedStruct;
-    diffStore.subscribe((value) => diffDataStruct = value);
+    diffStore.subscribe((value) => {
+        diffDataStruct = value;
 
-    $: if (diffDataStruct) {
-        mergedStruct = JSON.parse(JSON.stringify(diffDataStruct));
+        if (diffDataStruct) {
+            mergedStruct = JSON.parse(JSON.stringify(diffDataStruct));
+            mergedStruct.forEach(diffItem => {
+                diffItem.diffs.forEach(diff => {
+                    if (diff.newValue)
+                        diff.merged = []
+                })
+            });
+        }
+    });
 
-        mergedStruct.forEach(diffItem => {
-            diffItem.diffs.forEach(diff => {
-                if (diff.newValue)
-                    diff.merged = []
-            })
-        })
-        console.info('diffDataStruct', diffDataStruct)
-        console.info('mergedStruct', mergedStruct)
-    }
     let selection = [];
 
     const changeLineColor = (lineObject, old, diffId, diffItemId, index) => {
@@ -54,21 +54,13 @@
     const moveToAndFromMerged = (lineObject, diffId, diffItemId) => {
         let diffs = mergedStruct[diffItemId].diffs;
         const merged = diffs[diffId].merged;
-        const contains = merged.some(item => item.value === lineObject.value);
 
-        if (!contains) {
-            diffs[diffId].merged = [...merged, JSON.parse(JSON.stringify(lineObject))]; // Voeg toe met nieuwe referentie
-            console.log(diffs[diffId].merged) //correct
-            console.log(JSON.parse(JSON.stringify(lineObject))) //correct
-        } else {
-            diffs[diffId].merged = merged.filter(item => item.value !== lineObject.value); // Verwijder met nieuwe referentie
-        }
+        let contains;
+        if (merged) contains = merged.some(item => item.value === lineObject.value);
+        if (!contains) diffs[diffId].merged = [...merged, JSON.parse(JSON.stringify(lineObject))];
+        else diffs[diffId].merged = merged.filter(item => item.value !== lineObject.value);
 
-        // Svelte's reactivity werkt door toewijzing, update de mergedStruct met een nieuwe referentie
-        mergedStruct[diffItemId].diffs = diffs;
-        mergedStruct = [...mergedStruct]; // Trigger reactivity door toewijzing op het hoogste niveau
-        console.info('diffDataStruct', diffDataStruct)
-        console.info('mergedStruct', mergedStruct);
+        mergedStruct = [...mergedStruct];
     };
 
 
