@@ -13,8 +13,8 @@
      *
      * @param {Array.<{id: number, newValue: undefined | string | Array, oldValue: string | Array}>} diff - The diff to calculate line numbers for.
      * @returns {Array.<{id: number,
-     * newValue: Array.<{lineNumber: number, selected: undefined | string, value: string}>,
-     * oldValue: Array.<lineNumber: number, selected: undefined | string, value: string>}>} - An array of line objects with line numbers, content, and added/removed flags.
+     * newValue: Array.<{oldLineNumber: number, newLineNumber: number, selected: undefined | string, value: string}>,
+     * oldValue: Array.<{oldLineNumber: number, newLineNumber: number, selected: undefined | string, value: string}>}>} - An array of line objects with line numbers, content, and added/removed flags.
      */
 	const calculateLineNumbers = (diff) => {
 		let oldLineNumber = 0;
@@ -89,41 +89,6 @@
 		});
 	}
 
-	async function debugSubmit(event) {
-		event.preventDefault();
-		console.log('debugSubmit');
-		let newFileContent;
-		let oldFileContent;
-
-		try {
-			const newRes = await fetch('./debug/new.txt');
-			const oldRes = await fetch('./debug/old.txt');
-			if (!newRes.ok || !oldRes.ok) {
-				throw new Error('Kon het bestand niet laden');
-			}
-			newFileContent = await newRes.text();
-			oldFileContent = await oldRes.text();
-		} catch (error) {
-			console.error('Fout bij het laden van het bestand:', error);
-		}
-
-		let diffDataStructure = CreateDiffDataStructure(oldFileContent, newFileContent, { ignoreWhitespace: true });
-		let calculated = calculateLineNumbers(diffDataStructure);
-
-		diffStore.update((value) => {
-			const diff = {
-				id: value ? value.length : 0,
-				fileName: "wew",
-				diffs: calculated
-			};
-			console.log(diff);
-
-			if (value) return [...value, diff];
-			return [diff];
-		});
-		await goto('/differences');
-	}
-
 	async function submitForm(event) {
 		event.preventDefault();
 		await removeSignalRCallbacks();
@@ -161,7 +126,4 @@
 		</label>
 	</p>
 	<button on:click={() => redirect(300, '/differences')}>Upload</button>
-</form>
-<form on:submit={debugSubmit} enctype="multipart/form-data">
-	<button on:click={() => redirect(300, '/differences')}>Debug</button>
 </form>
