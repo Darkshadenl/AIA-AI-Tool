@@ -34,9 +34,10 @@
             mergedStruct.forEach(diffItem => {
                 diffItem.diffs.forEach(diff => {
                     if (diff.newValue)
-                        diff.merged = []
+                        diff.merged = [];
                 });
             });
+
         }
     });
 
@@ -59,6 +60,8 @@
         let contains;
         if (merged) contains = merged.some(item => item.id === lineObject.id);
 
+        calculateLineNumber(diffs, diffId, lineObject, contains);
+
         if (!contains) {
             lineObject.id = uuidv4();
             diffs[diffId].merged = [...merged, JSON.parse(JSON.stringify(lineObject))];
@@ -66,8 +69,19 @@
             diffs[diffId].merged = merged.filter(item => item.id !== lineObject.id);
         }
 
+        diffs[diffId].merged.sort((a, b) => a.newLineNumber - b.newLineNumber);
         mergedStruct = [...mergedStruct];
     };
+
+    function calculateLineNumber(diffs, diffId, lineObject, contains) {
+        if (diffId >= diffs.length) return;
+
+        for (let i = diffId; i < diffs.length; i++) {
+            diffs[i].oldValue.forEach(value => contains ? value.oldLineNumber-- : value.oldLineNumber++);
+        }
+
+        lineObject.lineNumber = contains ? lineObject.newLineNumber - 1 : lineObject.newLineNumber + 1;
+    }
 
 
     const handleClick = (diffId, diffItemId, index, old) => {
@@ -179,15 +193,15 @@
         <div class="code maxxed">
             {#each mergedStruct as diffItem}
                 <h2>{diffItem.fileName}</h2>
-                {#each diffItem.diffs as diff}
+                {#each diffItem.diffs as diff, diffIndex}
                     {#if diff.merged}
                         {#if diff.merged.length > 0}
                             {#each diff.merged as mergedCode, mergedIndex}
                                 <div class="code-diff merged-item removable-merge-item"
                                      tabindex="0"
                                      role="button">
-                                    <p>{mergedCode.oldLineNumber}</p>
-                                    <span>X</span>
+                                    <p>{mergedCode.lineNumber}</p>
+                                    <button on:click={() => handleClick(diff.id, diffItem.id, mergedIndex, false)}>X</button>
                                     <textarea class="merge-input"
                                               bind:value={mergedCode.value}
                                               on:input={(event) => handleTextEdit(diff.id, diffItem.id, mergedIndex, event)}
@@ -206,7 +220,7 @@
                     {:else}
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
-                                    <p>{oldCode.oldLineNumber}</p><pre>{oldCode.value}</pre>
+                                <p>{oldCode.oldLineNumber}</p><pre>{oldCode.value}</pre>
                             </div>
                         {/each}
                     {/if}
