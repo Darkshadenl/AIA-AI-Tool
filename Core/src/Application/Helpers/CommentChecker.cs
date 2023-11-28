@@ -10,7 +10,6 @@ public class CommentChecker
     private ZipArchiveEntry _file;
     private MatchCollection _allComments;
     private MatchCollection _eslintComments;
-    private MatchCollection _inlineComments;
 
     public CommentChecker(ILogger<CommentChecker> logger)
     {
@@ -32,26 +31,21 @@ public class CommentChecker
         {
             case ".ts":
                 var detectCommentsPattern = @"((?<=\s|^)\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/\*\*[\s\S]*?\*\/)";
-                var detectEslintCommentsPattern =
+                var detectEslintCommentsPattern = 
                     @"(\/\/.*eslint-.*|\/\*[\s\S]*?eslint-[\s\S]*?\*\/|\/\*\*[\s\S]*?eslint-[\s\S]*?\*\/)";
-                var detectInlineCommentsPattern =
-                    @"(?<=\S{1,3}\s{0,2})\/\/[^\n]*|(?<=\S{1,3}\s{0,2})\/\*[\s\S]*?\*\/|(?<=\S{1,3}\s{0,2})\/\*\*[\s\S]*?\*\/";
-                return FileHasComments(detectCommentsPattern, detectEslintCommentsPattern,
-                    detectInlineCommentsPattern);
+                return FileHasComments(detectCommentsPattern, detectEslintCommentsPattern);
             default:
                 _logger.LogDebug("File extension {extension} not supported.", fileExtension);
                 return false;
         }
     }
 
-    private bool FileHasComments(string allCommentPattern, string eslintCommentPattern,
-        string detectInlineCommentPattern)
+    private bool FileHasComments(string allCommentPattern, string eslintCommentPattern)
     {
         var fileContent = ReadFileContent(_file);
         _allComments = FindMatches(fileContent, allCommentPattern);
         _eslintComments = FindMatches(fileContent, eslintCommentPattern);
-        _inlineComments = FindMatches(fileContent, detectInlineCommentPattern);
-
+        
         return AnalyzeComments();
     }
 
@@ -73,6 +67,7 @@ public class CommentChecker
             Log($"{_file.Name} does not contain comments.");
             return false;
         }
+        
 
         var nonEssentialCommentCount = _eslintComments.Count;
 
@@ -86,8 +81,6 @@ public class CommentChecker
             return false;
 
         LogComments(_allComments);
-        LogComments(_inlineComments);
-
         return true;
     }
 
@@ -95,7 +88,7 @@ public class CommentChecker
     {
         if (_allComments.Count <= specificComments.Count)
         {
-            Log($"Found only {commentType} comment in {_file.FullName}. Skipping.");
+            Log($"Found only {commentType} comments in {_file.FullName}. Skipping.");
             return true;
         }
 
