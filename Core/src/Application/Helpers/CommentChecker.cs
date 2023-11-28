@@ -67,7 +67,7 @@ public class CommentChecker
             Log($"{_file.Name} does not contain comments.");
             return false;
         }
-        
+
         if (IsOnlyTypeOfComment(_eslintComments, "eslint"))
             return false;
 

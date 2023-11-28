@@ -1,6 +1,5 @@
 using aia_api.Application.Helpers;
 using aia_api.Configuration.Records;
-using Azure;
 using Azure.AI.OpenAI;
 using InterfacesAia.Database;
 using InterfacesAia.Services;
@@ -15,7 +14,7 @@ public class OpenAiApi
     private readonly ISignalRService _signalRService;
     private readonly CommentManipulationHelper _commentManipulationHelper;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
-    
+
     public OpenAiApi(
         ILogger<OpenAiApi> logger,
         IOptions<OpenAiSettings> openAiSettings,
@@ -30,7 +29,7 @@ public class OpenAiApi
         _commentManipulationHelper = commentManipulationHelper;
         _predictionDatabaseService = predictionDatabaseService;
     }
-    
+
     public async Task<ChatChoice> SendOpenAiCompletion(IDbPrediction dbPrediction)
     {
         ChatCompletionsOptions options = CreateChatCompletionsOptions(dbPrediction.Prompt);
@@ -51,10 +50,11 @@ public class OpenAiApi
 
     public void ProcessApiResponse(ChatChoice openAiResponse, IDbPrediction dbPrediction)
     {
-        string codeWithComments = 
+        _logger.LogDebug("LLM response for {fileName} was {response}", dbPrediction.FileName, openAiResponse.Message.Content);
+        _logger.LogDebug("End of llm response for {fileName}", dbPrediction.FileName);
+        string codeWithComments =
             _commentManipulationHelper.ReplaceCommentsInCode(openAiResponse.Message.Content, dbPrediction.InputCode);
-        
-        
+
         _predictionDatabaseService.UpdatePredictionResponseText(dbPrediction, openAiResponse.Message.Content);
         _predictionDatabaseService.UpdatePredictionEditedResponseText(dbPrediction, codeWithComments);
         _signalRService.SendLlmResponseToFrontend(dbPrediction.ClientConnectionId, dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments, dbPrediction.InputCode);
