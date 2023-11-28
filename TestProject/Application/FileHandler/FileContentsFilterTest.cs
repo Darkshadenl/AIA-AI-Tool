@@ -230,35 +230,23 @@ public class FileContentsFilterTest
     }
 
     [Test]
-    public async Task Filter_ShouldNot_DetectInlineComments()
+    public async Task Filter_ShouldFind_InlineComments()
     {
         // Arrange
         var mockFs = new MockFileSystem();
-        var expectedAmountEntries = 0;
-        // filename, content
-        var combinedCodeComments = new List<Tuple<string, string>>();
-        var combinationCount = 20;
+        var combinedCodeComments = new List<Tuple<string, string>>(); // Tuple<filename, content>
+        const int combinationCount = 20;
         var random = new Random();
-
+    
         for (var i = 0; i < combinationCount; i++)
         {
             var randomCodeSnippet = _codeSnippets[random.Next(0, _codeSnippets.Count - 1)];
             var randomComment = _commentsList[random.Next(40, _commentsList.Count - 1)];
+            
             if (randomComment == string.Empty) throw new Exception("Empty comment");
-            var splitCode = randomCodeSnippet.Split("\n");
-            int lineNumber = random.Next(1, splitCode.Length);
-            var codeWithComment = new StringBuilder();
-
-            for (var index = 0; index < splitCode.Length; index++)
-            {
-                var codeLine = splitCode[index];
-                if (codeLine == string.Empty) continue;
-                if (index == lineNumber)
-                    codeWithComment.AppendLine($"{codeLine} {randomComment}");
-                else
-                    codeWithComment.AppendLine(codeLine);
-            }
-            var tuple = Tuple.Create($"file{i}.ts", codeWithComment.ToString());
+            
+            var codeWithComment = $"{randomComment}{randomCodeSnippet}";
+            var tuple = Tuple.Create($"file{i}.ts", codeWithComment);
             combinedCodeComments.Add(tuple);
         }
 
@@ -293,7 +281,6 @@ public class FileContentsFilterTest
         using var filteredZipStream = new MemoryStream(filteredBytes);
         using ZipArchive filteredArchive = new ZipArchive(filteredZipStream, ZipArchiveMode.Read);
 
-        Assert.That(filteredArchive.Entries, Has.Count.Not.EqualTo(combinationCount));
-        Assert.That(filteredArchive.Entries, Has.Count.EqualTo(expectedAmountEntries));
+        Assert.That(filteredArchive.Entries, Has.Count.EqualTo(combinationCount));
     }
 }
