@@ -67,15 +67,6 @@ public class CommentChecker
             Log($"{_file.Name} does not contain comments.");
             return false;
         }
-        
-
-        var nonEssentialCommentCount = _eslintComments.Count;
-
-        if (nonEssentialCommentCount == (_allComments.Count + _inlineComments.Count))
-        {
-            Log($"{_file.Name} contains only eslint comments. Skipping.");
-            return false;
-        }
 
         if (IsOnlyTypeOfComment(_eslintComments, "eslint"))
             return false;
