@@ -10,6 +10,7 @@
 
 <style>
     pre {
+        font-family: 'monospace', serif;
         white-space: pre-wrap;
         margin: 0;
     }
