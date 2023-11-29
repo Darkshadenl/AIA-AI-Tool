@@ -73,6 +73,9 @@
 			let diffDataStructure = CreateDiffDataStructure(oldFileContent, fileContent, { ignoreWhitespace: false });
 			let calculated = calculateLineNumbers(diffDataStructure);
 
+			let hasNewValue = calculated.some(diff => diff.newValue && diff.newValue.length > 0);
+			if (!hasNewValue) return;
+
 			diffStore.update((value) => {
 				const diff = {
 					id: value ? value.length : 0,
@@ -111,16 +114,20 @@
 			let oldFileContent = await oldFile.text();
 			let newFileContent = await newFile.text();
 
-			let diffDataStructure = CreateDiffDataStructure(oldFileContent, newFileContent, { ignoreWhitespace: true });
+			let fileName = oldModulePath.split('/').pop().split('.').slice(0, -1).join('.');
+
+			let diffDataStructure = CreateDiffDataStructure(oldFileContent, newFileContent, { ignoreWhitespace: false });
 			let calculated = calculateLineNumbers(diffDataStructure);
+
+			let hasNewValue = calculated.some(diff => diff.newValue && diff.newValue.length > 0);
+			if (!hasNewValue) continue;
 
 			diffStore.update((value) => {
 				const diff = {
 					id: value ? value.length : 0,
-					fileName: "wew",
+					fileName: fileName,
 					diffs: calculated
 				};
-				console.log(diff);
 
 				if (value) return [...value, diff];
 				return [diff];
