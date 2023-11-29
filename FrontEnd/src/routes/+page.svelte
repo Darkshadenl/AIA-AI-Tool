@@ -1,24 +1,51 @@
 <script>
 	import { fail, redirect } from "@sveltejs/kit";
-	import { uploadChunk, getConnection } from '../SignalRServer.js';
+	import { CreateDiffDataStructure, getConnection, processFileChunks, resetStores, sliceFileIntoChunks } from "$lib";
 	import { HubConnectionState } from "@microsoft/signalr";
 	import { goto } from "$app/navigation";
-	import { oldCodeStore, newCodeStore, progressInformationMessageStore, errorMessageStore } from "../store.js";
-	import * as stores from '../store.js';
-	import { diffLines } from "diff";
+	import { diffStore, errorMessageStore, progressInformationMessageStore } from "../store.js";
 
 	const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
 
+
+    /**
+     * Calculates line numbers for each line in a given diff.
+     *
+     * @param {Array.<{id: number, newValue: undefined | string | Array, oldValue: string | Array}>} diff - The diff to calculate line numbers for.
+     * @returns {Array.<{id: number,
+     * newValue: Array.<{oldLineNumber: number, newLineNumber: number, selected: undefined | string, value: string}>,
+     * oldValue: Array.<{oldLineNumber: number, newLineNumber: number, selected: undefined | string, value: string}>}>} - An array of line objects with line numbers, content, and added/removed flags.
+     */
 	const calculateLineNumbers = (diff) => {
-		let lineNumber = 1;
-		return diff.map((chunk) => {
-			return chunk.value.trimEnd('\n').split('\n').map((line) => ({
-				line: lineNumber++,
-				content: line,
-				added: chunk.added,
-				removed: chunk.removed,
-			}));
-		}).flat();
+		let oldLineNumber = 0;
+		let newLineNumber = 0;
+		const diffCopy = diff.map(chunk => ({ ...chunk })); // Copy for debugging purposes
+		return diffCopy.map((chunk) => {
+			if (chunk.oldValue) {
+				chunk.oldValue = chunk.oldValue.trimEnd('\n').split('\n').map(line => {
+					oldLineNumber++;
+					if (!chunk.newValue) newLineNumber++;
+					return {
+						oldLineNumber: oldLineNumber,
+						newLineNumber: newLineNumber,
+						value: line,
+						selected: undefined
+					}
+				});
+			}
+			if (chunk.newValue) {
+				chunk.newValue = chunk.newValue.trimEnd('\n').split('\n').map(line => {
+					newLineNumber++;
+					return {
+						oldLineNumber: oldLineNumber,
+						newLineNumber: newLineNumber,
+						value: line,
+						selected: undefined
+					};
+				});
+			}
+			return chunk;
+		});
 	};
 
 	async function removeSignalRCallbacks() {
@@ -43,17 +70,18 @@
 		});
 
 		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
-			const differences = diffLines(oldFileContent, fileContent);
+			let diffDataStructure = CreateDiffDataStructure(oldFileContent, fileContent, { ignoreWhitespace: false });
+			let calculated = calculateLineNumbers(diffDataStructure);
 
-			oldCodeStore.update((value) => {
-				const oldCode = { fileName: fileName, code: oldFileContent, diff: calculateLineNumbers(differences.filter(diff => !diff.added)) };
-				if (value) return [...value, oldCode];
-				return [oldCode];
-			});
-			newCodeStore.update((value) => {
-				const newCode = { fileName: fileName, code: fileContent, diff: calculateLineNumbers(differences.filter(diff => !diff.removed)) };
-				if (value) return [...value, newCode];
-				return [newCode];
+			diffStore.update((value) => {
+				const diff = {
+					id: value ? value.length : 0,
+					fileName: fileName,
+					diffs: calculated
+				};
+
+				if (value) return [...value, diff];
+				return [diff];
 			});
 
 			progressInformationMessageStore.set(null);
@@ -83,76 +111,6 @@
 		}
 	}
 
-	/**
-	 * Slices the zip file into mutiple smaller chunks.
-	 * @param {File} file - Zip file to slice.
-	 * @returns {Blob[]} Returns a list of chunks.
-	 */
-	function sliceFileIntoChunks(file) {
-		const fileChunks = [];
-		const chunkSize = 1024 * 1024;
-		const totalChunks = Math.ceil(file.size / chunkSize);
-		console.log(`Total amount of chunks being created: ${totalChunks}`);
-
-		for (let i = 0; i < totalChunks; i++) {
-			const start = i * chunkSize;
-			const end = (i + 1) * chunkSize;
-			const chunk = file.slice(start, end);
-			fileChunks.push(chunk);
-		}
-
-		return fileChunks;
-	}
-
-	/**
-	 * Upload each chunk of the zip file to the API using SignalR.
-	 * @async
-	 * @param {string} connectionId - The id of the connection with the SignalR server.
-	 * @param {Blob[]} fileChunks - The list of chunks.
-	 * @param {string} fileName - The name of the file before it was sliced into chunks.
-	 * @param {string} contentType - The content type of the file before it was sliced into chunks.
-	 */
-	async function processFileChunks(connectionId, fileChunks, fileName, contentType) {
-		for (let i = 0; i < fileChunks.length; i++) {
-			const byteArray = await chunkToByteArray(fileChunks[i]);
-			const base64 = toBase64(byteArray);
-			uploadChunk(connectionId, base64, fileName, contentType, i, fileChunks.length).catch((err) => {
-				console.error(err);
-			});
-		}
-	}
-
-	function toBase64(byteArray) {
-		let binary = '';
-		const len = byteArray.byteLength;
-
-		for (let i = 0; i < len; i++) {
-			binary += String.fromCharCode(byteArray[i]);
-		}
-
-		return window.btoa(binary);
-	}
-
-	/**
-	 * Convert chunk of the zip file into a ByteArray (Uint8Array).
-	 * @async
-	 * @param {Blob} chunk - The chunk to convert.
-	 */
-	async function chunkToByteArray(chunk) {
-		const arrayBuffer = await chunk.arrayBuffer();
-		return new Uint8Array(arrayBuffer);
-	}
-
-	/**
-	 *
-	 */
-	function resetStores() {
-		for (const storeName in stores) {
-			if (Object.hasOwnProperty.call(stores, storeName)) {
-				stores[storeName].set(null);
-			}
-		}
-	}
 </script>
 
 <h1>ZIP File upload</h1>
