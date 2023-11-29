@@ -92,35 +92,41 @@
 	async function debugSubmit(event) {
 		event.preventDefault();
 		console.log('debugSubmit');
-		let newFileContent;
-		let oldFileContent;
 
-		try {
-			const newRes = await fetch('./debug/new.txt');
-			const oldRes = await fetch('./debug/old.txt');
-			if (!newRes.ok || !oldRes.ok) {
-				throw new Error('Kon het bestand niet laden');
-			}
-			newFileContent = await newRes.text();
-			oldFileContent = await oldRes.text();
-		} catch (error) {
-			console.error('Fout bij het laden van het bestand:', error);
+		const oldModules = import.meta.glob('../../research-files/old/*/*');
+		const newModules = import.meta.glob('../../research-files/new/*/*');
+		const oldModulesKeys = Object.keys(oldModules);
+		const newModulesKeys = Object.keys(newModules);
+
+		if (oldModulesKeys.length !== newModulesKeys.length)
+			return console.log("Not every old file has a corresponding new file.");
+
+		for (let i = 0; i < oldModulesKeys.length; i++) {
+			const oldModulePath = oldModulesKeys[i];
+			const newModulePath = newModulesKeys[i];
+
+			const oldFile = await fetch(oldModulePath);
+			const newFile = await fetch(newModulePath);
+
+			let oldFileContent = await oldFile.text();
+			let newFileContent = await newFile.text();
+
+			let diffDataStructure = CreateDiffDataStructure(oldFileContent, newFileContent, { ignoreWhitespace: true });
+			let calculated = calculateLineNumbers(diffDataStructure);
+
+			diffStore.update((value) => {
+				const diff = {
+					id: value ? value.length : 0,
+					fileName: "wew",
+					diffs: calculated
+				};
+				console.log(diff);
+
+				if (value) return [...value, diff];
+				return [diff];
+			});
 		}
 
-		let diffDataStructure = CreateDiffDataStructure(oldFileContent, newFileContent, { ignoreWhitespace: true });
-		let calculated = calculateLineNumbers(diffDataStructure);
-
-		diffStore.update((value) => {
-			const diff = {
-				id: value ? value.length : 0,
-				fileName: "wew",
-				diffs: calculated
-			};
-			console.log(diff);
-
-			if (value) return [...value, diff];
-			return [diff];
-		});
 		await goto('/differences');
 	}
 
