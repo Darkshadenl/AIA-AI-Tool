@@ -208,34 +208,6 @@
             </div>
 
             <div class="code maxxed">
-                <h2>{diffItem.fileName}</h2>
-
-                {#each diffItem.diffs as diff}
-                    {#if diff.newValue}
-                        {#each diff.newValue as newCode, newIndex}
-                            <div class="code-diff wrap {diff.oldValue && diff.newValue ? 'added' : 'unchanged'}"
-                                 tabindex="0"
-                                 class:selected-new={newCode.selected === "new"}
-                                 on:click={() => handleClick(diff.id, diffItem.id, newIndex, false)}
-                                 on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
-                                 role="button">
-                                <span>{newCode.newLineNumber}</span>
-                                <pre>{newCode.value}</pre>
-                            </div>
-                        {/each}
-                    {:else}
-                        {#each diff.oldValue as oldCode}
-                            <div class="code-diff unchanged wrap" role="button">
-                                <span>{oldCode.newLineNumber}</span>
-                                <pre>{oldCode.value}</pre>
-
-                            </div>
-                        {/each}
-                    {/if}
-                {/each}
-            </div>
-
-            <div class="code maxxed">
                 <h2>{mergedStruct[index].fileName}</h2>
 
                 {#each mergedStruct[index].diffs as diff}
@@ -261,6 +233,34 @@
                             <div class="code-diff unchanged wrap" role="button">
                                 <span>{oldCode.oldLineNumber}</span>
                                 <pre>{oldCode.value}</pre>
+                            </div>
+                        {/each}
+                    {/if}
+                {/each}
+            </div>
+
+            <div class="code maxxed">
+                <h2>{diffItem.fileName}</h2>
+
+                {#each diffItem.diffs as diff}
+                    {#if diff.newValue}
+                        {#each diff.newValue as newCode, newIndex}
+                            <div class="code-diff wrap {diff.oldValue && diff.newValue ? 'added' : 'unchanged'}"
+                                 tabindex="0"
+                                 class:selected-new={newCode.selected === "new"}
+                                 on:click={() => handleClick(diff.id, diffItem.id, newIndex, false)}
+                                 on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
+                                 role="button">
+                                <span>{newCode.newLineNumber}</span>
+                                <pre>{newCode.value}</pre>
+                            </div>
+                        {/each}
+                    {:else}
+                        {#each diff.oldValue as oldCode}
+                            <div class="code-diff unchanged wrap" role="button">
+                                <span>{oldCode.newLineNumber}</span>
+                                <pre>{oldCode.value}</pre>
+
                             </div>
                         {/each}
                     {/if}
@@ -350,7 +350,6 @@
     .removed {
         background-color: rgba(241, 113, 130, 0.65);
         color: #24292e;
-        text-decoration: line-through;
     }
 
     .added:hover, .removed:hover {
