@@ -1,8 +1,9 @@
 <script>
     import {v4 as uuidv4} from "uuid";
-    import {diffStore, errorMessageStore, progressInformationMessageStore} from "../../store.js";
     import JSZip from "jszip";
     import AutoGrowingTextArea from "$lib/components/AutoGrowingTextArea.svelte";
+    import Loading from '$lib/components/+loading.svelte';
+    import {diffStore, errorMessageStore, progressInformationMessageStore} from "../../store.js";
 
     let progressInformationMessage;
     let errorMessage;
@@ -233,7 +234,7 @@
                     {/if}
                 {/each}
             </div>
-            
+
             <div class="code maxxed">
                 <h2>{mergedStruct[index].fileName}</h2>
 
@@ -267,6 +268,8 @@
             </div>
         </div>
     {/each}
+{:else}
+    <Loading />
 {/if}
 
 <style>
