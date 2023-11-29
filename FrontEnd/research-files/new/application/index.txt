@@ -1,0 +1,196 @@
+import { Logger, Module, OnApplicationBootstrap } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ImageUrl } from 'beverhunt-models';
+import { AuthModule } from '~/authorization/auth.module';
+import { RedisConfig, configuration } from '~/configuration';
+import { BeverhuntUserId } from '~/constants';
+import { RegisterUserCommand } from '~/domain';
+import { AssignmentsModule } from '~/domain/assignments/assignments.module';
+import { DomainModule } from '~/domain/domain.module';
+import { FoxesModule } from '~/domain/foxes/foxes.module';
+import { HuntersModule } from '~/domain/hunters/hunters.module';
+import { HuntsModule } from '~/domain/hunts/hunts.module';
+import { Email, FamilyName, GivenName } from '~/domain/ids.value-object';
+import { NewsItemsModule } from '~/domain/news-items/news-items.module';
+import { ParticipantsModule } from '~/domain/participants/participants.module';
+import { PhotosModule } from '~/domain/photos/photos.module';
+import { PuzzlesModule } from '~/domain/puzzles/puzzles.module';
+import { GetUserByEmailQuery } from '~/domain/users/queries/get-user-by-email.query';
+import { SessionSerializer } from '~/domain/users/session.serializer';
+import { UsersModule } from '~/domain/users/users.module';
+import { Event } from '~/infrastructure/event-store';
+import { GeoModule } from '~/infrastructure/geo';
+import { GoogleSheetModule } from '~/infrastructure/google-sheet/google-sheet.module';
+import { JotihuntAdapterModule } from '~/infrastructure/jotihunt';
+import { Media, MediaModule } from '~/infrastructure/media';
+import { WebsocketPublisherModule } from '~/infrastructure/websocket-publisher';
+import { SessionService } from '../domain/users/session.service';
+import { AdminController } from './admin.controller';
+import { AssignmentController } from './assignment.controller';
+import { EditorsController } from './editors.controller';
+import { EditorsService } from './editors.service';
+import { FoxesController } from './foxes.controller';
+import { GeoController } from './geo.controller';
+import { HuntersController } from './hunters.controller';
+import { HuntsController } from './hunts.controller';
+import { InfoController } from './info.controller';
+import { JotihuntScheduler } from './jotihunt.scheduler';
+import { MediaController } from './media.controller';
+import { NewsController } from './news.controller';
+import { ParticipantController } from './participant.controller';
+import { PhotosController } from './photos.controller';
+import { PuzzleController } from './puzzle.controller';
+import { RestartService } from './restart.service';
+import { UserController } from './user.controller';
+
+import users from '~/seed/users';
+import { TraccarModule } from '~/infrastructure/traccar';
+import { JotihuntModule } from '~/domain/jotihunt/jotihunt.module';
+import { EventsController } from './events.controller';
+import { TelegramBot } from './telegram.bot';
+import { CacheModule } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-yet';
+import { RedisClientOptions } from 'redis';
+
+/**
+ * ApplicationModule is the primary module of the Beverhunt application, responsible for
+ * orchestrating the startup and configuration of various components and services.
+ * It establishes the database connection, configures caching, registers modules for different
+ * domain areas, and initializes controllers for handling WebSocket connections.
+ *
+ * Upon application startup, it seeds the user profiles, schedules tasks related to the Jotihunt
+ * event, and activates the Telegram bot for messaging. This module utilizes the NestJS
+ * framework's module system to organize the application structure and dependency management.
+ *
+ * @implements {OnApplicationBootstrap} - Ensures initialization logic is run before all modules are set up.
+ *
+ * @param {TelegramBot} telegramBot - Bot for receiving notifications via Telegram.
+ * @param {JotihuntScheduler} jotihuntScheduler - Scheduler for managing Jotihunt-related events.
+ * @param {CommandBus} commandBus - CQRS command bus for executing commands.
+ * @param {QueryBus} queryBus - CQRS query bus for executing queries.
+ */
+@Module({
+  imports: [
+    TypeOrmModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        type: 'better-sqlite3',
+        database:
+          configService.get<string>('server.dataDir') + '/beverhunt.sqlite3',
+        entities: [Event, Media],
+        synchronize: true,
+      }),
+      inject: [ConfigService],
+    }),
+    ConfigModule.forRoot({
+      load: [configuration],
+      isGlobal: true,
+    }),
+    CacheModule.registerAsync<RedisClientOptions>({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => {
+        const { host, port, password } =
+          configService.get<RedisConfig>('redis')!;
+        return {
+          store: await redisStore({
+            url: `redis://${host}:${port}`,
+            password,
+          }),
+        };
+      },
+    }),
+    UsersModule,
+    AuthModule,
+    CqrsModule,
+    GeoModule,
+    GoogleSheetModule,
+    AssignmentsModule,
+    DomainModule,
+    FoxesModule,
+    HuntersModule,
+    HuntsModule,
+    JotihuntAdapterModule,
+    JotihuntModule,
+    MediaModule,
+    NewsItemsModule,
+    ParticipantsModule,
+    PhotosModule,
+    PuzzlesModule,
+    ScheduleModule.forRoot(),
+    TraccarModule,
+    WebsocketPublisherModule,
+  ],
+  providers: [
+    Logger,
+    TelegramBot,
+    JotihuntScheduler,
+    RestartService,
+    EditorsService,
+    SessionService,
+    SessionSerializer,
+  ],
+  controllers: [
+    AdminController,
+    AssignmentController,
+    EditorsController,
+    EventsController,
+    FoxesController,
+    GeoController,
+    HuntersController,
+    HuntsController,
+    InfoController,
+    MediaController,
+    NewsController,
+    ParticipantController,
+    PhotosController,
+    PuzzleController,
+    UserController,
+  ],
+})
+export class ApplicationModule implements OnApplicationBootstrap {
+  private readonly logger = new Logger(ApplicationModule.name);
+  constructor(
+    private readonly telegramBot: TelegramBot,
+    private readonly jotihuntScheduler: JotihuntScheduler,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
+
+  async onApplicationBootstrap() {
+    await Promise.all(
+      users.map(async ({ email, givenName, familyName, picture }) => {
+        const user = await this.queryBus.execute(
+          new GetUserByEmailQuery(email),
+        );
+
+        if (!user) {
+          return await this.commandBus.execute(
+            new RegisterUserCommand(
+              BeverhuntUserId,
+              Email(email),
+              GivenName(givenName),
+              FamilyName(familyName),
+              ImageUrl(picture),
+            ),
+          );
+        }
+      }),
+    );
+
+    this.logger.log('Initializing jotihunt fox statusses');
+    this.jotihuntScheduler.getFoxStatusses();
+
+    this.logger.log('Initializing jotihunt participants');
+    this.jotihuntScheduler.getParticipants();
+
+    this.logger.log('Initializing jotihunt articles');
+    this.jotihuntScheduler.getArticles();
+
+    this.logger.log('Starting telegram bot');
+    this.telegramBot.start();
+    this.telegramBot.send('Beverhunt backend restart');
+  }
+}

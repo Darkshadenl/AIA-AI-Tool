@@ -1,0 +1,12 @@
+import { User } from 'beverhunt-models';
+
+/**
+ * AuthenticatedRequest extends the standard Express.Request to include
+ * user preferences. It represents an HTTP request with an authenticated session,
+ * ensuring that the user's credentials have been validated. This interface is used
+ * throughout the application to enforce authorization on protected endpoints and
+ * to provide user details to request processors.
+ */
+export interface AuthenticatedRequest extends Express.Request {
+  user: User;
+}

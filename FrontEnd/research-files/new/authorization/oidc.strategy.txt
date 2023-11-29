@@ -1,0 +1,132 @@
+import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { PassportStrategy } from '@nestjs/passport';
+import { ImageUrl } from 'beverhunt-models';
+import { BaseClient, Issuer, Strategy, TokenSet } from 'openid-client';
+import { Auth0Config, ServerConfig } from '~/configuration';
+import { Auth0UserId } from '~/constants';
+import { GetUserByEmailQuery, RegisterUserCommand, User } from '~/domain';
+import { Email, FamilyName, GivenName } from '~/domain/ids.value-object';
+
+export async function buildOpenIdClient(
+  configService: ConfigService,
+): Promise<BaseClient | undefined> {
+  const logger = new Logger('OidcStrategy');
+  try {
+    const config = configService.get<Auth0Config>('auth0')!;
+    const TrustIssuer = await Issuer.discover(
+      `${config.issuerUrl}.well-known/openid-configuration`,
+    );
+
+    return new TrustIssuer.Client({
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
+    });
+  } catch (error: unknown) {
+    logger.error(error);
+  }
+}
+
+/**
+ * OIDCStrategy extends PassportStrategy to implement OpenID Connect (OIDC) authentication.
+ * It is responsible for initializing the OIDC client with the necessary configuration,
+ * handling the login flow, and validating the user information received from
+ * the OIDC provider. This strategy uses the Auth0 configuration to discover the issuer
+ * and set up the client. It also integrates with the CommandBus and QueryBus to register
+ * or retrieve users within the application domain.
+ *
+ * The `authenticate` method customizes the login process by setting the state
+ * parameter, which can be used for redirecting after a successful login.
+ *
+ * The `validate` method is responsible for processing the tokenset received from the OIDC
+ * provider, fetching the user profile, and either retrieving an existing user or registering
+ * a new one in the system. It ensures that the user has an associated email and handles the
+ * user creation or retrieval process through the application's command and query buses.
+ *
+ * @param {ConfigService} configService - Service for accessing configuration settings
+ * @param {BaseClient} client - OpenID client for interacting with the OIDC provider
+ * @param {CommandBus} commandBus - CQRS command bus for dispatching commands
+ * @param {QueryBus} queryBus - CQRS query bus for dispatching queries
+ */
+export class OICDStrategy extends PassportStrategy(Strategy, 'oidc') {
+  private readonly config: Auth0Config;
+
+  constructor(
+    configService: ConfigService,
+    client: BaseClient,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {
+    const auth0Config = configService.get<Auth0Config>('auth0')!;
+    const serverConfig = configService.get<ServerConfig>('server')!;
+
+    super({
+      client: client,
+      params: {
+        client_id: auth0Config.clientId,
+        code_challenge_method: 'RS256',
+        prompt: 'select_account',
+        redirect_uri: `${serverConfig.publicUrl}/auth/callback`,
+        response_mode: 'form_post',
+        response_type: 'code',
+        scope: 'profile email openid offline_access',
+      },
+      passReqToCallback: false,
+      usePKCE: true,
+    });
+
+    this.config = auth0Config;
+  }
+
+  // Passport does not use a more specific type then any.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  authenticate(req: any, options?: any): void {
+    options.state = req.query?.redirect ?? '/';
+    super.authenticate(req, options);
+  }
+
+  async validate(
+    tokenset: TokenSet,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    done: (error: boolean | null, user: User | null) => void,
+  ): Promise<void> {
+    const profile = await fetch(`${this.config.issuerUrl}userinfo`, {
+      headers: {
+        Authorization: 'Bearer ' + tokenset.access_token,
+      },
+    }).then(
+      (response) =>
+        response.json() as Promise<{
+          email: string;
+          given_name: string;
+          surname?: string;
+          family_name?: string;
+          picture: string;
+        }>,
+    );
+
+    if (!profile?.email) {
+      // User does not have a email associated with its account, thus cannot be logged in.
+      done(false, null);
+    }
+
+    let user = await this.queryBus.execute<GetUserByEmailQuery, User>(
+      new GetUserByEmailQuery(profile.email),
+    );
+
+    if (!user) {
+      user = await this.commandBus.execute<RegisterUserCommand, User>(
+        new RegisterUserCommand(
+          Auth0UserId,
+          Email(profile.email),
+          GivenName(profile.given_name),
+          FamilyName(profile.surname || profile.family_name || ''),
+          ImageUrl(profile.picture),
+        ),
+      );
+    }
+
+    return done(null, user);
+  }
+}

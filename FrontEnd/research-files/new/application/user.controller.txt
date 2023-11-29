@@ -1,0 +1,254 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Logger,
+  Param,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiParam } from '@nestjs/swagger';
+import { ImageUrl, UserId } from 'beverhunt-models';
+import { RequireActiveUser, RequireAdmin } from '~/authorization';
+import { AuthenticatedRequest } from '~/authorization/authenticated.request';
+import {
+  CraftCommand,
+  HuntCommand,
+  MakeUserAdminCommand,
+  PhotoCommand,
+  PuzzleCommand,
+  SetUserLicencePlateCommand,
+  SetUserNameCommand,
+  SetUserPhoneNumberCommand,
+  SetUserPictureCommand,
+  User,
+  WatchCommand,
+} from '~/domain';
+import { FamilyName, GivenName } from '~/domain/ids.value-object';
+import { BlockUserCommand } from '~/domain/users/commands/block-user.command';
+import { ConfirmUserCommand } from '~/domain/users/commands/confirm-user.command';
+import { HideUserCommand } from '~/domain/users/commands/hide-user.command';
+import { GetUserByEmailQuery } from '~/domain/users/queries/get-user-by-email.query';
+import { GetUsersQuery } from '~/domain/users/queries/get-users.query';
+import { GoogleSheetAdapter } from '~/infrastructure/google-sheet/google-sheet.adapter';
+import { SetImageUrlDto } from './dtos/set-picture-url.dto';
+import { SetUserNameDto } from './dtos/set-user-name.dto';
+import { UserIdDto } from './dtos/user-id.dto';
+import { SetUserPhoneNumberDto } from './dtos/set-user-phone-number.dto';
+import { SetUserLicencePlateDto } from './dtos/set-user-licence-plate.dto';
+
+/**
+ * UserController is a NestJS controller that manages user-related actions within the system.
+ * The controller integrates with a GoogleSheetAdapter for registration-related data.
+ *
+ * The UserController is protected with authorization checks that require users to be
+ * authenticated and, for certain actions, to have admin privileges.
+ *
+ * @param {QueryBus} queryBus - The bus for handling query operations
+ * @param {CommandBus} commandBus - The bus for handling command operations
+ * @param {GoogleSheetAdapter} sheet - Adapter for interacting with Google Sheets and external APIs
+ */
+@Controller('user')
+@RequireActiveUser()
+export class UserController {
+  private logger = new Logger(UserController.name);
+
+  constructor(
+    private readonly queryBus: QueryBus,
+    private readonly commandBus: CommandBus,
+    private readonly sheet: GoogleSheetAdapter,
+  ) {}
+
+  @Get()
+  find(
+    @Req() req: AuthenticatedRequest,
+    @Query('email') email?: string,
+    @Query('deleted') includeDeleted?: boolean,
+  ) {
+    this.logger.debug(`find: ${email ?? 'All'}`);
+    if (email) {
+      return this.queryBus.execute<GetUserByEmailQuery, User>(
+        new GetUserByEmailQuery(email),
+      );
+    }
+
+    const query = new GetUsersQuery(
+      req.user.isAdmin,
+      req.user.isAdmin && includeDeleted,
+    );
+    return this.queryBus.execute<GetUsersQuery, User[]>(query);
+  }
+
+  @Get('registrations')
+  @RequireAdmin()
+  async registations() {
+    const value = (await this.sheet.readSpreadSheet()).values.map(
+      (row: unknown[]) => row[0],
+    );
+    return value;
+  }
+
+  @Post(':id/confirm')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  confirm(@Param() { id }: UserIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`confirm ${id}`);
+    return this.commandBus.execute<ConfirmUserCommand, User>(
+      new ConfirmUserCommand(UserId(req.user.id), id, true, false),
+    );
+  }
+
+  @Post(':id/block')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  block(@Param() { id }: UserIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`block ${id}`);
+    return this.commandBus.execute<BlockUserCommand, User>(
+      new BlockUserCommand(UserId(req.user.id), id),
+    );
+  }
+
+  @Post(':id/picture')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  picture(
+    @Param() { id }: UserIdDto,
+    @Body() { imageUrl }: SetImageUrlDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    this.logger.log(`picture ${id}`);
+    return this.commandBus.execute<SetUserPictureCommand, User>(
+      new SetUserPictureCommand(UserId(req.user.id), id, ImageUrl(imageUrl)),
+    );
+  }
+
+  @Post(':id/admin')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  makeAdmin(@Param() { id }: UserIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`admin ${id}`);
+    return this.commandBus.execute<MakeUserAdminCommand, User>(
+      new MakeUserAdminCommand(UserId(req.user.id), id),
+    );
+  }
+
+  @Delete(':id/admin')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  removeAdmin(@Param() { id }: UserIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`admin ${id}`);
+    return this.commandBus.execute<MakeUserAdminCommand, User>(
+      new MakeUserAdminCommand(UserId(req.user.id), id, false),
+    );
+  }
+
+  @Post(':id/watch')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  watch(@Param() { id }: UserIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`watch ${id}`);
+    return this.commandBus.execute<WatchCommand, User>(
+      new WatchCommand(UserId(req.user.id), id),
+    );
+  }
+
+  @Post(':id/craft')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  craft(@Param() { id }: UserIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`craft ${id}`);
+    return this.commandBus.execute<CraftCommand, User>(
+      new CraftCommand(UserId(req.user.id), id),
+    );
+  }
+
+  @Post(':id/puzzle')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  puzzle(@Param() { id }: UserIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`puzzle ${id}`);
+    // Creates a new puzzle with the provided user id and logs the process
+    return this.commandBus.execute<PuzzleCommand, User>(
+      new PuzzleCommand(UserId(req.user.id), id),
+    );
+  }
+
+  @Post(':id/photo')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  photo(@Param() { id }: UserIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`puzzle ${id}`);
+    return this.commandBus.execute<PhotoCommand, User>(
+      new PhotoCommand(UserId(req.user.id), id),
+    );
+  }
+
+  @Post(':id/hunt')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  hunt(@Param() { id }: UserIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`craft ${id}`);
+    return this.commandBus.execute<HuntCommand, User>(
+      new HuntCommand(UserId(req.user.id), id),
+    );
+  }
+
+  @Post(':id/name/:givenName/:familyName')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  @ApiParam({ name: 'givenName', required: true, type: String })
+  @ApiParam({ name: 'familyName', required: true, type: String })
+  setName(
+    @Param() { id, givenName, familyName }: SetUserNameDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    this.logger.log(`setName ${id}, ${givenName} ${familyName}`);
+    return this.commandBus.execute<SetUserNameCommand, User>(
+      new SetUserNameCommand(
+        UserId(req.user.id),
+        id,
+        GivenName(givenName),
+        FamilyName(familyName),
+      ),
+    );
+  }
+
+  @RequireAdmin()
+  @Post('/:id/hide')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  hide(@Param() { id }: UserIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`hide ${id}`);
+    return this.commandBus.execute<HideUserCommand, object>(
+      new HideUserCommand(UserId(req.user.id), UserId(id), true),
+    );
+  }
+
+  @RequireAdmin()
+  @Post('/:id/show')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  show(@Param() { id }: UserIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`hide ${id}`);
+    return this.commandBus.execute<HideUserCommand, object>(
+      new HideUserCommand(UserId(req.user.id), UserId(id), false),
+    );
+  }
+
+  @Post(':id/phoneNumber/:phoneNumber')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  @ApiParam({ name: 'phoneNumber', required: true, type: String })
+  setPhoneNumber(
+    @Param() { id, phoneNumber }: SetUserPhoneNumberDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    // Handles a request to update the user's phone number
+    this.logger.log(`setPhoneNumber ${id}, ${phoneNumber}`);
+    return this.commandBus.execute<SetUserPhoneNumberCommand, User>(
+      new SetUserPhoneNumberCommand(UserId(req.user.id), id, phoneNumber),
+    );
+  }
+
+  @Post(':id/licencePlate/:licencePlate')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  @ApiParam({ name: 'licencePlate', required: true, type: String })
+  setLicencePlate(
+    @Param() { id, licencePlate }: SetUserLicencePlateDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    this.logger.log(`setLicencePlate ${id}, ${licencePlate}`);
+    return this.commandBus.execute<SetUserLicencePlateCommand, User>(
+      new SetUserLicencePlateCommand(UserId(req.user.id), id, licencePlate),
+    );
+  }
+}

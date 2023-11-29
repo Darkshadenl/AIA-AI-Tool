@@ -1,0 +1,89 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Post,
+  Req,
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { PhotoId, UserId } from 'beverhunt-models';
+import { RequireActiveUser } from '~/authorization';
+import { AuthenticatedRequest } from '~/authorization/authenticated.request';
+import {
+  Assignment,
+  ReceivePhotoPointsCommand,
+  SubmitPhotoToJotihuntCommand,
+} from '~/domain';
+import { CreatePhotoCommand, GetPhotosQuery, Photo } from '~/domain';
+import { CreatePhotoDto } from './dtos/create-photo.dto';
+
+/**
+ * PhotosController is responsible for handling requests related to photo management
+ * in the application. The controller leverages Command and Query buses to interact
+ * with the application's core logic.
+ *
+ * The `@RequireActiveUser` decorator ensures that all actions performed by this controller
+ * require an active and authenticated user.
+ *
+ * Each method logs its actions for monitoring and debugging purposes, and the controller
+ * is structured to handle different types of photo-related commands and queries.
+ *
+ * @param {QueryBus} queryBus - The bus for handling queries to retrieve data
+ * @param {CommandBus} commandBus - The bus for handling commands that alter data
+ */
+@Controller('photos')
+@RequireActiveUser()
+export class PhotosController {
+  private logger = new Logger(PhotosController.name);
+
+  constructor(
+    private readonly queryBus: QueryBus,
+    private readonly commandBus: CommandBus,
+  ) {}
+
+  @Get()
+  find() {
+    this.logger.debug(`findAll`);
+    return this.queryBus.execute<GetPhotosQuery, Assignment[]>(
+      new GetPhotosQuery(),
+    );
+  }
+
+  @Post()
+  create(
+    @Body() { title, description, imageUrl }: CreatePhotoDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.commandBus.execute<CreatePhotoCommand, Photo>(
+      new CreatePhotoCommand(UserId(req.user.id), title, description, imageUrl),
+    );
+  }
+
+  @Post(':id/submit')
+  submit(
+    @Param('id') id: number,
+    @Body('submissionDateTime') submissionDateTime: Date,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.commandBus.execute<SubmitPhotoToJotihuntCommand, Photo>(
+      new SubmitPhotoToJotihuntCommand(
+        PhotoId(id),
+        UserId(req.user.id),
+        submissionDateTime,
+      ),
+    );
+  }
+
+  @Post(':id/points/:points')
+  registerPoints(
+    @Param('id') id: number,
+    @Param('points') points: number,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.commandBus.execute<ReceivePhotoPointsCommand, Photo>(
+      new ReceivePhotoPointsCommand(UserId(req.user.id), PhotoId(id), points),
+    );
+  }
+}

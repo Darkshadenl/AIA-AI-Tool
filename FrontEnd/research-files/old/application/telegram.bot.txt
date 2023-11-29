@@ -1,0 +1,260 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  OnApplicationShutdown,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { Assignment, Hunt, Photo } from 'beverhunt-models';
+import { Cache } from 'cache-manager';
+import { Context, NarrowedContext, Telegraf } from 'telegraf';
+import { Message, Update } from 'telegraf/typings/core/types/typegram';
+import { TelegramBotConfig } from '~/configuration';
+import { TelegramUserId } from '~/constants';
+import {
+  GetAssignmentByNameQuery,
+  GetHuntByCodeQuery,
+  GetPhotoByNameQuery,
+  ReceiveAssignmentPointsCommand,
+  ReceiveHuntPointsCommand,
+  ReceivePhotoPointsCommand,
+} from '~/domain';
+
+/**
+ * TelegramBot is a service class that integrates with the Telegram Bot API to provide
+ * interactive features for a game called Beverhunt. It allows users to register and receive
+ * notifications, and it processes messages related to assignments, photos, and hunts within the game.
+ * The bot can register points, handle user commands, and manage a list of listeners for notifications.
+ *
+ * Note: This bot is localized for English-speaking users, as seen in the command responses.
+ *
+ * @param {ConfigService} configService - Service for accessing configuration settings
+ * @param {Cache} cacheManager - Cache manager instance for managing listener data and user preferences
+ * @param {QueryBus} queryBus - CQRS query bus for handling read operations
+ * @param {CommandBus} commandBus - CQRS command bus for handling write operations and user authentication
+ */
+@Injectable()
+export class TelegramBot implements OnApplicationShutdown {
+  private readonly logger = new Logger(TelegramBot.name);
+  private readonly config: TelegramBotConfig;
+  private readonly bot: Telegraf;
+
+  private async getListeners(): Promise<number[]> {
+    return (await this.cacheManager.get<number[]>('telegram:listeners')) || [];
+  }
+
+  private async addListener(listener: number) {
+    const listeners = await this.getListeners();
+    if (!listeners.includes(listener)) {
+      this.logger.verbose(`adding listener: ${listener}`);
+      this.cacheManager.set('telegram:listeners', [...listeners, listener]);
+    } else {
+      this.logger.verbose('listener already exists');
+    }
+  }
+
+  private async removeListener(listener: number) {
+    const listeners = await this.getListeners();
+    this.logger.verbose(`removing listener: ${listener}`);
+    this.cacheManager.set(
+      'telegram:listeners',
+      listeners.filter((l) => l != listener),
+    );
+  }
+
+  constructor(
+    configService: ConfigService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly queryBus: QueryBus,
+    private readonly commandBus: CommandBus,
+  ) {
+    this.config = configService.get('telegramBot')!;
+    this.bot = new Telegraf(this.config.apiToken);
+
+    this.bot.command('help', async (ctx) => {
+      this.logger.debug(`help requested by ${ctx.message.from.first_name}`);
+
+      await ctx.telegram.sendMessage(
+        ctx.message.chat.id,
+        `Hallo ${ctx.message.from.first_name}. Je kunt je registeren via /register om meldingen te krijgen van mij.`,
+      );
+    });
+
+    this.bot.command('register', async (ctx) => {
+      this.logger.debug(`register requested by ${ctx.message.from.first_name}`);
+      await this.addListener(ctx.chat.id);
+      await ctx.telegram.sendMessage(
+        ctx.message.chat.id,
+        `Je krijgt vanaf nu meldingen van mij. Meldingen uitzetten: /unregister`,
+      );
+    });
+
+    this.bot.command('unregister', async (ctx) => {
+      this.logger.debug(
+        `unregister requested by ${ctx.message.from.first_name}`,
+      );
+
+      this.removeListener(ctx.chat.id);
+      await ctx.telegram.sendMessage(
+        ctx.message.chat.id,
+        `Je krijgt vanaf nu GEEN meldingen van mij. Meldingen aanzetten: /register`,
+      );
+    });
+
+    const handleAssignmentMessage = async (
+      ctx: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>,
+      name: string,
+      points: number,
+      remarks: string | undefined,
+    ) => {
+      const assignment = await this.queryBus.execute<
+        GetAssignmentByNameQuery,
+        Assignment
+      >(new GetAssignmentByNameQuery(name));
+
+      if (!assignment) {
+        const message = `Ik kon de punten voor de opdracht "${name}" niet registeren, want de opdracht kon ik niet vinden op https://www.beverhunt.nl/assignments`;
+        await ctx.telegram.sendMessage(ctx.message.chat.id, message);
+        this.send(message);
+        return;
+      }
+
+      await this.commandBus.execute(
+        new ReceiveAssignmentPointsCommand(
+          TelegramUserId,
+          assignment.id,
+          points,
+        ),
+      );
+
+      const message = `Ik heb ${points} van ${assignment.maxPoints} punten voor opdracht "${name}" geregistreerd: https://www.beverhunt.nl/assignment/${assignment.id}`;
+      await ctx.telegram.sendMessage(ctx.message.chat.id, message);
+      this.send(message);
+
+      if (remarks) {
+        const message = `De jury had als opmerking: ${remarks}`;
+        await ctx.telegram.sendMessage(ctx.message.chat.id, message);
+        this.send(message);
+      }
+    };
+
+    // This function handles photo messages, queries for a photo by name, sends error message if the photo does not exist or executes a command to assign points to a found photo.
+    const handlePhotoMessage = async (
+      ctx: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>,
+      name: string,
+      points: number,
+    ) => {
+      const photo = await this.queryBus.execute<GetPhotoByNameQuery, Photo>(
+        new GetPhotoByNameQuery(name),
+      );
+
+      if (!photo) {
+        const message = `Ik kon de punten voor de foto "${name}" niet registeren, want de foto kon ik niet vinden op https://www.beverhunt.nl/photos`;
+        await ctx.telegram.sendMessage(ctx.message.chat.id, message);
+        await this.send(message);
+        return;
+      }
+
+      await this.commandBus.execute(
+        new ReceivePhotoPointsCommand(TelegramUserId, photo.id, points),
+      );
+
+      const message = `Ik heb ${points} punten voor photo "${name}" geregistreerd: https://www.beverhunt.nl/photos/${photo.id}`;
+      await ctx.telegram.sendMessage(ctx.message.chat.id, message);
+      await this.send(message);
+    };
+
+    const handleHuntMessage = async (
+      ctx: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>,
+      code: string,
+      points: number,
+    ) => {
+      // This code attempts to retrieve a Hunt by its code. If the Hunt is not found, it sends an error message.
+      // If the Hunt is found, it executes a command to receive points for the Hunt and sends a success message.
+      const hunt = await this.queryBus.execute<GetHuntByCodeQuery, Hunt>(
+        new GetHuntByCodeQuery(code),
+      );
+
+      if (!hunt) {
+        const message = `Ik kon de punten voor de hunt "${code}" niet registeren, want de hunt kon ik niet vinden op https://www.beverhunt.nl/hunts`;
+        await ctx.telegram.sendMessage(ctx.message.chat.id, message);
+        this.send(message);
+        return;
+      }
+
+      await this.commandBus.execute(
+        new ReceiveHuntPointsCommand(TelegramUserId, hunt.id, points),
+      );
+
+      const message = `Ik heb ${points} punten voor hunt "${code}" geregistreerd: https://www.beverhunt.nl/hunts/${hunt.id}`;
+      await ctx.telegram.sendMessage(ctx.message.chat.id, message);
+      this.send(message);
+    };
+
+    this.bot.on('message', async (ctx) => {
+      if ('text' in ctx.message) {
+        const assignmentResponse = ctx.message.text.match(
+          this.config.assignmentRegExp,
+        );
+
+        if (assignmentResponse && assignmentResponse.groups) {
+          const points = assignmentResponse.groups['points'];
+          const name = assignmentResponse.groups['name'];
+          const remarks = assignmentResponse.groups['remarks'];
+
+          handleAssignmentMessage(ctx, name, Number(points), remarks);
+          return;
+        }
+
+        const huntResponse = ctx.message.text.match(this.config.huntRegExp);
+
+        if (huntResponse && huntResponse.groups) {
+          const code = huntResponse.groups['code'];
+          const points = huntResponse.groups['points'];
+
+          handleHuntMessage(ctx, code, Number(points));
+          return;
+        }
+        const photoResponse = ctx.message.text.match(this.config.photoRegExp);
+
+        if (photoResponse && photoResponse.groups) {
+          const points = photoResponse.groups['points'];
+          const name = photoResponse.groups['name'];
+
+          handlePhotoMessage(ctx, name, Number(points));
+          return;
+        }
+        if (!ctx.message.text.includes('@Auto_Forward_Messages_Bot')) {
+          this.logger.warn(
+            `Did not understand: ${JSON.stringify(ctx.message)}`,
+          );
+          await ctx.telegram.sendMessage(
+            ctx.message.chat.id,
+            `Ik heb je verstaan ${ctx.message.from.first_name}, maar niet begrepen Je zei "${ctx.message.text}"`,
+          );
+        }
+      }
+    });
+  }
+
+  public async start() {
+    const listeners = await this.getListeners();
+    this.logger.log(
+      `Starting telegram bot with listeners: ${listeners.join(', ')}`,
+    );
+    this.bot.launch();
+  }
+
+  public async send(message: string) {
+    this.logger.debug(`sending ${message}`);
+    (await this.getListeners()).map((listener) =>
+      this.bot.telegram.sendMessage(listener, message),
+    );
+  }
+
+  public onApplicationShutdown() {
+    this.bot.stop();
+  }
+}

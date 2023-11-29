@@ -1,0 +1,188 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiParam, ApiQuery } from '@nestjs/swagger';
+import { AreaId, ImageUrl, ParticipantId, UserId } from 'beverhunt-models';
+import { RequireActiveUser, RequireAdmin } from '~/authorization';
+import { AuthenticatedRequest } from '~/authorization/authenticated.request';
+import {
+  CreateParticipantCommand,
+  GetParticipantByIdQuery,
+  GetParticipantByNameQuery,
+  GetParticipantsQuery,
+  HideParticipantCommand,
+  Participant,
+  SetParticipantAreaCommand,
+  SetParticipantLogoCommand,
+  UpdateParticipantLocationCommand,
+  UpdateParticipantNameCommand,
+} from '~/domain';
+import { LocationDto, ParticipantIdDto, SetParticipantNameDto } from './dtos';
+import { SetParticipantAreaDto } from './dtos/set-participant-area.dto';
+import { SetParticipantNameImageUrlDto } from './dtos/set-participant-image-url.dto';
+import { CreateParticipantDto } from './dtos/create-participant.dto';
+
+/**
+ * ParticipantController is responsible for handling requests related to participant profiles
+ * in the system.
+ * This controller requires users to be active and authenticated. Actions that modify data are restricted to admin users.
+ *
+ * It leverages the Command Query Responsibility Segregation (CQRS) pattern to separate
+ * read and write operations, improving performance, scalability, and maintainability.
+ * The controller uses the CommandBus and QueryBus from NestJS CQRS module to dispatch commands
+ * and queries respectively.
+ *
+ * All actions performed through this controller are logged for auditing and debugging purposes.
+ *
+ * @param {CommandBus} commandBus - The bus for dispatching CQRS commands
+ * @param {QueryBus} queryBus - The bus for dispatching CQRS queries
+ */
+@Controller('participant')
+@RequireActiveUser()
+export class ParticipantController {
+  private logger = new Logger(ParticipantController.name);
+
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
+
+  @Get()
+  @ApiQuery({ name: 'name', required: false, type: String })
+  find(
+    @Req() req: AuthenticatedRequest,
+    @Query('name') name?: string,
+    @Query('deleted') includeDeleted?: boolean,
+  ) {
+    this.logger.debug(`find: ${name || 'All'}`);
+    if (name) {
+      return this.queryBus.execute<GetParticipantByNameQuery, Participant[]>(
+        new GetParticipantByNameQuery(name),
+      );
+    }
+    const query = new GetParticipantsQuery(req.user.isAdmin, includeDeleted);
+    return this.queryBus.execute<GetParticipantsQuery, Participant>(query);
+  }
+
+  @Post()
+  @RequireAdmin()
+  create(
+    @Body() { name, location }: CreateParticipantDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.commandBus.execute<CreateParticipantCommand, Participant>(
+      new CreateParticipantCommand(UserId(req.user.id), name, location),
+    );
+  }
+
+  @Get(':id')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  findOne(@Param('id') id: number) {
+    return this.queryBus.execute<GetParticipantByIdQuery, Participant>(
+      new GetParticipantByIdQuery(ParticipantId(id)),
+    );
+  }
+
+  @Post(':id/name/:name')
+  @RequireAdmin()
+  @ApiParam({ name: 'name', required: true, type: String })
+  @ApiParam({ name: 'id', required: true, type: Number })
+  setName(
+    @Param() { id, name }: SetParticipantNameDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    this.logger.debug(`setName: ${JSON.stringify({ id, name })}`);
+    return this.commandBus.execute<UpdateParticipantNameCommand, Participant>(
+      new UpdateParticipantNameCommand(
+        UserId(req.user.id),
+        ParticipantId(id),
+        name,
+      ),
+    );
+  }
+
+  @Post(':id/area/:area')
+  @RequireAdmin()
+  @ApiParam({ name: 'area', required: true, type: String })
+  @ApiParam({ name: 'id', required: true, type: Number })
+  setArea(
+    @Param() { id, area }: SetParticipantAreaDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    this.logger.debug(`setArea: ${JSON.stringify({ id, area })}`);
+    return this.commandBus.execute<SetParticipantAreaCommand, Participant>(
+      new SetParticipantAreaCommand(
+        UserId(req.user.id),
+        ParticipantId(id),
+        area === AreaId('-') ? AreaId('') : area,
+      ),
+    );
+  }
+
+  @Post(':id/logo')
+  @RequireAdmin()
+  @ApiParam({ name: 'id', required: true, type: Number })
+  setImageUrl(
+    @Param() { id }: ParticipantIdDto,
+    @Body() { imageUrl: imageUrl }: SetParticipantNameImageUrlDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    this.logger.debug(`setImageUrl: ${JSON.stringify({ id, imageUrl })}`);
+    return this.commandBus.execute<SetParticipantLogoCommand, Participant>(
+      new SetParticipantLogoCommand(
+        UserId(req.user.id),
+        ParticipantId(id),
+        ImageUrl(imageUrl),
+      ),
+    );
+  }
+
+  @RequireAdmin()
+  @Post('/:id/hide')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  hide(@Param() { id }: ParticipantIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`hide ${id}`);
+    return this.commandBus.execute<HideParticipantCommand, object>(
+      new HideParticipantCommand(UserId(req.user.id), UserId(id), true),
+    );
+  }
+
+  @RequireAdmin()
+  @Post('/:id/show')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  show(@Param() { id }: ParticipantIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`hide ${id}`);
+    return this.commandBus.execute<HideParticipantCommand, object>(
+      new HideParticipantCommand(UserId(req.user.id), UserId(id), false),
+    );
+  }
+
+  @Post(':id/location')
+  @RequireAdmin()
+  @ApiParam({ name: 'id', required: true, type: Number })
+  setLocation(
+    @Param() { id }: ParticipantIdDto,
+    @Req() req: AuthenticatedRequest,
+    @Body() { location }: LocationDto,
+  ) {
+    this.logger.debug(`setLocation: ${JSON.stringify({ id, location })}`);
+    return this.commandBus.execute<
+      UpdateParticipantLocationCommand,
+      Participant
+    >(
+      new UpdateParticipantLocationCommand(
+        UserId(req.user.id),
+        ParticipantId(id),
+        location,
+      ),
+    );
+  }
+}

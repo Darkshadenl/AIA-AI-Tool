@@ -1,0 +1,87 @@
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+  Param,
+  Post,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes } from '@nestjs/swagger';
+import { Response } from 'express';
+import { MediaService } from '~/infrastructure/media';
+
+/**
+ * MediaController is responsible for handling media-related operations such as
+ * uploading and retrieving media files. It leverages the MediaService to interact
+ * with the underlying media storage and retrieval mechanisms. This controller
+ * handles text/plain requests for file uploads and provides endpoints
+ * for accessing the uploaded media.
+ *
+ * The uploadFile method allows for updating an new media file or replacing an
+ * existing one based on its name. It performs checks to ensure a file is provided
+ * and logs the creation or update of media items.
+ *
+ * The getFile method retrieves a media item by its name and sends it in the response.
+ * It ensures that the requested media exists and logs the retrieval operation.
+ *
+ * Note: All media operations are logged for monitoring and performance analysis.
+ *
+ * @param {MediaService} media - Service for handling media-related operations
+ */
+@Controller('media')
+export class MediaController {
+  private logger = new Logger(MediaController.name);
+  constructor(private readonly media: MediaService) {}
+
+  @Post()
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('no file');
+    }
+    const name = file.originalname.toLowerCase();
+    const mimetype = file.mimetype;
+    const blob = file.buffer;
+
+    let media = await this.media.getMediaByName(name);
+    if (!media) {
+      media = await this.media.createMedia({
+        name,
+        mimetype,
+        blob,
+      });
+    } else {
+      media.mimetype = mimetype;
+      media.blob = file.buffer;
+
+      media = await this.media.updateMedia(media);
+    }
+
+    if (media) {
+      const { name, id, mimetype } = media;
+      this.logger.verbose(`Created ${name} as ${id}`);
+      return { name, id, mimetype, url: `/api/media/${name}` };
+    }
+
+    throw new InternalServerErrorException('Could not create media');
+  }
+
+  // Retrieves the specific media by its name and sends it as a response
+  @Get(':name')
+  async getFile(@Param('name') name: string, @Res() res: Response) {
+    this.logger.debug('GET ' + name);
+    const media = await this.media.getMediaByName(name.toLowerCase());
+    if (!media) { // If media is not found, throw an exception with the name that could not be located
+      throw new NotFoundException(`"${name}" not found in media`);
+    }
+    res.appendHeader('Content-type', media.mimetype);
+    res.send(media.blob);
+  }
+}

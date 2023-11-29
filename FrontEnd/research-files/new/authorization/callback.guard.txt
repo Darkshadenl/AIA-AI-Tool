@@ -1,0 +1,30 @@
+import { ExecutionContext, Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+/**
+ * CallbackGuard extends the functionality of the default AuthGuard to implement
+ * OAuth2 authentication. It is responsible for handling the OAuth2
+ * authentication callback, ensuring that the user session is refreshed before
+ * proceeding with the request.
+ *
+ * If authentication fails, it catches the error, logs it, and closes the session
+ * token to prevent any outdated authentication states.
+ *
+ * @extends {AuthGuard}
+ */
+@Injectable()
+export class CallbackGuard extends AuthGuard('oidc') {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    try {
+      const result = (await super.canActivate(context)) as boolean;
+      const request = context.switchToHttp().getRequest();
+      await super.logIn(request);
+      return result;
+    } catch (e) {
+      console.error(e);
+      const response = context.switchToHttp().getResponse();
+      response.clearCookie('connect.sid');
+      return false;
+    }
+  }
+}

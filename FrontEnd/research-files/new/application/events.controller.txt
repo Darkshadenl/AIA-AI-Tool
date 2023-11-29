@@ -1,0 +1,32 @@
+import { Controller, Get, Logger, Req } from '@nestjs/common';
+import { Authenticated } from '~/authorization';
+import { AuthenticatedRequest } from '~/authorization/authenticated.request';
+import { EventStore } from '~/infrastructure/event-store';
+
+/**
+ * EventsController is responsible for handling all user requests, including event-related ones.
+ * It leverages the EventStore to retrieve and manage user profiles.
+ * This controller is intended to be accessed by any user, ensuring that event data is public.
+ *
+ * @param {EventStore} eventStore - Store for user data and operations
+ */
+@Controller('events')
+export class EventsController {
+  private logger = new Logger(EventsController.name);
+
+  constructor(private readonly eventStore: EventStore) {}
+
+  /**
+   * GetEvents retrieves a single event from the EventStore.
+   * This method is intended to be accessed by any user, ensuring that event data is public.
+   *
+   * @param {AuthenticatedRequest} req - Express request object with user information
+   * @returns {Promise<Event[]>} - Promise containing a single event from the EventStore
+   */
+  @Get()
+  @Authenticated()
+  getEvents(@Req() req: AuthenticatedRequest) {
+    this.logger.log(`GetEvents ${req.user?.email}`);
+    return this.eventStore.findAll(); // Invokes "findOne" method from eventStore after logging the user's email
+  }
+}

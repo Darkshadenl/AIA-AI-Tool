@@ -1,0 +1,32 @@
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { AuthenticatedRequest } from './authenticated.request';
+
+/**
+ * AdminGuard is a custom guard implementing the CanActivate interface, used to protect routes
+ * that should only be accessible by confirmed and non-blocked admin users. It ensures that a user
+ * is authenticated and has the necessary admin privileges before allowing access to the protected
+ * route.
+ *
+ * The guard checks the following conditions:
+ * - The user must be authenticated (logged in).
+ * - The user's account must be confirmed.
+ * - The user must not be blocked.
+ * - The user must have admin rights.
+ *
+ * If any of these conditions fail, access to the route is denied.
+ *
+ * @implements {CanActivate} from NestJS common module, providing a method to determine
+ * whether the current user is allowed to proceed with the current request.
+ */
+@Injectable()
+export class AdminGuard implements CanActivate {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest() as AuthenticatedRequest;
+    return (
+      request.isAuthenticated() &&
+      request.user.isConfirmed &&
+      !request.user.isBlocked &&
+      request.user.isAdmin
+    );
+  }
+}

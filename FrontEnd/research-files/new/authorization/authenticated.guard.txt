@@ -1,0 +1,22 @@
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+
+/**
+ * AuthenticatedGuard is a custom guard class that implements the `CanActivate` interface
+ * provided by NestJS. It is used to determine if a user is authenticated to
+ * proceed with the current request. This guard can be applied to routes to
+ * protect them and ensure that only authenticated users can access them.
+ *
+ * The `canActivate` method extracts the request object from the execution context and
+ * checks if the user is authenticated by calling `request.isAuthenticated()`.
+ *
+ * This guard should be used in conjunction with authentication middleware that sets up
+ * the `isAuthenticated` method on the request object.
+ *
+ */
+@Injectable()
+export class AuthenticatedGuard implements CanActivate {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    return request.isAuthenticated();
+  }
+}

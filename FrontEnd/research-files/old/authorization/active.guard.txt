@@ -1,0 +1,27 @@
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { AuthenticatedRequest } from './authenticated.request';
+
+/**
+ * ActiveGuard is a custom guard implementation used in NestJS to determine
+ * whether a given request should be allowed to proceed. It checks if the user
+ * is authenticated, their account is confirmed, and the user has admin privileges.
+ *
+ * This guard is typically used in routes that require a user to be signed in
+ * and have a premium account status. It ensures that only active and premium
+ * users can access protected resources.
+ *
+ * @implements {CanActivate} from NestJS common module, providing the checkActive method
+ * @see {AuthenticatedRequest} for the extended request object with user session details
+ */
+@Injectable()
+export class ActiveGuard implements CanActivate {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest() as AuthenticatedRequest;
+
+    return (
+      request.isAuthenticated() &&
+      request.user.isConfirmed &&
+      !request.user.isBlocked
+    );
+  }
+}

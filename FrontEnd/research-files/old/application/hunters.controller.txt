@@ -1,0 +1,195 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  NotFoundException,
+  Param,
+  Post,
+  Req,
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiParam } from '@nestjs/swagger';
+import { AreaId, HunterId, UserId } from 'beverhunt-models';
+import { RequireActiveUser } from '~/authorization';
+import { AuthenticatedRequest } from '~/authorization/authenticated.request';
+import {
+  ChangeTransportCommand,
+  CreateHunterCommand,
+  GetHunterByUserId,
+  GetHuntersQuery,
+  Hunter,
+  PauseCommand,
+  ResetTraccarPasswordCommand,
+  ResumeCommand,
+  SetHunterAreaCommand,
+  StartCommand,
+  StopCommand,
+  UpdateHunterNameCommand,
+} from '~/domain';
+import {
+  ChangeTransportDto,
+  CreateHunterDto,
+  HunterIdDto,
+  SetHunterNameDto,
+} from './dtos';
+import { ResetTraccarPasswordDto } from './dtos/reset-traccar-password.dto';
+import { SetHunterAreaDto } from './dtos/set-hunter-area.dto';
+
+/**
+ * HuntersController is responsible for handling requests related to hunter management.
+ * It provides endpoints for CRUD operations on hunters, as well as for controlling their
+ * state (e.g., start, stop, pause, resume) and managing their associated details such as
+ * transport and habitat. This controller is designed to be used by all users with
+ * the necessary permissions to manage wildlife within the system.
+ *
+ * The controller requires an active user session and utilizes command/query buses to
+ * interact with the domain model, ensuring a clear separation of concerns and adherence
+ * to the CQRS pattern.
+ *
+ * All actions performed through this controller are logged for auditing and debugging purposes.
+ *
+ * @param {CommandBus} commandBus - The bus for dispatching commands to the appropriate handlers
+ * @param {QueryBus} queryBus - The bus for dispatching queries to retrieve data
+ */
+@Controller('hunter')
+@RequireActiveUser()
+export class HuntersController {
+  private readonly logger = new Logger(HuntersController.name);
+
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
+
+  @Get()
+  findAll() {
+    this.logger.debug(`findAll`);
+    return this.queryBus.execute<GetHuntersQuery, Hunter[]>(
+      new GetHuntersQuery(),
+    );
+  }
+
+  @Get(':userId')
+  async findOneByUserId(@Param('userId') userId: number) {
+    this.logger.debug(`findOneByUserId: ${JSON.stringify({ userId })}`);
+    const hunter = await this.queryBus.execute<GetHunterByUserId, Hunter>(
+      new GetHunterByUserId(UserId(userId)),
+    );
+    if (!hunter) {
+      throw new NotFoundException(`Hero "${userId}" not found`);
+    }
+    return hunter;
+  }
+
+  @Post()
+  createHunter(
+    @Body() { name, userId, transport, password }: CreateHunterDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    this.logger.debug(
+      `createHunter: ${JSON.stringify({ name, userId, transport })}`,
+    );
+    return this.commandBus.execute<CreateHunterCommand, Hunter>(
+      new CreateHunterCommand(
+        UserId(req.user.id),
+        name,
+        userId,
+        transport,
+        password,
+      ),
+    );
+  }
+
+  @Post(':id/name/:name')
+  @ApiParam({ name: 'name', required: true, type: String })
+  @ApiParam({ name: 'id', required: true, type: Number })
+  setName(
+    @Param() { id, name }: SetHunterNameDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    this.logger.debug(`setName: ${JSON.stringify({ id, name })}`);
+    return this.commandBus.execute<UpdateHunterNameCommand, Hunter>(
+      new UpdateHunterNameCommand(UserId(req.user.id), id, name),
+    );
+  }
+
+  @Post(':id/start')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  start(@Param() { id }: HunterIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.debug(`start: ${JSON.stringify({ id })}`);
+    return this.commandBus.execute<StartCommand, Hunter>(
+      new StartCommand(UserId(req.user.id), id),
+    );
+  }
+
+  @Post(':id/stop')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  stop(@Param() { id }: HunterIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.debug(`stop: ${JSON.stringify({ id })}`);
+    return this.commandBus.execute<StopCommand, Hunter>(
+      new StopCommand(UserId(req.user.id), id),
+    );
+  }
+
+  @Post(':id/pause')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  pause(@Param() { id }: HunterIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.debug(`pause: ${JSON.stringify({ id })}`);
+    return this.commandBus.execute<PauseCommand, Hunter>(
+      new PauseCommand(UserId(req.user.id), id),
+    );
+  }
+
+  @Post(':id/resume')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  resume(@Param() { id }: HunterIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.debug(`resume: ${JSON.stringify({ id })}`);
+    return this.commandBus.execute<ResumeCommand, Hunter>(
+      new ResumeCommand(UserId(req.user.id), id),
+    );
+  }
+
+  @Post(':id/password')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  resetTraccarPassword(
+    @Param() { id }: HunterIdDto,
+    @Body() { password }: ResetTraccarPasswordDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    this.logger.debug(`resetPassword: ${JSON.stringify({ id })}`);
+    return this.commandBus.execute<ResetTraccarPasswordCommand, Hunter>(
+      new ResetTraccarPasswordCommand(UserId(req.user.id), id, password),
+    );
+  }
+
+  @Post(':id/transport/:transport')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  @ApiParam({ name: 'transport', required: true, type: String })
+  changeTransport(  // Changes the transport for a user identified by 'id' with the provided 'transport' parameter
+    @Param() { id, transport }: ChangeTransportDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    this.logger.debug(`changeTransport: ${JSON.stringify({ id, transport })}`);
+    return this.commandBus.execute<ChangeTransportCommand, Hunter>(
+      new ChangeTransportCommand(UserId(req.user.id), id, transport),
+    );
+  }
+
+  @Post(':id/area/:area')
+  @ApiParam({ name: 'area', required: true, type: String })
+  @ApiParam({ name: 'id', required: true, type: Number })
+  setArea(
+    @Param() { id, area }: SetHunterAreaDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    this.logger.debug(`setArea: ${JSON.stringify({ id, area })}`);
+    return this.commandBus.execute<SetHunterAreaCommand, Hunter>(
+      new SetHunterAreaCommand(
+        UserId(req.user.id),
+        HunterId(id),
+        area === AreaId('-') ? AreaId('') : area,
+      ),
+    );
+  }
+}

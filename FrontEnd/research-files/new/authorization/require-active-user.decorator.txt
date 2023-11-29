@@ -1,0 +1,6 @@
+import { applyDecorators, UseGuards } from '@nestjs/common';
+import { ActiveGuard } from './active.guard';
+
+export function RequireActiveUser(): MethodDecorator & ClassDecorator {
+  return applyDecorators(UseGuards(ActiveGuard));
+}

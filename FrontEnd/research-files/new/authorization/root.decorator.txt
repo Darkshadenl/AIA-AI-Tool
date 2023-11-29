@@ -1,0 +1,6 @@
+import { applyDecorators, UseGuards } from '@nestjs/common';
+import { RootGuard } from './root.guard';
+
+export function Root(): MethodDecorator & ClassDecorator {
+  return applyDecorators(UseGuards(RootGuard));
+}

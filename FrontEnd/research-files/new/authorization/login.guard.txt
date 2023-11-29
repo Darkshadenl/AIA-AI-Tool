@@ -1,0 +1,33 @@
+import { ExecutionContext, Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+/**
+ * LoginGuard extends the functionality of the standard AuthGuard to implement
+ * OAuth2 authentication. It overrides the canActivate method to
+ * provide additional login logic specific to social media platforms.
+ *
+ * The guard ensures that the user session is valid before allowing access to public
+ * routes. If authentication fails, it clears the browsing history and redirects the user
+ * to the login page.
+ *
+ * Note: This guard should be used on routes where OAuth2 authentication is preferred.
+ *
+ * @extends {AuthGuard} from '@nestjs/passport' - Inherits the base AuthGuard capabilities.
+ */
+@Injectable()
+export class LoginGuard extends AuthGuard('oidc') {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    try {
+      const result = (await super.canActivate(context)) as boolean;
+      const request = context.switchToHttp().getRequest();
+      await super.logIn(request);
+      return result;
+    } catch (e) {
+      console.error(e);
+      const response = context.switchToHttp().getResponse();
+      response.clearCookie('connect.sid');
+      response.redirect('/');
+      return false;
+    }
+  }
+}

@@ -1,0 +1,15 @@
+import { applyDecorators, UseGuards } from '@nestjs/common';
+import { AuthenticatedGuard } from './authenticated.guard';
+
+/**
+ * `Authenticated` is a custom decorator that applies the `AuthenticatedGuard` to either
+ * a whole class or specific methods within a class. It is used to ensure that only
+ * authorized personnel can access the decorated class or methods.
+ * This decorator is typically used in services to protect routes that require a user
+ * to be signed up. It simplifies the enforcement of authorization by abstracting the guard
+ * application logic into a reusable decorator.
+ *
+ */
+export function Authenticated(): MethodDecorator & ClassDecorator {
+  return applyDecorators(UseGuards(AuthenticatedGuard));
+}

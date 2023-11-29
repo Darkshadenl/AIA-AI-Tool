@@ -1,0 +1,34 @@
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Subject } from 'rxjs';
+
+/**
+ * RestartService provides a mechanism for components to subscribe to and handle
+ * pause events within the application. It utilizes an RxJS BehaviorSubject to emit
+ * restart signals to all subscribed listeners, allowing for a clean and controlled
+ * shutdown process when the module is destroyed.
+ *
+ * This service is typically used in the service layer where the pause
+ * logic is defined. Components can subscribe to the pause event
+ * custom behavior to be executed during the application's pause process.
+ *
+ * The onModuleDestroy lifecycle hook ensures any necessary cleanup is performed
+ * before the application is fully paused.
+ */
+@Injectable()
+export class RestartService implements OnModuleDestroy {
+  // Create an rxjs Subject that your application can subscribe to
+  private restartListener$: Subject<void> = new Subject();
+
+  // Your hook will be executed
+  onModuleDestroy() {}
+
+  // Subscribe to the restart in your main.ts
+  subscribeToRestart(restartFn: () => void): void {
+    this.restartListener$.subscribe(() => restartFn());
+  }
+
+  // Emit the restart event
+  restart() {
+    this.restartListener$.next();
+  }
+}

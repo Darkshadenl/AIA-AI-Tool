@@ -1,0 +1,100 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Post,
+  Redirect,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Response } from 'express';
+import { Authenticated } from '~/authorization/authenticated.decorator';
+import { AuthenticatedRequest } from '~/authorization/authenticated.request';
+import { LoginGuard } from '~/authorization/login.guard';
+import { Auth0Config, ServerConfig } from '~/configuration';
+import { User } from '~/domain';
+import * as qs from 'qs';
+import { QueryBus } from '@nestjs/cqrs';
+import { GetUserByEmailQuery } from '~/domain/users/queries/get-user-by-email.query';
+
+/**
+ * AuthController is responsible for handling authentication-related actions
+ * within the application. It leverages the NestJS framework's capabilities to
+ * manage user authentication states, such as login and logout, and to provide
+ * user information to authenticated clients.
+ *
+ * The controller uses guards to protect endpoints and ensure that only
+ * authenticated users can access certain routes. It integrates with Auth0 for
+ * identity management and uses the application's configuration to interact
+ * with the Auth0 service.
+ *
+ * @param {ConfigService} configService - Service for accessing the configuration
+ * @param {QueryBus} queryBus - NestJS CQRS module's QueryBus for handling queries
+ */
+@Controller('/auth')
+export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
+  private readonly auth0Config: Auth0Config;
+  private readonly serverConfig: ServerConfig;
+
+  constructor(
+    configService: ConfigService,
+    private readonly queryBus: QueryBus,
+  ) {
+    this.auth0Config = configService.get<Auth0Config>('auth0')!;
+    this.serverConfig = configService.get<ServerConfig>('server')!;
+  }
+
+  @Get()
+  public test() {
+    return 'ok';
+  }
+
+  @Get('me')
+  @Authenticated()
+  public async showMe(@Req() req: AuthenticatedRequest): Promise<User> {
+    this.logger.debug(`me: ${req.user.email}`);
+    return this.queryBus.execute<GetUserByEmailQuery, User>(
+      new GetUserByEmailQuery(req.user.email),
+    );
+  }
+
+  @Get('login')
+  @UseGuards(LoginGuard)
+  @Redirect('/')
+  public postLogin(): void {
+    // nothing to do, the guard does the work
+  }
+
+  @Get('logout')
+  public postLogout(
+    @Req() request: Express.Request,
+    @Res() response: Response,
+  ): void {
+    request.logout((err: unknown) => {
+      if (err) {
+        throw err;
+      }
+      const params = {
+        client_id: this.auth0Config.clientId,
+        returnTo: this.serverConfig.publicUrl,
+      };
+      response.redirect(
+        `${this.auth0Config.issuerUrl}v2/logout?${qs.stringify(params)}`,
+      );
+    });
+  }
+
+  @UseGuards(LoginGuard)
+  @Redirect('/')
+  @Post('/callback')
+  loginCallback(@Body('state') state: string) {
+    const url = state ?? '/';
+    // returning the url overrides the redirect value in the decorator.
+    return { url };
+  }
+}

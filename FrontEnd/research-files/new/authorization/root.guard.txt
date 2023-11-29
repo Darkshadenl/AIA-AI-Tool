@@ -1,0 +1,32 @@
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { AuthenticatedRequest } from './authenticated.request';
+
+/**
+ * RootGuard is a custom guard implementing the CanActivate interface, designed to protect
+ * routes that require both admin and root-level access.
+ * It ensures that the incoming request is from an
+ * authenticated user with confirmed status, not blocked, and possesses both admin and root
+ * privileges.
+ * This guard is typically used to secure sensitive endpoints that perform critical
+ * system operations or configuration changes.
+ *
+ * The canActivate method checks multiple conditions on the user object attached to the request
+ * to determine if the request should be allowed to proceed. If all of the conditions are met,
+ * access is granted, and the route is executed.
+ *
+ * @implements {CanActivate} from NestJS common module, providing a method to determine if a route can be activated
+ */
+@Injectable()
+export class RootGuard implements CanActivate {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest() as AuthenticatedRequest;
+
+    return (
+      request.isAuthenticated() &&
+      request.user.isConfirmed &&
+      !request.user.isBlocked &&
+      request.user.isAdmin &&
+      request.user.isRoot
+    );
+  }
+}

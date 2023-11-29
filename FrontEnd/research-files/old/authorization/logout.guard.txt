@@ -1,0 +1,56 @@
+import { ExecutionContext, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AuthGuard } from '@nestjs/passport';
+import * as qs from 'qs';
+import { Auth0Config, ServerConfig } from '~/configuration';
+
+/**
+ * LogoutGuard extends the functionality of the standard AuthGuard to handle
+ * user sign-off processes specifically for OAuth2 authentication.
+ * It is responsible for signing out users from the application and then redirecting
+ * them to the Google logout endpoint, ensuring that the user is also logged out from
+ * their Google session.
+ *
+ * This guard is typically used in routes that handle user sign-off functionality. It
+ * leverages the Google and server configurations to construct the logout URL and
+ * manage the redirection after the user visited the logout page.
+ *
+ * Note: This guard should be used in conjunction with the appropriate authentication
+ * strategies and is configured to work with OAuth2 by default.
+ *
+ * @param {ConfigService} configService - Service for accessing configuration values,
+ *                                        including Google and server-specific settings.
+ */
+@Injectable()
+export class LogoutGuard extends AuthGuard('oidc') {
+  private readonly auth0Config: Auth0Config;
+  private readonly serverConfig: ServerConfig;
+
+  constructor(configService: ConfigService) {
+    super();
+    this.auth0Config = configService.get<Auth0Config>('auth0')!;
+    this.serverConfig = configService.get<ServerConfig>('server')!;
+  }
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const httpContext = context.switchToHttp();
+    const response = httpContext.getResponse();
+    const request = httpContext.getRequest();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    request.logout((err: any) => {
+      if (err) {
+        throw err;
+      }
+      const params = {
+        client_id: this.auth0Config.clientId,
+        returnTo: this.serverConfig.publicUrl,
+      };
+      response.redirect(
+        this.auth0Config.issuerUrl + '/v2/logout?' + qs.stringify(params),
+      );
+    });
+
+    return true;
+  }
+}

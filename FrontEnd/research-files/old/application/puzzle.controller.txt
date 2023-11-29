@@ -1,0 +1,196 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Logger,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiParam } from '@nestjs/swagger';
+import { ArticleId, PuzzleId, UserId } from 'beverhunt-models';
+import { RequireActiveUser, RequireAdmin } from '~/authorization';
+import { AuthenticatedRequest } from '~/authorization/authenticated.request';
+import {
+  AddPuzzleGuessCommand,
+  CreatePuzzleCommand,
+  HidePuzzleCommand,
+  Puzzle,
+  ReceivePuzzlePointsCommand,
+  RegisterPuzzleSolutionCommand,
+  SetPuzzleGuesserCommand,
+  SubmitPuzzleSolutionCommand,
+  UpdatePuzzleCommand,
+} from '~/domain';
+import { GetPuzzlesQuery } from '~/domain/puzzles/queries/get-puzzles.query';
+import { GuessDto } from './dtos/guess.dto';
+import { PuzzleIdDto } from './dtos/puzzle-id.dto';
+import { SolutionDto } from './dtos/solution.dto';
+import { PuzzleFoxIdDto } from './dtos/puzzle-fox-id.dto';
+import { SetGuesserDto } from './dtos/set-guesser.dto';
+import { CreatePuzzleDto } from './dtos/create-puzzle.dto';
+
+/**
+ * PuzzleController is a RESTful controller that manages puzzle-related actions within the application.
+ * It provides endpoints for creating, updating, hiding, and solving puzzles, as well as for managing guesses
+ * and assigning points to users. This controller is designed to be used by both regular users and administrators,
+ * with certain actions restricted to admin users only.
+ *
+ * Note that most endpoints require an authenticated user, and actions such as creating, updating, and hiding
+ * puzzles require the user to have editorial privileges. TODO: should be: administrative privileges.
+ *
+ * @param {QueryBus} queryBus - The bus for handling query operations
+ * @param {CommandBus} commandBus - The bus for handling command operations
+ * @param {Logger} logger - Logs puzzle-related activities TODO: remove: @param {Logger} logger - Logs puzzle-related activities
+ */
+@Controller('puzzle')
+@RequireActiveUser()
+export class PuzzleController {
+  private logger = new Logger(PuzzleController.name);
+
+  constructor(
+    private readonly queryBus: QueryBus,
+    private readonly commandBus: CommandBus,
+  ) {}
+
+  @Get()
+  find(
+    @Req() req: AuthenticatedRequest,
+    @Query('deleted') includeDeleted?: boolean,
+  ) {
+    this.logger.debug(`findAll`);
+    const query = new GetPuzzlesQuery(req.user.isAdmin, includeDeleted);
+    return this.queryBus.execute<GetPuzzlesQuery, Puzzle[]>(query);
+  }
+
+  @Post()
+  @RequireAdmin()
+  create(
+    @Body() { name, content, publicationDate }: CreatePuzzleDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.commandBus.execute<CreatePuzzleCommand, Puzzle>(
+      new CreatePuzzleCommand(
+        UserId(req.user.id),
+        ArticleId(0),
+        name,
+        content,
+        publicationDate,
+      ),
+    );
+  }
+
+  @Put(':id')
+  @RequireAdmin()
+  update(
+    @Param() { id }: PuzzleIdDto,
+    @Body() { name, content, publicationDate }: CreatePuzzleDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.commandBus.execute<UpdatePuzzleCommand, Puzzle>(
+      new UpdatePuzzleCommand(
+        UserId(req.user.id),
+        id,
+        name,
+        content,
+        publicationDate,
+      ),
+    );
+  }
+
+  @Post('/:id/solution')
+  addSolution(
+    @Param() { id }: PuzzleIdDto,
+    @Body() { foxId, location, solverId, guess }: SolutionDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    this.logger.debug(`addSolution`);
+    return this.commandBus.execute<RegisterPuzzleSolutionCommand, Puzzle[]>(
+      new RegisterPuzzleSolutionCommand(
+        UserId(req.user.id),
+        id,
+        foxId,
+        location,
+        solverId,
+        guess,
+      ),
+    );
+  }
+
+  @Post('/:id/guess/:foxId')
+  guess(
+    @Param() { id, foxId }: PuzzleFoxIdDto,
+    @Body() { x, y, query }: GuessDto,
+  ) {
+    this.logger.debug(`addGuess: ${JSON.stringify({ foxId, x, y, query })}`);
+    return this.commandBus.execute<AddPuzzleGuessCommand, Puzzle[]>(
+      new AddPuzzleGuessCommand(id, foxId, x, y, query),
+    );
+  }
+
+  @Post('/:id/guesser/:foxId/:guesserId')
+  setGuesser(@Param() { id, foxId, guesserId }: SetGuesserDto) {
+    this.logger.debug(`setGuesser: ${JSON.stringify({ foxId, guesserId })}`);
+    return this.commandBus.execute<SetPuzzleGuesserCommand, Puzzle[]>(
+      new SetPuzzleGuesserCommand(id, foxId, guesserId),
+    );
+  }
+
+  @Delete('/:id/guesser/:foxId/')
+  clearGuesser(@Param() { id, foxId }: PuzzleFoxIdDto) {
+    this.logger.debug(`clearGuesser: ${JSON.stringify({ foxId })}`);
+    return this.commandBus.execute<SetPuzzleGuesserCommand, Puzzle[]>(
+      new SetPuzzleGuesserCommand(id, foxId, undefined),
+    );
+  }
+
+  @RequireAdmin()
+  @Post('/:id/hide')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  hide(@Param() { id }: PuzzleIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`hide ${id}`);
+    return this.commandBus.execute<HidePuzzleCommand, object>(
+      new HidePuzzleCommand(UserId(req.user.id), PuzzleId(id), true),
+    );
+  }
+
+  @RequireAdmin()
+  @Post('/:id/show')
+  @ApiParam({ name: 'id', required: true, type: Number })
+  show(@Param() { id }: PuzzleIdDto, @Req() req: AuthenticatedRequest) {
+    this.logger.log(`hide ${id}`);
+    return this.commandBus.execute<HidePuzzleCommand, object>(
+      new HidePuzzleCommand(UserId(req.user.id), PuzzleId(id), false),
+    );
+  }
+
+  @Post(':id/submit')
+  submit(
+    @Param('id') id: number,
+    @Body('submissionDateTime') submissionDateTime: Date,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.commandBus.execute<SubmitPuzzleSolutionCommand, Puzzle>(
+      new SubmitPuzzleSolutionCommand(
+        UserId(req.user.id),
+        PuzzleId(id),
+        submissionDateTime,
+      ),
+    );
+  }
+
+  @Post(':id/points/:points')
+  registerPoints(
+    @Param('id') id: number,
+    @Param('points') points: number,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.commandBus.execute<ReceivePuzzlePointsCommand, Puzzle>(
+      new ReceivePuzzlePointsCommand(UserId(req.user.id), PuzzleId(id), points),
+    );
+  }
+}

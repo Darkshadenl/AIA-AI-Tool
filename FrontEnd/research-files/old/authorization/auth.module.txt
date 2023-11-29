@@ -1,0 +1,35 @@
+import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
+import { PassportModule } from '@nestjs/passport';
+import { ActiveGuard } from './active.guard';
+import { AdminGuard } from './admin.guard';
+import { AuthController } from './auth.controller';
+import { OICDStrategy, buildOpenIdClient } from './oidc.strategy';
+import { SessionSerializer } from '../domain/users/session.serializer';
+
+const OIDCStrategyFactory = {
+  provide: 'OidcStrategy',
+  useFactory: async (
+    configService: ConfigService,
+    commandBus: CommandBus,
+    queryBus: QueryBus,
+  ) => {
+    const client = await buildOpenIdClient(configService);
+    if (client) {
+      return new OICDStrategy(configService, client, commandBus, queryBus);
+    }
+  },
+  inject: [ConfigService, CommandBus, QueryBus],
+};
+
+@Module({
+  imports: [
+    PassportModule.register({ session: true, defaultStrategy: 'oidc' }),
+    CqrsModule,
+  ],
+  exports: [PassportModule, AdminGuard, ActiveGuard],
+  providers: [OIDCStrategyFactory, SessionSerializer, AdminGuard, ActiveGuard],
+  controllers: [AuthController],
+})
+export class AuthModule {}

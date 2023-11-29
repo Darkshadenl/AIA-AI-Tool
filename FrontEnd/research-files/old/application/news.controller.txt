@@ -1,0 +1,32 @@
+import { Controller, Get, Logger } from '@nestjs/common';
+import { QueryBus } from '@nestjs/cqrs';
+import { RequireActiveUser } from '~/authorization';
+import { GetNewsItemsQuery, Puzzle } from '~/domain';
+
+/**
+ * NewsController is designed to handle requests related to news items within the application.
+ * It leverages the CQRS pattern by using a CommandBus to retrieve news data, encapsulating the
+ * query logic away from the controller itself. The controller is equipped with a logger for
+ * debugging and monitoring purposes.
+ *
+ * The `@RequireActiveUser` decorator ensures that all methods within this controller are
+ * accessible only to users who have an active account, providing an additional layer of
+ * security and enforcing user authentication.
+ *
+ * @param {QueryBus} queryBus - The EventBus instance used to handle CQRS operations.
+ */
+@Controller('news')
+@RequireActiveUser()
+export class NewsController {
+  private logger = new Logger(NewsController.name);
+
+  constructor(private readonly queryBus: QueryBus) {}
+
+  @Get()
+  find() {
+    this.logger.debug(`findAll`);
+    return this.queryBus.execute<GetNewsItemsQuery, Puzzle[]>(
+      new GetNewsItemsQuery(),
+    );
+  }
+}
