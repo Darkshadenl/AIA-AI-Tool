@@ -4,6 +4,13 @@
     import AutoGrowingTextArea from "$lib/components/AutoGrowingTextArea.svelte";
     import Loading from '$lib/components/+loading.svelte';
     import {diffStore, errorMessageStore, progressInformationMessageStore} from "../../store.js";
+    import hljs from 'highlight.js';
+    import {onMount} from "svelte";
+    import typescript from 'highlight.js/lib/languages/typescript';
+    import 'highlight.js/styles/github.css';
+
+    hljs.registerLanguage('typescript', typescript);
+
 
     let progressInformationMessage;
     let errorMessage;
@@ -125,9 +132,9 @@
                     let mergedValues = ""
                     current.merged.forEach(data => mergedValues = mergedValues === "" ? `${data.value}` :`${mergedValues}\n${data.value}`);
                     dataString = dataString === "" ? `${mergedValues}` : `${dataString}\n${mergedValues}`;
-                } else if (current.oldValue && current.newValue) {
-                    // if both oldValue and newValue exist, user forgot to select an option
-                    showError = true;
+                // }  // else if (current.oldValue && current.newValue) {
+                //     // if both oldValue and newValue exist, user forgot to select an option
+                //     showError = true;
                 } else {
                     // just take oldValue
                     let mergedValues = ""
@@ -167,6 +174,18 @@
         return new Blob([textContent], { type: "text/plain" });
     }
 
+    function highlightCode() {
+        const codeElements = document.querySelectorAll('pre code');
+        codeElements.forEach((block) => {
+            hljs.highlightBlock(block);
+            block.style.padding = '2px';
+        });
+    }
+
+    onMount(() => {
+        highlightCode();
+    });
+
 </script>
 
 <div>
@@ -201,14 +220,14 @@
                              role="button">
 
                             <span>{oldCode.oldLineNumber}</span>
-                            <pre>{oldCode.value}</pre>
+                            <pre><code class="typescript">{oldCode.value}</code></pre>
                         </div>
                     {/each}
                 {/each}
             </div>
 
             <div class="code maxxed">
-                <h2>New: {mergedStruct[index].fileName}</h2>
+                <h2>Merged: {mergedStruct[index].fileName}</h2>
 
                 {#each mergedStruct[index].diffs as diff}
                     {#if diff.merged}
@@ -232,7 +251,7 @@
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
                                 <span>{oldCode.oldLineNumber}</span>
-                                <pre>{oldCode.value}</pre>
+                                <pre><code class="typescript">{oldCode.value}</code></pre>
                             </div>
                         {/each}
                     {/if}
@@ -240,7 +259,7 @@
             </div>
 
             <div class="code maxxed">
-                <h2>Merged: {diffItem.fileName}</h2>
+                <h2>New: {diffItem.fileName}</h2>
 
                 {#each diffItem.diffs as diff}
                     {#if diff.newValue}
@@ -259,17 +278,12 @@
                         {#each diff.oldValue as oldCode}
                             <div class="code-diff unchanged wrap" role="button">
                                 <span>{oldCode.newLineNumber}</span>
-                                <pre>{oldCode.value}</pre>
-
+                                <pre><code class="typescript">{oldCode.value}</code></pre>
                             </div>
                         {/each}
                     {/if}
                 {/each}
             </div>
-
-
-
-
         </div>
     {/each}
 {:else}
@@ -318,6 +332,7 @@
     .code-diff {
         margin: 0 0 3px 0;
         display: flex;
+        white-space: pre;
     }
 
     .code-diff span {
@@ -341,6 +356,11 @@
         font-weight: bold;
     }
 
+    .removed pre, .removed code {
+        background-color: rgba(241, 113, 130, 0.65);
+        color: #24292e;
+    }
+
     .added {
         background-color: rgba(117, 243, 155, 0.49);
         color: #24292e;
@@ -348,11 +368,6 @@
     }
 
     .unchanged {
-        color: #24292e;
-    }
-
-    .removed {
-        background-color: rgba(241, 113, 130, 0.65);
         color: #24292e;
     }
 
