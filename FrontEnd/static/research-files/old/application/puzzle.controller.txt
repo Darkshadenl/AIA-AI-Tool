@@ -41,11 +41,11 @@ import { CreatePuzzleDto } from './dtos/create-puzzle.dto';
  * with certain actions restricted to admin users only.
  *
  * Note that most endpoints require an authenticated user, and actions such as creating, updating, and hiding
- * puzzles require the user to have editorial privileges. TODO: should be: administrative privileges.
+ * puzzles require the user to have editorial privileges.
  *
  * @param {QueryBus} queryBus - The bus for handling query operations
  * @param {CommandBus} commandBus - The bus for handling command operations
- * @param {Logger} logger - Logs puzzle-related activities TODO: remove: @param {Logger} logger - Logs puzzle-related activities
+ * @param {Logger} logger - Logs puzzle-related activities
  */
 @Controller('puzzle')
 @RequireActiveUser()
