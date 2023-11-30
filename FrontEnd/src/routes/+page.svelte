@@ -95,9 +95,8 @@
 	async function debugSubmit(event) {
 		event.preventDefault();
 		console.log('debugSubmit');
-
-		const oldModules = import.meta.glob('../../research-files/old/*/*');
-		const newModules = import.meta.glob('../../research-files/new/*/*');
+		const oldModules = import.meta.glob('/static/research-files/old/*/*');
+		const newModules = import.meta.glob('/static/research-files/new/*/*');
 		const oldModulesKeys = Object.keys(oldModules);
 		const newModulesKeys = Object.keys(newModules);
 
@@ -105,8 +104,8 @@
 			return console.log("Not every old file has a corresponding new file.");
 
 		for (let i = 0; i < oldModulesKeys.length; i++) {
-			const oldModulePath = oldModulesKeys[i];
-			const newModulePath = newModulesKeys[i];
+			const oldModulePath = oldModulesKeys[i].replace('/static', '');
+			const newModulePath = newModulesKeys[i].replace('/static', '');
 
 			const oldFile = await fetch(oldModulePath);
 			const newFile = await fetch(newModulePath);
