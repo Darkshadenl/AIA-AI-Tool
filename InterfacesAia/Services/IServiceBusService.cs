@@ -4,7 +4,7 @@ namespace InterfacesAia.Services
 {
 	public interface IServiceBusService
 	{
-        Task<HubConnection> ExecuteAsync();
+        Task<HubConnection> ExecuteAsync(bool isDevelopment);
         HubConnection GetConnection();
     }
 }

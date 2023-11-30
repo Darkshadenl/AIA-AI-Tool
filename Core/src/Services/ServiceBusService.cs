@@ -18,10 +18,19 @@ namespace aia_api.Services
             _settings = settings;
         }
 
-        public async Task<HubConnection> ExecuteAsync()
+        public async Task<HubConnection> ExecuteAsync(bool isDevelopment)
         {
             var uri = _settings.Value.ServiceBusUrl;
-            _connection = new HubConnectionBuilder().WithUrl(uri).WithAutomaticReconnect().Build();
+            _connection = new HubConnectionBuilder().WithUrl(uri, conf =>
+            {
+                if (isDevelopment)
+                {
+                    conf.HttpMessageHandlerFactory = (x) => new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+                    };
+                }
+            }).WithAutomaticReconnect().Build();
 
             try
             {

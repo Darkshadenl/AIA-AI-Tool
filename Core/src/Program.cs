@@ -6,6 +6,7 @@ using InterfacesAia.Handlers;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.Http.Features;
 using InterfacesAia.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
@@ -20,10 +21,17 @@ builder.Services.Configure<FormOptions>(x =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<PredictionDbContext>();
+    if (context.Database.GetPendingMigrations().Any()) context.Database.Migrate();
+}
+
 IUploadHandler uploadHandler = app.Services.GetRequiredService<IUploadHandler>();
 IServiceBusService serviceBusService = app.Services.GetRequiredService<IServiceBusService>();
-HubConnection connection = await serviceBusService.ExecuteAsync();
-
+HubConnection connection = await serviceBusService.ExecuteAsync(app.Environment.IsDevelopment());
+Console.WriteLine(app.Environment.IsDevelopment());
 connection.On<string, string, string, byte[], int, int>("UploadChunk", uploadHandler.ReceiveFileChunk);
 
 var api = app.MapGroup("/api");
