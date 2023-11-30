@@ -3,11 +3,54 @@
 version: '3.4'
 
 services:
-  aiaapi:
-    image: aiaapi
+  api:
+    container_name: api
+    image: api
     build:
-      context: .
+      context: ./
       dockerfile: Dockerfile
-      target: ${TARGET}
     ports:
-      - 5264:80
+      - "5264:80"
+    volumes:
+      - db-data:/SharedFiles
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80;http://+:5264
+    depends_on:
+      - db
+      - signalr
+  frontend:
+    container_name: frontend
+    image: frontend
+    build:
+      context: ./FrontEnd
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - PUBLIC_API_URL=http://localhost:5195/uploadZip
+    depends_on:
+      - signalr
+  signalr:
+    container_name: signalr
+    image: signalr
+    build:
+      context: ./SignalRServer/SignalR
+      dockerfile: Dockerfile
+    ports:
+      - "5195:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80;http://+:5195
+  db:
+    container_name: sqlitedb
+    image: linuxserver/sqlitebrowser
+    ports:
+      - "1433:1433"
+    volumes:
+      - db-data:/SharedFiles
+    environment:
+      - DefaultConnection=Data Source=/SharedFiles/aia.db
+        
+volumes:
+  db-data:
