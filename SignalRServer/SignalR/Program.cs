@@ -3,6 +3,7 @@
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+builder.WebHost.UseUrls("http://*:5000");
 builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = true;
@@ -15,5 +16,6 @@ app.MapHub<MainHub>("/uploadZip", options =>
     options.ApplicationMaxBufferSize = 0; // No Maximum
     options.TransportMaxBufferSize = 0; // No Maximum
 });
+app.UseHostFiltering();
 
 app.Run();
