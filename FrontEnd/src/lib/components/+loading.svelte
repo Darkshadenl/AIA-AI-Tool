@@ -26,17 +26,27 @@
   }
 </script>
 
-<div class="loading-container">
-  <div class="img-joke-container">
+<div class="flex justify-center mt-5">
+  <div class="w-[640px]">
     <img src="{mrBean}" alt="mr-bean-waiting-gif" />
 
-    <div class="joke-container">
+    <div class="break-words mt-2">
       <p>Want to hear a joke in the meantime?</p>
-      <button id="get-joke-button" on:click="{getJoke}">YES!</button>
+      <button
+        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 mt-2 focus:outline-none"
+        id="get-joke-button"
+        on:click="{getJoke}">
+        YES!
+      </button>
+
 
       {#if jokeSetup && jokeDelivery}
         <p>{jokeSetup}</p>
-        <button on:click={displayDelivery}>Tell me!</button>
+        <button
+          class="text-white bg-gray-800 border border-gray-600 focus:outline-none hover:bg-gray-700 focus:ring-gray-700 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 mt-2"
+          on:click={displayDelivery}>
+          Tell me!
+        </button>
 
         {#if showDelivery}
           <p>{jokeDelivery}</p>
@@ -45,14 +55,3 @@
     </div>
   </div>
 </div>
-
-<style>
-    .loading-container {
-        display: flex;
-        justify-content: center;
-    }
-
-    .img-joke-container { width: 640px; }
-
-    .joke-container { word-break: break-word; }
-</style>

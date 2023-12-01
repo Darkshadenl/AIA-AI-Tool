@@ -173,14 +173,6 @@
     <h1 class="text-3xl font-bold underline hidden">Differences</h1>
 </div>
 
-<div class="fixed top-4 left-1/2 transform -translate-x-1/2">
-    <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-full shadow-lg"
-            type="submit"
-            on:click={submit}>
-        Submit
-    </button>
-</div>
-
 {#if progressInformationMessage && errorMessage === null}
     <p>{progressInformationMessage}</p>
 {/if}
@@ -190,6 +182,14 @@
 {/if}
 
 {#if diffDataStruct && mergedStruct}
+    <div class="fixed top-4 left-1/2 transform -translate-x-1/2">
+        <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-full shadow-lg"
+                type="submit"
+                on:click={submit}>
+            Submit
+        </button>
+    </div>
+
     {#each diffDataStruct as diffItem, index}
         <div class="column-container">
             <div class="code maxxed">
