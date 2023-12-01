@@ -170,11 +170,15 @@
 </script>
 
 <div>
-    <h1>Differences</h1>
+    <h1 class="text-3xl font-bold underline hidden">Differences</h1>
 </div>
 
-<div class="submit-button">
-    <button type="submit" on:click={submit}>submit</button>
+<div class="fixed top-4 left-1/2 transform -translate-x-1/2">
+    <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-full shadow-lg"
+            type="submit"
+            on:click={submit}>
+        Submit
+    </button>
 </div>
 
 {#if progressInformationMessage && errorMessage === null}
@@ -272,15 +276,7 @@
     <Loading />
 {/if}
 
-<style>
-    .submit-button {
-        display: flex;
-        justify-content: center;
-        position: fixed;
-        bottom: 95%;
-        width: 100%;
-    }
-
+<style lang="postcss">
     .wrap {
         word-break: break-word;
         max-width: 100%;
