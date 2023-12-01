@@ -193,7 +193,7 @@
     {#each diffDataStruct as diffItem, index}
         <div class="column-container">
             <div class="code maxxed">
-                <h2>{diffItem.fileName}</h2>
+                <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h2>
 
                 {#each diffItem.diffs as diff}
                     {#each diff.oldValue as oldCode, oldIndex}
@@ -212,7 +212,7 @@
             </div>
 
             <div class="code maxxed">
-                <h2>{diffItem.fileName}</h2>
+                <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h2>
 
                 {#each diffItem.diffs as diff}
                     {#if diff.newValue}
@@ -240,7 +240,7 @@
             </div>
 
             <div class="code maxxed">
-                <h2>{mergedStruct[index].fileName}</h2>
+                <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{mergedStruct[index].fileName}</h2>
 
                 {#each mergedStruct[index].diffs as diff}
                     {#if diff.merged}
