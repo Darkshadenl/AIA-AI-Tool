@@ -14,7 +14,7 @@
     <nav class="flex items-center">
       <div class="flex">
         <a href="/" class="-m-1.5 p-1.5">
-          <img class="h-20 w-auto" src="{logo}" alt="">
+          <img class="h-20 w-auto rounded-full" src="{logo}" alt="logo">
         </a>
       </div>
       <div class="ml-5">
