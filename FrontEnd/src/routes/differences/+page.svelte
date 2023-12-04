@@ -149,132 +149,134 @@
         for (const [fileName, content] of Object.entries(dataToZip)) {
             const blob = createBlob(content);
             zip.file(fileName, blob);
+            }
+
+            zip.generateAsync({ type: "blob" }).then((zipBlob) => {
+                const zipUrl = URL.createObjectURL(zipBlob);
+                const link = document.createElement("a");
+                link.href = zipUrl;
+                link.download = "bestanden.zip";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(zipUrl);
+            });
         }
 
-        zip.generateAsync({ type: "blob" }).then((zipBlob) => {
-            const zipUrl = URL.createObjectURL(zipBlob);
-            const link = document.createElement("a");
-            link.href = zipUrl;
-            link.download = "bestanden.zip";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(zipUrl);
-        });
-    }
+        function createBlob(textContent) {
+            return new Blob([textContent], { type: "text/plain" });
+        }
 
-    function createBlob(textContent) {
-        return new Blob([textContent], { type: "text/plain" });
-    }
+    </script>
 
-</script>
-
-<div>
-    <h1 class="text-3xl font-bold underline hidden">Differences</h1>
-</div>
-
-{#if progressInformationMessage && errorMessage === null}
-    <p>{progressInformationMessage}</p>
-{/if}
-
-{#if errorMessage}
-    <p>An exception occurred: {errorMessage}</p>
-{/if}
-
-{#if diffDataStruct && mergedStruct}
-    <div class="fixed top-4 left-1/2 transform -translate-x-1/2">
-        <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-full shadow-lg"
-                type="submit"
-                on:click={submit}>
-            Submit
-        </button>
+    <div>
+    <div>
+        <h1 class="text-3xl font-bold underline hidden">Differences</h1>
     </div>
 
-    {#each diffDataStruct as diffItem, index}
-        <div class="column-container">
-            <div class="code maxxed">
-                <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h2>
+    {#if progressInformationMessage && errorMessage === null}
+        <p>{progressInformationMessage}</p>
+    {/if}
 
-                {#each diffItem.diffs as diff}
-                    {#each diff.oldValue as oldCode, oldIndex}
-                        <div class="code-diff wrap {diff.oldValue && diff.newValue ? 'removed' : 'unchanged'}"
-                             tabindex="0"
-                             class:selected-old={oldCode.selected === "old"}
-                             on:click={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
-                             on:keydown={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
-                             role="button">
+    {#if errorMessage}
+        <p>An exception occurred: {errorMessage}</p>
+    {/if}
 
-                            <span>{oldCode.oldLineNumber}</span>
-                            <pre>{oldCode.value}</pre>
-                        </div>
-                    {/each}
-                {/each}
-            </div>
+    {#if diffDataStruct && mergedStruct}
+        <div class="fixed top-4 left-1/2 transform -translate-x-1/2">
+            <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-full shadow-lg"
+                    type="submit"
+                    on:click={submit}>
+                Submit
+            </button>
+        </div>
 
-            <div class="code maxxed">
-                <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h2>
+        {#each diffDataStruct as diffItem, index}
+            <div class="column-container">
+                <div class="code maxxed">
+                    <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h2>
 
-                {#each diffItem.diffs as diff}
-                    {#if diff.newValue}
-                        {#each diff.newValue as newCode, newIndex}
-                            <div class="code-diff wrap {diff.oldValue && diff.newValue ? 'added' : 'unchanged'}"
+                    {#each diffItem.diffs as diff}
+                        {#each diff.oldValue as oldCode, oldIndex}
+                            <div class="code-diff wrap {diff.oldValue && diff.newValue ? 'removed' : 'unchanged'}"
                                  tabindex="0"
-                                 class:selected-new={newCode.selected === "new"}
-                                 on:click={() => handleClick(diff.id, diffItem.id, newIndex, false)}
-                                 on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
+                                 class:selected-old={oldCode.selected === "old"}
+                                 on:click={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
+                                 on:keydown={() => handleClick(diff.id, diffItem.id, oldIndex, true)}
                                  role="button">
-                                <span>{newCode.newLineNumber}</span>
-                                <pre>{newCode.value}</pre>
-                            </div>
-                        {/each}
-                    {:else}
-                        {#each diff.oldValue as oldCode}
-                            <div class="code-diff unchanged wrap" role="button">
-                                <span>{oldCode.newLineNumber}</span>
-                                <pre>{oldCode.value}</pre>
 
-                            </div>
-                        {/each}
-                    {/if}
-                {/each}
-            </div>
-
-            <div class="code maxxed">
-                <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{mergedStruct[index].fileName}</h2>
-
-                {#each mergedStruct[index].diffs as diff}
-                    {#if diff.merged}
-                        {#if diff.merged.length > 0}
-                            {#each diff.merged as mergedCode, mergedIndex}
-                                <div class="code-diff merged-item removable-merge-item"
-                                     tabindex="0"
-                                     role="button">
-                                    <span>{mergedCode.lineNumber}</span>
-                                    <AutoGrowingTextArea textValue="{mergedCode.value}" parentFunc="{(event) => handleTextBlur(diff.id, diffItem.id, mergedIndex, event)}" />
-                                </div>
-                            {/each}
-                        {:else}
-                            <div class="code-diff merged-item"
-                                 tabindex="0"
-                                 role="button">
-                                <pre> </pre>
-                            </div>
-                        {/if}
-                    {:else}
-                        {#each diff.oldValue as oldCode}
-                            <div class="code-diff unchanged wrap" role="button">
                                 <span>{oldCode.oldLineNumber}</span>
                                 <pre>{oldCode.value}</pre>
                             </div>
                         {/each}
-                    {/if}
-                {/each}
+                    {/each}
+                </div>
+
+                <div class="code maxxed">
+                    <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h2>
+
+                    {#each diffItem.diffs as diff}
+                        {#if diff.newValue}
+                            {#each diff.newValue as newCode, newIndex}
+                                <div class="code-diff wrap {diff.oldValue && diff.newValue ? 'added' : 'unchanged'}"
+                                     tabindex="0"
+                                     class:selected-new={newCode.selected === "new"}
+                                     on:click={() => handleClick(diff.id, diffItem.id, newIndex, false)}
+                                     on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
+                                     role="button">
+                                    <span>{newCode.newLineNumber}</span>
+                                    <pre>{newCode.value}</pre>
+                                </div>
+                            {/each}
+                        {:else}
+                            {#each diff.oldValue as oldCode}
+                                <div class="code-diff unchanged wrap" role="button">
+                                    <span>{oldCode.newLineNumber}</span>
+                                    <pre>{oldCode.value}</pre>
+
+                                </div>
+                            {/each}
+                        {/if}
+                    {/each}
+                </div>
+
+                <div class="code maxxed">
+                    <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{mergedStruct[index].fileName}</h2>
+
+                    {#each mergedStruct[index].diffs as diff}
+                        {#if diff.merged}
+                            {#if diff.merged.length > 0}
+                                {#each diff.merged as mergedCode, mergedIndex}
+                                    <div class="code-diff merged-item removable-merge-item"
+                                         tabindex="0"
+                                         role="button">
+                                        <span>{mergedCode.lineNumber}</span>
+                                        <AutoGrowingTextArea textValue="{mergedCode.value}" parentFunc="{(event) => handleTextBlur(diff.id, diffItem.id, mergedIndex, event)}" />
+                                    </div>
+                                {/each}
+                            {:else}
+                                <div class="code-diff merged-item"
+                                     tabindex="0"
+                                     role="button">
+                                    <pre> </pre>
+                                </div>
+                            {/if}
+                        {:else}
+                            {#each diff.oldValue as oldCode}
+                                <div class="code-diff unchanged wrap" role="button">
+                                    <span>{oldCode.oldLineNumber}</span>
+                                    <pre>{oldCode.value}</pre>
+                                </div>
+                            {/each}
+                        {/if}
+                    {/each}
+                </div>
             </div>
-        </div>
-    {/each}
-{:else}
-    <Loading />
-{/if}
+        {/each}
+    {:else}
+        <Loading />
+    {/if}
+</div>
 
 <style lang="postcss">
     .wrap {
