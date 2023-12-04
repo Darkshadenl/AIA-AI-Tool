@@ -92,7 +92,7 @@ public class LlmFileUploaderHandlerTest
         var openAiApi = new OpenAiApi(_openAiApiLoggerMock.Object, _openAiSettings, signalRService, _commentManipulationHelper, _predictionDatabaseService);
         
         var handler = new LlmFileUploaderHandler(_llmFileUploaderHandlerLoggerMock.Object, _settings, _openAiSettings, 
-                                                    openAiApi, new FileSystem(), _predictionDatabaseService);
+                                                    openAiApi, new FileSystem(), signalRService, _predictionDatabaseService);
         
         // Act
         var result = await handler.Handle(_clientConnectionId, _inputPath, InputContentType);
@@ -117,7 +117,7 @@ public class LlmFileUploaderHandlerTest
         var openAiApi = new OpenAiApi(_openAiApiLoggerMock.Object, _openAiSettings, signalRService, _commentManipulationHelper, _predictionDatabaseService);
         
         var handler = new LlmFileUploaderHandler(_llmFileUploaderHandlerLoggerMock.Object, _settings, _openAiSettings, 
-            openAiApi, new FileSystem(), _predictionDatabaseService);
+                                                    openAiApi, new FileSystem(), signalRService, _predictionDatabaseService);
         
         // Act
         var result = await handler.Handle(_clientConnectionId, _inputPath, InputContentType);
@@ -141,7 +141,7 @@ public class LlmFileUploaderHandlerTest
         var openAiApi = new OpenAiApi(_openAiApiLoggerMock.Object, _openAiSettings, signalRService, _commentManipulationHelper, _predictionDatabaseService);
         
         var handler = new LlmFileUploaderHandler(_llmFileUploaderHandlerLoggerMock.Object, _settings, _openAiSettings, 
-            openAiApi, new FileSystem(), _predictionDatabaseService);
+                                                    openAiApi, new FileSystem(), signalRService, _predictionDatabaseService);
         
         // Act
         await handler.Handle(_clientConnectionId, _inputPath, InputContentType);
@@ -162,7 +162,7 @@ public class LlmFileUploaderHandlerTest
         var openAiApi = new OpenAiApi(_openAiApiLoggerMock.Object, _openAiSettings, signalRService, _commentManipulationHelper, _predictionDatabaseService);
         
         var handler = new LlmFileUploaderHandler(_llmFileUploaderHandlerLoggerMock.Object, _settings, _openAiSettings, 
-            openAiApi, new FileSystem(), _predictionDatabaseService);
+                                                    openAiApi, new FileSystem(), signalRService, _predictionDatabaseService);
     
         // Act
         await handler.Handle(_clientConnectionId, _inputPath, InputContentType);

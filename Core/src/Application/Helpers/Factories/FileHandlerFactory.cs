@@ -15,6 +15,7 @@ public class FileHandlerFactory : IFileHandlerFactory
     private readonly IOptions<Settings> _extensionSettings;
     private readonly IUploadedFileHandler _fileHandlerStreet;
     private readonly IFileSystem _fileSystem;
+    private readonly ISignalRService _signalRService;
     private readonly IOptions<OpenAiSettings> _openAiSettings;
     private readonly OpenAiApi _openAiApi;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
@@ -26,6 +27,7 @@ public class FileHandlerFactory : IFileHandlerFactory
         ILogger<LlmFileUploaderHandler> llmFileUploaderHandlerLogger,
         IOptions<Settings> extensionSettings,
         IFileSystem fileSystem,
+        ISignalRService signalRService,
         IOptions<OpenAiSettings> openAiSettings,
         OpenAiApi openAiApi,
         IPredictionDatabaseService predictionDatabaseService,
@@ -34,6 +36,7 @@ public class FileHandlerFactory : IFileHandlerFactory
     {
         _extensionSettings = extensionSettings;
         _fileSystem = fileSystem;
+        _signalRService = signalRService;
         _openAiSettings = openAiSettings;
         _openAiApi = openAiApi;
         _predictionDatabaseService = predictionDatabaseService;
@@ -48,7 +51,7 @@ public class FileHandlerFactory : IFileHandlerFactory
         var fileValidator = new FileValidator(fileValidatorLogger, _extensionSettings);
         var zipHandler = new FileContentsFilter(zipHandlerLogger, _extensionSettings, _fileSystem, _commentChecker);
         var llm = new LlmFileUploaderHandler(llmFileUploaderHandlerLogger, _extensionSettings, _openAiSettings, 
-                                            _openAiApi, _fileSystem, _predictionDatabaseService);
+                                            _openAiApi, _fileSystem, _signalRService, _predictionDatabaseService);
 
         fileValidator.SetNext(zipHandler);
         zipHandler.SetNext(llm);

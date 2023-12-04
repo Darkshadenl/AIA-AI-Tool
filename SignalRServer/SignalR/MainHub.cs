@@ -48,6 +48,12 @@ namespace SignalR
             _logger.LogInformation("Received error: {message}", errorMessage);
         }
 
+        public async Task ReturnTotalFiles(string connectionId, int totalFiles)
+        {
+            await Clients.Client(connectionId).ReceiveTotalFiles(connectionId, totalFiles);
+            _logger.LogInformation("Received total files: {amount}", totalFiles);
+        }
+
         public async Task<string> GetConnectionId()
         {
             return Context.ConnectionId;

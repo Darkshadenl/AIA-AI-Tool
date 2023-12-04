@@ -23,6 +23,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
     private readonly OpenAiSettings _openAiSettings;
     private readonly OpenAiApi _openAiApi;
     private readonly IFileSystem _fileSystem;
+    private readonly ISignalRService _signalRService;
     private readonly IPredictionDatabaseService _predictionDatabaseService;
     private List<string> _errors;
     private string _clientConnectionId;
@@ -33,6 +34,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         IOptions<OpenAiSettings> openAiSettings,
         OpenAiApi openAiApi,
         IFileSystem fileSystem,
+        ISignalRService signalRService,
         IPredictionDatabaseService predictionDatabaseService
         ) : base(logger, settings)
     {
@@ -41,6 +43,7 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         _openAiSettings = openAiSettings.Value;
         _openAiApi = openAiApi;
         _fileSystem = fileSystem;
+        _signalRService = signalRService;
         _predictionDatabaseService = predictionDatabaseService;
     }
 
@@ -56,6 +59,8 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         var fileName = _fileSystem.Path.GetFileName(inputPath);
         var outputFilePath = _fileSystem.Path.Combine(_settings.TempFolderPath + "Output/", fileName);
         var zipArchive = GetZipArchive(outputFilePath);
+        
+        _signalRService.SendTotalFiles(clientConnectionId, zipArchive.Entries.Count);
 
         await ProcessFiles(zipArchive);
         return CreateHandlerResult();
