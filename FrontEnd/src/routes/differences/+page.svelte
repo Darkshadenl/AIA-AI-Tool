@@ -15,7 +15,14 @@
 
     /** @type {Array<DiffData>}*/
     let diffDataStruct;
-    diffStore.subscribe((value) => diffDataStruct = value);
+    diffStore.subscribe((value) => {
+        diffDataStruct = value;
+
+        if (diffDataStruct && diffDataStruct.length > 0) {
+            selectedDiffItem = diffDataStruct[0];
+            selectedDiffItemIndex = 0;
+        }
+    });
 
     function setDiffItemsOnClick(index) {
         selectedDiffItem = diffDataStruct[index];
@@ -23,9 +30,9 @@
     }
     </script>
 
-<div>
+<div class="m-5">
     <div>
-        <h1 class="text-3xl font-bold">Differences</h1>
+        <h1 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">Differences</h1>
     </div>
 
     {#if progressInformationMessage && errorMessage === null}
