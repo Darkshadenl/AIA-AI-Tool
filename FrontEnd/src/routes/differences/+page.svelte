@@ -44,17 +44,20 @@
     {/if}
 
     {#if diffDataStruct}
-        <div>
-            {#each diffDataStruct as diffItem, index}
-                <button class="bg-blue-400 hover:bg-blue-800 text-white font-bold py-2 px-4 m-1 shadow-lg"
-                        on:click={() => setDiffItemsOnClick(index)}>
-                    {diffItem.fileName}
-                </button>
-            {/each}
-        </div>
+        <div class="flex">
+            <div class="flex flex-col mr-2">
+                <h4 class="m-1 text-xl">Files</h4>
+                {#each diffDataStruct as diffItem, index}
+                    <button class="bg-blue-400 hover:bg-blue-800 text-white font-bold py-2 px-4 m-1 shadow-lg h-fit w-56 break-words"
+                            on:click={() => setDiffItemsOnClick(index)}>
+                        {diffItem.fileName}
+                    </button>
+                {/each}
+            </div>
 
         <Code diffItem="{selectedDiffItem}" index="{selectedDiffItemIndex}" />
 
+        </div>
         <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 px-4 m-1 shadow-lg fixed bottom-4 right-0 transform -translate-x-1/2 rounded-full"
                 on:click={() => window.scrollTo({ top: 0, left: 0, behavior: 'smooth'})}>
             <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 512 512">
