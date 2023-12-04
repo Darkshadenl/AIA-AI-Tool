@@ -88,6 +88,7 @@ public class LlmFileUploaderHandlerTest
     {
         // Arrange
         var serviceBusService = new ServiceBusService(_serviceBusServiceLoggerMock.Object, _settings);
+        await serviceBusService.ExecuteAsync();
         var signalRService = new SignalRService(_signalRServiceLoggerMock.Object, serviceBusService);
         var openAiApi = new OpenAiApi(_openAiApiLoggerMock.Object, _openAiSettings, signalRService, _commentManipulationHelper, _predictionDatabaseService);
         
@@ -112,6 +113,7 @@ public class LlmFileUploaderHandlerTest
     {
         // Arrange
         var serviceBusService = new ServiceBusService(_serviceBusServiceLoggerMock.Object, _settings);
+        await serviceBusService.ExecuteAsync();
         var signalRService = new SignalRService(_signalRServiceLoggerMock.Object, serviceBusService);
         _openAiSettings.Value.MaxTokens = 1;
         var openAiApi = new OpenAiApi(_openAiApiLoggerMock.Object, _openAiSettings, signalRService, _commentManipulationHelper, _predictionDatabaseService);
@@ -137,6 +139,7 @@ public class LlmFileUploaderHandlerTest
     {
         // Arrange
         var serviceBusService = new ServiceBusService(_serviceBusServiceLoggerMock.Object, _settings);
+        await serviceBusService.ExecuteAsync();
         var signalRService = new SignalRService(_signalRServiceLoggerMock.Object, serviceBusService);
         var openAiApi = new OpenAiApi(_openAiApiLoggerMock.Object, _openAiSettings, signalRService, _commentManipulationHelper, _predictionDatabaseService);
         
@@ -158,6 +161,7 @@ public class LlmFileUploaderHandlerTest
     {
         // Arrange
         var serviceBusService = new ServiceBusService(_serviceBusServiceLoggerMock.Object, _settings);
+        await serviceBusService.ExecuteAsync();
         var signalRService = new SignalRService(_signalRServiceLoggerMock.Object, serviceBusService);
         var openAiApi = new OpenAiApi(_openAiApiLoggerMock.Object, _openAiSettings, signalRService, _commentManipulationHelper, _predictionDatabaseService);
         
