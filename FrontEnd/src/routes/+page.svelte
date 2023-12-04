@@ -3,19 +3,18 @@
 	import { CreateDiffDataStructure, getConnection, processFileChunks, resetStores, sliceFileIntoChunks } from "$lib";
 	import { HubConnectionState } from "@microsoft/signalr";
 	import { goto } from "$app/navigation";
-	import { diffStore, errorMessageStore, progressInformationMessageStore } from "../store.js";
+	import { diffStore, errorMessageStore, progressInformationMessageStore, fileAmountStore } from "../store.js";
 
 	const FILE_SIZE_LIMIT_IN_BYTES = 1000 * 1000 * 1000; // 1GB
 
-
-    /**
-     * Calculates line numbers for each line in a given diff.
-     *
-     * @param {Array.<{id: number, newValue: undefined | string | Array, oldValue: string | Array}>} diff - The diff to calculate line numbers for.
-     * @returns {Array.<{id: number,
-     * newValue: Array.<{oldLineNumber: number, newLineNumber: number, selected: undefined | string, value: string}>,
-     * oldValue: Array.<{oldLineNumber: number, newLineNumber: number, selected: undefined | string, value: string}>}>} - An array of line objects with line numbers, content, and added/removed flags.
-     */
+	/**
+	 * Calculates line numbers for each line in a given diff.
+	 *
+	 * @param {Array.<{id: number, newValue: undefined | string | Array, oldValue: string | Array}>} diff - The diff to calculate line numbers for.
+	 * @returns {Array.<{id: number,
+	 * newValue: Array.<{oldLineNumber: number, newLineNumber: number, selected: undefined | string, value: string}>,
+	 * oldValue: Array.<{oldLineNumber: number, newLineNumber: number, selected: undefined | string, value: string}>}>} - An array of line objects with line numbers, content, and added/removed flags.
+	 */
 	const calculateLineNumbers = (diff) => {
 		let oldLineNumber = 0;
 		let newLineNumber = 0;
@@ -54,10 +53,16 @@
 		connection.off('ReceiveProgressInformation');
 		connection.off('ReceiveError');
 		connection.off('ReceiveLlmResponse');
+		connection.off('ReceiveTotalFiles');
 	}
 
 	async function registerSignalRCallbacks() {
 		const connection = await getConnection();
+
+		connection.on('ReceiveTotalFiles', (_, totalFiles) => {
+			console.log(`Total amount of files send to LLM: ${totalFiles}`)
+			fileAmountStore.set(totalFiles);
+		});
 
 		connection.on('ReceiveProgressInformation', (_, message) => {
 			console.log(`Success: ${message}`);
