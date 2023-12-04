@@ -113,26 +113,28 @@
 
 </script>
 
-<div>
-	<h1 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">ZIP-file upload</h1>
+<div class="flex flex-grow justify-center items-center">
+	<div>
+		<h1 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">ZIP-file upload</h1>
 
-	<div class="w-fit mt-5">
-		<form on:submit={submitForm} enctype="multipart/form-data">
-			<label class="block mb-2 text-sm font-medium text-gray-900" for="file">Currently, only TypeScript files within the ZIP file are being processed by the AI.</label>
-			<input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
-						 aria-describedby="file_input_help"
-						 id="file"
-						 name="file"
-						 type="file"
-						 accept=".zip"
-						 required>
-			<p class="mt-1 text-sm text-gray-500" id="file">Only .zip allowed</p>
+		<div class="w-fit mt-5">
+			<form on:submit={submitForm} enctype="multipart/form-data">
+				<label class="block mb-2 text-sm font-medium text-gray-900" for="file">Currently, only TypeScript files within the ZIP file are being processed by the AI.</label>
+				<input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+							 aria-describedby="file_input_help"
+							 id="file"
+							 name="file"
+							 type="file"
+							 accept=".zip"
+							 required>
+				<p class="mt-1 text-sm text-gray-500" id="file">Only .zip allowed</p>
 
-			<button class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 mt-5 focus:outline-none"
-							type="submit"
-							on:click={() => redirect(300, '/differences')}>
-				Upload
-			</button>
-		</form>
+				<button class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 mt-5 focus:outline-none"
+								type="submit"
+								on:click={() => redirect(300, '/differences')}>
+					Upload
+				</button>
+			</form>
+		</div>
 	</div>
 </div>
