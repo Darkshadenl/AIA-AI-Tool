@@ -55,7 +55,7 @@
 
         <Code diffItem="{selectedDiffItem}" index="{selectedDiffItemIndex}" />
 
-        <button class="bg-blue-400 hover:bg-blue-800 text-white font-bold py-4 px-4 m-1 shadow-lg fixed bottom-4 right-0 transform -translate-x-1/2 rounded-full"
+        <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 px-4 m-1 shadow-lg fixed bottom-4 right-0 transform -translate-x-1/2 rounded-full"
                 on:click={() => window.scrollTo({ top: 0, left: 0, behavior: 'smooth'})}>
             <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 512 512">
                 <!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.-->
