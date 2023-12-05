@@ -33,22 +33,22 @@
     </script>
 
 <div class="m-5">
-    <div>
-        <h1 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">Differences</h1>
-    </div>
-
-    {#if progressInformationMessage && errorMessage === null}
-        <p>{progressInformationMessage}</p>
-    {/if}
-
-    {#if errorMessage}
-        <p>An exception occurred: {errorMessage}</p>
+    {#if progressInformationMessage || errorMessage}
+        <div class="flex items-center p-4 mb-4 text-sm text-blue-800 border border-blue-300 rounded-lg bg-blue-50 w-fit max-w-3xl" role="alert">
+            <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+            </svg>
+            <div>
+                {#if progressInformationMessage && !errorMessage} <span class="font-medium">Info!</span> {progressInformationMessage}{/if}
+                {#if errorMessage}<span class="font-medium">An exception occurred!</span> {errorMessage}{/if}
+            </div>
+        </div>
     {/if}
 
     {#if diffDataStruct}
         <div class="flex">
             <div class="flex flex-col mr-2">
-                <h4 class="m-1 text-xl">Files</h4>
+                <h2 class="m-1 mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">Files</h2>
                 {#each diffDataStruct as diffItem, index}
                     <button class="bg-blue-400 hover:bg-blue-800 text-white font-bold py-2 px-4 m-1 shadow-lg h-fit w-56 break-words"
                             on:click={() => setDiffItemsOnClick(index)}>
@@ -66,8 +66,7 @@
                 {/if}
             </div>
 
-        <Code diffItem="{selectedDiffItem}" index="{selectedDiffItemIndex}" />
-
+            <Code diffItem="{selectedDiffItem}" index="{selectedDiffItemIndex}" />
         </div>
         <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 px-4 m-1 shadow-lg fixed bottom-4 right-0 transform -translate-x-1/2 rounded-full"
                 on:click={() => window.scrollTo({ top: 0, left: 0, behavior: 'smooth'})}>
