@@ -28,9 +28,10 @@
       console.log('returning. No new AND old found');
       return;
     }
-    console.log(`click diffitemid:${diffItemId} diffid:${diffId} index:${index} old:${old}`)
+
     const lineObject = old === true ? diffItem.diffs[diffId].oldValue[index] :
       diffItem.diffs[diffId].newValue[index];
+
     changeLineColor(lineObject, old, diffId, diffItemId, index);
     moveToAndFromMerged(lineObject, diffId, diffItemId);
   }
@@ -84,7 +85,7 @@
       current.diffs.forEach(current => {
         if (current.merged && current.merged.length > 0) {
           // use merged values
-          let mergedValues = ""
+          let mergedValues = "";
           current.merged.forEach(data => mergedValues = mergedValues === "" ? `${data.value}` :`${mergedValues}\n${data.value}`);
           dataString = dataString === "" ? `${mergedValues}` : `${dataString}\n${mergedValues}`;
         } else if (current.oldValue && current.newValue) {
@@ -173,34 +174,6 @@
     </div>
 
     <div class="code maxxed">
-      <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h2>
-
-      {#each diffItem.diffs as diff}
-        {#if diff.newValue}
-          {#each diff.newValue as newCode, newIndex}
-            <div class="code-diff wrap {diff.oldValue && diff.newValue ? 'added' : 'unchanged'}"
-                 tabindex="0"
-                 class:selected-new={newCode.selected === "new"}
-                 on:click={() => handleClick(diff.id, diffItem.id, newIndex, false)}
-                 on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
-                 role="button">
-              <span>{newCode.newLineNumber}</span>
-              <pre>{newCode.value}</pre>
-            </div>
-          {/each}
-        {:else}
-          {#each diff.oldValue as oldCode}
-            <div class="code-diff unchanged wrap" role="button">
-              <span>{oldCode.newLineNumber}</span>
-              <pre>{oldCode.value}</pre>
-
-            </div>
-          {/each}
-        {/if}
-      {/each}
-    </div>
-
-    <div class="code maxxed">
       <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{mergedStruct[index].fileName}</h2>
 
       {#each mergedStruct[index].diffs as diff}
@@ -226,6 +199,34 @@
             <div class="code-diff unchanged wrap" role="button">
               <span>{oldCode.oldLineNumber}</span>
               <pre>{oldCode.value}</pre>
+            </div>
+          {/each}
+        {/if}
+      {/each}
+    </div>
+
+    <div class="code maxxed">
+      <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h2>
+
+      {#each diffItem.diffs as diff}
+        {#if diff.newValue}
+          {#each diff.newValue as newCode, newIndex}
+            <div class="code-diff wrap {diff.oldValue && diff.newValue ? 'added' : 'unchanged'}"
+                 tabindex="0"
+                 class:selected-new={newCode.selected === "new"}
+                 on:click={() => handleClick(diff.id, diffItem.id, newIndex, false)}
+                 on:keydown={() => handleClick(diff.id, diffItem.id, newIndex, false)}
+                 role="button">
+              <span>{newCode.newLineNumber}</span>
+              <pre>{newCode.value}</pre>
+            </div>
+          {/each}
+        {:else}
+          {#each diff.oldValue as oldCode}
+            <div class="code-diff unchanged wrap" role="button">
+              <span>{oldCode.newLineNumber}</span>
+              <pre>{oldCode.value}</pre>
+
             </div>
           {/each}
         {/if}
