@@ -155,7 +155,8 @@
 {#if diffItem && mergedStruct}
   <div class="column-container">
     <div class="code maxxed">
-      <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h2>
+      <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">Original:</h2>
+      <h3 class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h3>
 
       {#each diffItem.diffs as diff}
         {#each diff.oldValue as oldCode, oldIndex}
@@ -174,7 +175,8 @@
     </div>
 
     <div class="code maxxed">
-      <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{mergedStruct[index].fileName}</h2>
+      <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">Merged:</h2>
+      <h3 class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900">{mergedStruct[index].fileName}</h3>
 
       {#each mergedStruct[index].diffs as diff}
         {#if diff.merged}
@@ -206,7 +208,8 @@
     </div>
 
     <div class="code maxxed">
-      <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h2>
+      <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">Generated:</h2>
+      <h3 class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h3>
 
       {#each diffItem.diffs as diff}
         {#if diff.newValue}
