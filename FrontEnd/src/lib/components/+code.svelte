@@ -154,14 +154,12 @@
     } else {
       popup.style.visibility = 'hidden';
       popup.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+      document.removeEventListener('keydown', handleKeyDown);
     }
   }
 
   function handleKeyDown(event) {
-    if (event.key === 'Escape') {
-      togglePopup();
-      document.removeEventListener('keydown', handleKeyDown);
-    }
+    if (event.key === 'Escape') togglePopup();
   }
 </script>
 
