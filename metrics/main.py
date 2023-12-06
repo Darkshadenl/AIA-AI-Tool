@@ -1,5 +1,8 @@
+from datetime import time
 import pandas as pd
-from diff_graphs import diff_amount_changed_correct, diff_amount_changed_wrong
+from diff_graphs import diff_amount_changed_correct, diff_amount_changed_wrong, diff_building_context, \
+    diff_time_building_context_plus_searchtime
+from tools import convert_field_to_seconds
 
 input = r"/Users/quintenmeijboom/OneDrive - Avans Hogeschool/Stage/Onderzoek/screencast_analysis.xlsx"
 output = "./output.xlsx"
@@ -9,9 +12,11 @@ excel_data = pd.ExcelFile(input)
 sheet_names = excel_data.sheet_names
 
 ronde_1_data = pd.read_excel(excel_data, sheet_name='metrics', header=1, nrows=12)
-ronde_2_data = pd.read_excel(excel_data, sheet_name='metrics', header=0, skiprows=38, nrows=10)
-before_ai_data = pd.read_excel(excel_data, sheet_name='metrics', header=0, skiprows=19, nrows=12)
-ai_data = pd.read_excel(excel_data, sheet_name='metrics', header=0, skiprows=54, nrows=11)
+ronde_2_data = pd.read_excel(excel_data, sheet_name='metrics', skiprows=38, nrows=10)
+
+colnames = ['name', 'time_finding_comment', 'time_understand_comment_and_code', 'time_edit_comment']
+before_ai_data = pd.read_excel(excel_data, sheet_name='metrics', usecols=colnames, skiprows=19, nrows=12)
+ai_data = pd.read_excel(excel_data, sheet_name='metrics', usecols=colnames, skiprows=54, nrows=11)
 # hierboven staat: neem sheet metrics, skip n rows (skiprows), header row is n omlaag (header), neem n rows (nrows)
 
 # Filter de DataFrame door alleen rijen te behouden waar kolom 1 niet NaN is
@@ -25,14 +30,14 @@ cleaned_ronde_1_data = ronde_1_data[ronde_1_data.iloc[:, 0].isin(cl0)]
 cleaned_ronde_1_data.set_index('name', inplace=True)
 cleaned_ronde_2_data.set_index('name', inplace=True)
 
-# Zet 'name' als index voor beide DataFrames
-diff_amount_changed_correct(cleaned_ronde_1_data, cleaned_ronde_2_data)
-diff_amount_changed_wrong(cleaned_ronde_1_data, cleaned_ronde_2_data)
-
+# draw graphs
+# diff_amount_changed_correct(cleaned_ronde_1_data, cleaned_ronde_2_data)
+# diff_amount_changed_wrong(cleaned_ronde_1_data, cleaned_ronde_2_data)
 
 
 # Filter de DataFrame door alleen rijen te behouden waar kolom 1 niet NaN is
 cleaned_ai_data = ai_data[ai_data.iloc[:, 1].notna()]
+cleaned_ai_data = cleaned_ai_data[~ai_data.loc[:, 'time_finding_comment'].isin([time(0, 0)])]
 # Selecteer alle namen en converteer naar array
 cl1 = ai_data.loc[:, 'name'].to_numpy()
 # soort inner join op naam.
@@ -41,5 +46,13 @@ cleaned_before_ai_data = before_ai_data[before_ai_data.iloc[:, 0].isin(cl0)]
 
 cleaned_before_ai_data.set_index('name', inplace=True)
 cleaned_ai_data.set_index('name', inplace=True)
+
+
+# converteer datetime.time naar secondes.
+cleaned_before_ai_data = convert_field_to_seconds(cleaned_before_ai_data)
+cleaned_ai_data = convert_field_to_seconds(cleaned_ai_data)
+
+# diff_building_context(cleaned_before_ai_data, cleaned_ai_data)
+diff_time_building_context_plus_searchtime(cleaned_before_ai_data, cleaned_ai_data)
 
 print()
