@@ -102,9 +102,7 @@
       download[mergedStructItem.fileName] = dataString;
     });
 
-    if (showError) {
-      document.querySelector('#popup-modal').style.visibility = 'visible';
-    }
+    if (showError) togglePopup();
     else createZip(download);
 
     console.log(download);
@@ -145,6 +143,18 @@
     mergedStruct[diffItemId].diffs[diffId].merged[index].value = event.target.value;
     mergedStruct = [...mergedStruct];
   }
+
+  function togglePopup() {
+    const popup = document.querySelector('#popup-modal');
+
+    if (!popup.style.visibility || popup.style.visibility === 'hidden') {
+      popup.style.visibility = 'visible';
+      popup.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    } else {
+      popup.style.visibility = 'hidden';
+      popup.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+    }
+  }
 </script>
 
 <div class="fixed top-4 left-1/2 transform -translate-x-1/2">
@@ -157,10 +167,10 @@
   </button>
 </div>
 
-<Popup on:click={() => submit(false)} />
+<Popup on:submit={() => {submit(false); togglePopup()}} on:toggle={togglePopup} />
 
 {#if diffItem && mergedStruct}
-  <div class="column-container">
+  <div id="code-container" class="column-container">
     <div class="code maxxed">
       <h2 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900">Original:</h2>
       <h3 class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900">{diffItem.fileName}</h3>
