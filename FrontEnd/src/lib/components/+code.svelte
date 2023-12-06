@@ -1,5 +1,6 @@
 <script>
   import AutoGrowingTextArea from "$lib/components/AutoGrowingTextArea.svelte";
+  import Popup from '$lib/components/+popup.svelte';
   import { v4 as uuidv4 } from "uuid";
   import { diffStore } from "../../store.js";
   import JSZip from "jszip";
@@ -76,34 +77,36 @@
     }
   }
 
-  function submit() {
+  function submit(shouldCheckError) {
     let showError = false;
     const download = {}
-    mergedStruct.forEach(current => {
+    mergedStruct.forEach(mergedStructItem => {
       let dataString = "";
 
-      current.diffs.forEach(current => {
-        if (current.merged && current.merged.length > 0) {
+      mergedStructItem.diffs.forEach(diff => {
+        if (diff.merged && diff.merged.length > 0) {
           // use merged values
           let mergedValues = "";
-          current.merged.forEach(data => mergedValues = mergedValues === "" ? `${data.value}` :`${mergedValues}\n${data.value}`);
+          diff.merged.forEach(data => mergedValues = mergedValues === "" ? `${data.value}` :`${mergedValues}\n${data.value}`);
           dataString = dataString === "" ? `${mergedValues}` : `${dataString}\n${mergedValues}`;
-        } else if (current.oldValue && current.newValue) {
+        } else if (shouldCheckError && diff.oldValue && diff.newValue) {
           // if both oldValue and newValue exist, user forgot to select an option
           showError = true;
         } else {
           // just take oldValue
           let mergedValues = ""
-          current.oldValue.forEach(data => mergedValues = mergedValues === "" ? `${data.value}` :`${mergedValues}\n${data.value}`);
+          diff.oldValue.forEach(data => mergedValues = mergedValues === "" ? `${data.value}` :`${mergedValues}\n${data.value}`);
           dataString = dataString === "" ? `${mergedValues}` : `${dataString}\n${mergedValues}`;
         }
       })
-      download[current.fileName] = dataString;
+      download[mergedStructItem.fileName] = dataString;
     });
+
     if (showError) {
-      alert("You forgot to select one or more old/new options.");
+      document.querySelector('#popup-modal').style.visibility = 'visible';
     }
-    createZip(download);
+    else createZip(download);
+
     console.log(download);
   }
 
@@ -146,11 +149,15 @@
 
 <div class="fixed top-4 left-1/2 transform -translate-x-1/2">
   <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-full shadow-lg"
-          type="submit"
-          on:click={submit}>
+          data-modal-target="popup-modal"
+          data-modal-toggle="popup-modal"
+          type="button"
+          on:click={() => submit(true)}>
     Submit
   </button>
 </div>
+
+<Popup on:click={() => submit(false)} />
 
 {#if diffItem && mergedStruct}
   <div class="column-container">
