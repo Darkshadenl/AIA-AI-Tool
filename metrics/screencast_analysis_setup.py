@@ -32,9 +32,6 @@ def build_charts_for_screencast_analysis(screencast_data: ExcelFile):
     cleaned_ai_data = ai_data[ai_data.iloc[:, 1].notna()]
     cleaned_ai_data = cleaned_ai_data[~ai_data.loc[:, 'time_finding_comment'].isin([time(0, 0)])]
 
-    # Selecteer alle namen en converteer naar array
-    cl1 = ai_data.loc[:, 'name'].to_numpy()
-
     # soort inner join op naam.
     cleaned_before_ai_data = before_ai_data[before_ai_data.iloc[:, 0].isin(cl0)]
     # op dit moment hebben we alleen data van de 2 tabellen als beide tabellen de naam MET data bevatten
