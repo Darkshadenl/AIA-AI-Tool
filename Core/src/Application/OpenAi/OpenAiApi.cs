@@ -48,6 +48,22 @@ public class OpenAiApi
         }
     }
 
+    public async Task<ChatChoice> SendOpenAiCompletionAsync(List<IDbPrediction> dbPredictions)
+    {
+        OpenAIClient openAiClient = new OpenAIClient(_openAiSettings.ApiToken);
+        List<ChatCompletionsOptions> options = CreateChatCompletionsOptions(dbPredictions);
+
+
+        try
+        {
+
+        }
+        catch (Exception e)
+        {
+
+        }
+    }
+
     public void ProcessApiResponse(ChatChoice openAiResponse, IDbPrediction dbPrediction)
     {
         _logger.LogDebug("LLM response for {fileName} was {response}", dbPrediction.FileName, openAiResponse.Message.Content);
@@ -58,6 +74,29 @@ public class OpenAiApi
         _predictionDatabaseService.UpdatePredictionResponseText(dbPrediction, openAiResponse.Message.Content);
         _predictionDatabaseService.UpdatePredictionEditedResponseText(dbPrediction, codeWithComments);
         _signalRService.SendLlmResponseToFrontend(dbPrediction.ClientConnectionId, dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments, dbPrediction.InputCode);
+    }
+
+    private List<ChatCompletionsOptions> CreateChatCompletionsOptions(List<IDbPrediction> dbPredictions)
+    {
+        var chatCompletionOptions = new List<ChatCompletionsOptions>();
+        foreach (IDbPrediction dbPrediction in dbPredictions)
+        {
+            chatCompletionOptions.Add(new ChatCompletionsOptions(new[]
+            {
+                new ChatMessage
+                {
+                    Role = ChatRole.System,
+                    Content = _openAiSettings.SystemPrompt
+                },
+                new ChatMessage { Role = ChatRole.User, Content = dbPrediction.Prompt }
+            })
+            {
+                Temperature = _openAiSettings.Temperature,
+                MaxTokens = _openAiSettings.MaxTokens
+            });
+        }
+
+        return chatCompletionOptions;
     }
 
     private ChatCompletionsOptions CreateChatCompletionsOptions(string prompt)
