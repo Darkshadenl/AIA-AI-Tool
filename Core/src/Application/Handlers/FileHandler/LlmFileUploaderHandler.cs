@@ -91,14 +91,19 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
     private async Task ProcessFiles(ZipArchive zipArchive)
     {
-        var number = 0;
+        var dbPredictions = new List<IDbPrediction>();
 
         foreach (var file in zipArchive.Entries)
         {
-            number++;
-            _logger.LogDebug("Uploading {number} of {Count} files... \nFilename: {FullName}", number, zipArchive.Entries.Count, file.FullName);
-            await ProcessFile(file);
+            dbPredictions.Add(await SavePredictionToDatabase(file));
         }
+
+        var time = DateTime.Now;
+        var gptCompletions = await _openAiApi.SendOpenAiCompletionAsync(dbPredictions);
+        var newTime = DateTime.Now;
+        _logger.LogDebug("Duration: {time} for {amount} of files", newTime - time, dbPredictions.Count);
+
+
     }
 
     private async Task ProcessFile(ZipArchiveEntry file)
@@ -111,8 +116,8 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             var openAiResponse = await _openAiApi.SendOpenAiCompletion(dbPrediction);
             var newTime = DateTime.Now;
             _logger.LogDebug("Duration: {time} - Finish reason: {finishReason}", newTime - time, openAiResponse.FinishReason);
-            
-            CheckIfErrors(openAiResponse, file);
+
+            CheckIfErrors(openAiResponse, dbPrediction);
             if (_errors.Count > 0) return;
 
             _openAiApi.ProcessApiResponse(openAiResponse, dbPrediction);
@@ -120,16 +125,16 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         }
     }
 
-    private void CheckIfErrors(ChatChoice openAiResponse, ZipArchiveEntry file)
+    private void CheckIfErrors(ChatChoice openAiResponse, IDbPrediction prediction)
     {
         if (openAiResponse.Message.Content.Length <= 0)
-            _errors.Add($"File: {file.FullName}, Error: No content received from LLM.");
+            _errors.Add($"File: {prediction.FileName}, Error: No content received from LLM.");
         if (openAiResponse.FinishReason == CompletionsFinishReason.TokenLimitReached)
-            _errors.Add($"File {file.FullName}, Error: Token limit reached for message.");
+            _errors.Add($"File {prediction.FileName}, Error: Token limit reached for message.");
         if (openAiResponse.FinishReason == CompletionsFinishReason.ContentFiltered)
-            _errors.Add($"File {file.FullName}, Error: Potentially sensitive content found and filtered from the LLM result.");
+            _errors.Add($"File {prediction.FileName}, Error: Potentially sensitive content found and filtered from the LLM result.");
         if (openAiResponse.FinishReason == null)
-            _errors.Add($"File {file.FullName}, Error: LLM is still processing the request.");
+            _errors.Add($"File {prediction.FileName}, Error: LLM is still processing the request.");
     }
 
     private HandlerResult CreateHandlerResult()

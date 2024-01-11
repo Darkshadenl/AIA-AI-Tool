@@ -1,5 +1,7 @@
 using aia_api.Application.Helpers;
 using aia_api.Configuration.Records;
+using aia_api.Database;
+using Azure;
 using Azure.AI.OpenAI;
 using InterfacesAia.Database;
 using InterfacesAia.Services;
@@ -21,7 +23,7 @@ public class OpenAiApi
         ISignalRService signalRService,
         CommentManipulationHelper commentManipulationHelper,
         IPredictionDatabaseService predictionDatabaseService
-        )
+    )
     {
         _logger = logger;
         _openAiSettings = openAiSettings.Value;
@@ -43,60 +45,79 @@ public class OpenAiApi
         }
         catch (Exception e)
         {
-            await _signalRService.InvokeErrorMessage(dbPrediction.ClientConnectionId, "The connection with the OpenAI API could not be established.");
+            await _signalRService.InvokeErrorMessage(dbPrediction.ClientConnectionId,
+                "The connection with the OpenAI API could not be established.");
             throw;
         }
     }
 
-    public async Task<ChatChoice> SendOpenAiCompletionAsync(List<IDbPrediction> dbPredictions)
+    public async Task<Dictionary<IDbPrediction, ChatCompletions>> SendOpenAiCompletionAsync(List<IDbPrediction> dbPredictions)
     {
         OpenAIClient openAiClient = new OpenAIClient(_openAiSettings.ApiToken);
-        List<ChatCompletionsOptions> options = CreateChatCompletionsOptions(dbPredictions);
-
+        var mapDbPredictionResponse = new Dictionary<IDbPrediction, ChatCompletions>();
+        var chatCompletionsOptionsList = PlaceIdAndCreateChatCompletions(dbPredictions);
 
         try
         {
+            List<Task<Response<ChatCompletions>>> tasks = new List<Task<Response<ChatCompletions>>>();
 
+            foreach (var chatCompletionsOptions in chatCompletionsOptionsList)
+            {
+                tasks.Add(openAiClient.GetChatCompletionsAsync(_openAiSettings.ModelName, chatCompletionsOptions));
+            }
+
+            var responses = await Task.WhenAll(tasks);
+
+            foreach (var response in responses)
+            {
+                var llmResponseValue = response.Value.Choices.First().Message.Content;
+                var stringIndex = llmResponseValue.IndexOf(Environment.NewLine, StringComparison.CurrentCulture);
+                int id;
+                Int32.TryParse(llmResponseValue.Substring(0, stringIndex), out id);
+
+                foreach (var dbPrediction in dbPredictions)
+                {
+                    if (id == dbPrediction.Id)
+                    {
+                        mapDbPredictionResponse.Add(dbPrediction, response);
+                        break;
+                    }
+                }
+            }
         }
         catch (Exception e)
         {
-
+            _logger.LogError(e.Message);
         }
+
+        return mapDbPredictionResponse;
     }
 
     public void ProcessApiResponse(ChatChoice openAiResponse, IDbPrediction dbPrediction)
     {
-        _logger.LogDebug("LLM response for {fileName} was {response}", dbPrediction.FileName, openAiResponse.Message.Content);
+        _logger.LogDebug("LLM response for {fileName} was {response}", dbPrediction.FileName,
+            openAiResponse.Message.Content);
         _logger.LogDebug("End of llm response for {fileName}", dbPrediction.FileName);
         string codeWithComments =
             _commentManipulationHelper.ReplaceCommentsInCode(openAiResponse.Message.Content, dbPrediction.InputCode);
 
         _predictionDatabaseService.UpdatePredictionResponseText(dbPrediction, openAiResponse.Message.Content);
         _predictionDatabaseService.UpdatePredictionEditedResponseText(dbPrediction, codeWithComments);
-        _signalRService.SendLlmResponseToFrontend(dbPrediction.ClientConnectionId, dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments, dbPrediction.InputCode);
+        _signalRService.SendLlmResponseToFrontend(dbPrediction.ClientConnectionId, dbPrediction.FileName,
+            dbPrediction.FileExtension, codeWithComments, dbPrediction.InputCode);
     }
 
-    private List<ChatCompletionsOptions> CreateChatCompletionsOptions(List<IDbPrediction> dbPredictions)
+    private List<ChatCompletionsOptions> PlaceIdAndCreateChatCompletions(List<IDbPrediction> dbPredictions)
     {
-        var chatCompletionOptions = new List<ChatCompletionsOptions>();
+        var chatCompletionsOptionsList = new List<ChatCompletionsOptions>();
+
         foreach (IDbPrediction dbPrediction in dbPredictions)
         {
-            chatCompletionOptions.Add(new ChatCompletionsOptions(new[]
-            {
-                new ChatMessage
-                {
-                    Role = ChatRole.System,
-                    Content = _openAiSettings.SystemPrompt
-                },
-                new ChatMessage { Role = ChatRole.User, Content = dbPrediction.Prompt }
-            })
-            {
-                Temperature = _openAiSettings.Temperature,
-                MaxTokens = _openAiSettings.MaxTokens
-            });
+            dbPrediction.Prompt = dbPrediction.Prompt.Replace("${ID}", dbPrediction.Id.ToString());
+            chatCompletionsOptionsList.Add(CreateChatCompletionsOptions(dbPrediction.Prompt));
         }
 
-        return chatCompletionOptions;
+        return chatCompletionsOptionsList;
     }
 
     private ChatCompletionsOptions CreateChatCompletionsOptions(string prompt)
