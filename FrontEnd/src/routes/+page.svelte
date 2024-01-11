@@ -76,13 +76,15 @@
 
 		connection.on('ReceiveLlmResponse', (_, fileName, contentType, fileContent, oldFileContent) => {
 			let diffDataStructure = CreateDiffDataStructure(oldFileContent, fileContent, { ignoreWhitespace: false });
-			let calculated = calculateLineNumbers(diffDataStructure);
+			let diffWithLineNumbers = calculateLineNumbers(diffDataStructure);
+
+			diffWithLineNumbers = removeFileWithoutChanges(diffWithLineNumbers);
 
 			diffStore.update((value) => {
 				const diff = {
 					id: value ? value.length : 0,
 					fileName: fileName,
-					diffs: calculated
+					diffs: diffWithLineNumbers
 				};
 
 				if (value) return [...value, diff];
@@ -92,6 +94,15 @@
 			progressInformationMessageStore.set(null);
 			errorMessageStore.set(null);
 		});
+	}
+
+	function removeFileWithoutChanges(differences) {
+		let hasNewValue = differences.some(diff => diff.newValue && diff.newValue.length > 0);
+		if (!hasNewValue) {
+			fileAmountStore.update(value => value - 1);
+			return differences.remove(differences.find(diff => !diff.newValue || diff.newValue.length === 0));
+		}
+		return differences;
 	}
 
 	async function submitForm(event) {

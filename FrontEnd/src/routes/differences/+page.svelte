@@ -25,7 +25,7 @@
             selectedDiffItemIndex = 0;
         }
     });
-
+console.log(diffDataStruct)
     function setDiffItemsOnClick(index) {
         selectedDiffItem = diffDataStruct[index];
         selectedDiffItemIndex = index;
