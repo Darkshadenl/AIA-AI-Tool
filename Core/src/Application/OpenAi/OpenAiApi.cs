@@ -51,10 +51,10 @@ public class OpenAiApi
         }
     }
 
-    public async Task<Dictionary<IDbPrediction, ChatCompletions>> SendOpenAiCompletionAsync(List<IDbPrediction> dbPredictions)
+    public async Task<Dictionary<IDbPrediction, ChatChoice>> SendOpenAiCompletionAsync(List<IDbPrediction> dbPredictions)
     {
         OpenAIClient openAiClient = new OpenAIClient(_openAiSettings.ApiToken);
-        var mapDbPredictionResponse = new Dictionary<IDbPrediction, ChatCompletions>();
+        var mapDbPredictionResponse = new Dictionary<IDbPrediction, ChatChoice>();
         var chatCompletionsOptionsList = PlaceIdAndCreateChatCompletions(dbPredictions);
 
         try
@@ -77,11 +77,10 @@ public class OpenAiApi
 
                 foreach (var dbPrediction in dbPredictions)
                 {
-                    if (id == dbPrediction.Id)
-                    {
-                        mapDbPredictionResponse.Add(dbPrediction, response);
-                        break;
-                    }
+                    if (id != dbPrediction.Id) continue;
+
+                    mapDbPredictionResponse.Add(dbPrediction, response.Value.Choices.First());
+                    break;
                 }
             }
         }

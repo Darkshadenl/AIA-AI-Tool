@@ -99,11 +99,23 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         }
 
         var time = DateTime.Now;
+        _logger.LogInformation("Starting LLM Processing");
         var gptCompletions = await _openAiApi.SendOpenAiCompletionAsync(dbPredictions);
+        _logger.LogInformation("Done with LLM Processing");
         var newTime = DateTime.Now;
-        _logger.LogDebug("Duration: {time} for {amount} of files", newTime - time, dbPredictions.Count);
+        _logger.LogInformation("Duration LLM: {time} for {amount} files", newTime - time, dbPredictions.Count);
 
-
+        var itime = DateTime.Now;
+        foreach (var completion in gptCompletions)
+        {
+            CheckIfErrors(completion.Value, completion.Key);
+            if (_errors.Count > 0) return;
+            _openAiApi.ProcessApiResponse(completion.Value, completion.Key);
+            _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", completion.Key.FileName, completion.Key.Id);
+        }
+        var inewTime = DateTime.Now;
+        _logger.LogInformation("Duration LLM: {time} for {amount} files", newTime - time, dbPredictions.Count);
+        _logger.LogInformation("Duration processing: {time}", inewTime - itime);
     }
 
     private async Task ProcessFile(ZipArchiveEntry file)
