@@ -109,38 +109,19 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             _errors.Add("Error: No content received from LLM.");
             return;
         }
-        
+
         var processResponseStartTime = DateTime.Now;
         foreach (var completion in gptCompletions)
         {
             CheckIfErrors(completion.Value, completion.Key);
             if (_errors.Count > 0) return;
-            
+
             _openAiApi.ProcessApiResponse(completion.Value, completion.Key);
             _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", completion.Key.FileName, completion.Key.Id);
         }
         var processResponseEndTime = DateTime.Now;
         _logger.LogInformation("Duration LLM: {time} for {amount} files", sendCompletionEndTime - sendCompletionStartTime, dbPredictions.Count);
         _logger.LogInformation("Duration processing: {time}", processResponseEndTime - processResponseStartTime);
-    }
-
-    private async Task ProcessFile(ZipArchiveEntry file)
-    {
-        var dbPrediction = await SavePredictionToDatabase(file);
-
-        if (EnvHelper.OpenAiEnabled())
-        {
-            var time = DateTime.Now;
-            var openAiResponse = await _openAiApi.SendOpenAiCompletion(dbPrediction);
-            var newTime = DateTime.Now;
-            _logger.LogDebug("Duration: {time} - Finish reason: {finishReason}", newTime - time, openAiResponse.FinishReason);
-
-            CheckIfErrors(openAiResponse, dbPrediction);
-            if (_errors.Count > 0) return;
-
-            _openAiApi.ProcessApiResponse(openAiResponse, dbPrediction);
-            _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.FileName, dbPrediction.Id);
-        }
     }
 
     private void CheckIfErrors(ChatChoice openAiResponse, IDbPrediction prediction)
