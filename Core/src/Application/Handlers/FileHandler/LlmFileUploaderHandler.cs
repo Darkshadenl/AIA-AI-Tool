@@ -105,6 +105,12 @@ public class LlmFileUploaderHandler : AbstractFileHandler
         var newTime = DateTime.Now;
         _logger.LogInformation("Duration LLM: {time} for {amount} files", newTime - time, dbPredictions.Count);
 
+        if (gptCompletions.Count == 0)
+        {
+            _errors.Add("Error: No content received from LLM.");
+            return;
+        }
+        
         var itime = DateTime.Now;
         foreach (var completion in gptCompletions)
         {
