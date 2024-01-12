@@ -98,12 +98,11 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             dbPredictions.Add(await SavePredictionToDatabase(file));
         }
 
-        var time = DateTime.Now;
         _logger.LogInformation("Starting LLM Processing");
+        var sendCompletionStartTime = DateTime.Now;
         var gptCompletions = await _openAiApi.SendOpenAiCompletionAsync(dbPredictions);
+        var sendCompletionEndTime = DateTime.Now;
         _logger.LogInformation("Done with LLM Processing");
-        var newTime = DateTime.Now;
-        _logger.LogInformation("Duration LLM: {time} for {amount} files", newTime - time, dbPredictions.Count);
 
         if (gptCompletions.Count == 0)
         {
@@ -111,17 +110,18 @@ public class LlmFileUploaderHandler : AbstractFileHandler
             return;
         }
         
-        var itime = DateTime.Now;
+        var processResponseStartTime = DateTime.Now;
         foreach (var completion in gptCompletions)
         {
             CheckIfErrors(completion.Value, completion.Key);
             if (_errors.Count > 0) return;
+            
             _openAiApi.ProcessApiResponse(completion.Value, completion.Key);
             _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", completion.Key.FileName, completion.Key.Id);
         }
-        var inewTime = DateTime.Now;
-        _logger.LogInformation("Duration LLM: {time} for {amount} files", newTime - time, dbPredictions.Count);
-        _logger.LogInformation("Duration processing: {time}", inewTime - itime);
+        var processResponseEndTime = DateTime.Now;
+        _logger.LogInformation("Duration LLM: {time} for {amount} files", sendCompletionEndTime - sendCompletionStartTime, dbPredictions.Count);
+        _logger.LogInformation("Duration processing: {time}", processResponseEndTime - processResponseStartTime);
     }
 
     private async Task ProcessFile(ZipArchiveEntry file)
