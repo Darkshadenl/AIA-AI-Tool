@@ -2,7 +2,6 @@ using System.IO.Abstractions;
 using aia_api.Application.Handlers.FileHandler;
 using aia_api.Application.OpenAi;
 using aia_api.Configuration.Records;
-using aia_api.Services;
 using InterfacesAia.Handlers;
 using InterfacesAia.Helpers;
 using InterfacesAia.Services;

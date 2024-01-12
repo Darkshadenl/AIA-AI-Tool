@@ -1,7 +1,6 @@
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
-using aia_api.Application.Helpers;
 using aia_api.Application.OpenAi;
 using aia_api.Configuration.Records;
 using aia_api.Database;
@@ -91,45 +90,49 @@ public class LlmFileUploaderHandler : AbstractFileHandler
 
     private async Task ProcessFiles(ZipArchive zipArchive)
     {
-        var number = 0;
+        var dbPredictions = new List<IDbPrediction>();
 
         foreach (var file in zipArchive.Entries)
         {
-            number++;
-            _logger.LogDebug("Uploading {number} of {Count} files... \nFilename: {FullName}", number, zipArchive.Entries.Count, file.FullName);
-            await ProcessFile(file);
+            dbPredictions.Add(await SavePredictionToDatabase(file));
         }
-    }
 
-    private async Task ProcessFile(ZipArchiveEntry file)
-    {
-        var dbPrediction = await SavePredictionToDatabase(file);
+        _logger.LogInformation("Starting LLM Processing");
+        var sendCompletionStartTime = DateTime.Now;
+        var gptCompletions = await _openAiApi.SendOpenAiCompletionAsync(dbPredictions);
+        var sendCompletionEndTime = DateTime.Now;
+        _logger.LogInformation("Done with LLM Processing");
 
-        if (EnvHelper.OpenAiEnabled())
+        if (gptCompletions.Count == 0)
         {
-            var time = DateTime.Now;
-            var openAiResponse = await _openAiApi.SendOpenAiCompletion(dbPrediction);
-            var newTime = DateTime.Now;
-            _logger.LogDebug("Duration: {time} - Finish reason: {finishReason}", newTime - time, openAiResponse.FinishReason);
-            
-            CheckIfErrors(openAiResponse, file);
+            _errors.Add("Error: No content received from LLM.");
+            return;
+        }
+
+        var processResponseStartTime = DateTime.Now;
+        foreach (var completion in gptCompletions)
+        {
+            CheckIfErrors(completion.Value, completion.Key);
             if (_errors.Count > 0) return;
 
-            _openAiApi.ProcessApiResponse(openAiResponse, dbPrediction);
-            _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", dbPrediction.FileName, dbPrediction.Id);
+            _openAiApi.ProcessApiResponse(completion.Value, completion.Key);
+            _logger.LogInformation("Llm response for {fileName} with id {id} was successfully processed", completion.Key.FileName, completion.Key.Id);
         }
+        var processResponseEndTime = DateTime.Now;
+        _logger.LogInformation("Duration LLM: {time} for {amount} files", sendCompletionEndTime - sendCompletionStartTime, dbPredictions.Count);
+        _logger.LogInformation("Duration processing: {time}", processResponseEndTime - processResponseStartTime);
     }
 
-    private void CheckIfErrors(ChatChoice openAiResponse, ZipArchiveEntry file)
+    private void CheckIfErrors(ChatChoice openAiResponse, IDbPrediction prediction)
     {
         if (openAiResponse.Message.Content.Length <= 0)
-            _errors.Add($"File: {file.FullName}, Error: No content received from LLM.");
+            _errors.Add($"File: {prediction.FileName}, Error: No content received from LLM.");
         if (openAiResponse.FinishReason == CompletionsFinishReason.TokenLimitReached)
-            _errors.Add($"File {file.FullName}, Error: Token limit reached for message.");
+            _errors.Add($"File {prediction.FileName}, Error: Token limit reached for message.");
         if (openAiResponse.FinishReason == CompletionsFinishReason.ContentFiltered)
-            _errors.Add($"File {file.FullName}, Error: Potentially sensitive content found and filtered from the LLM result.");
+            _errors.Add($"File {prediction.FileName}, Error: Potentially sensitive content found and filtered from the LLM result.");
         if (openAiResponse.FinishReason == null)
-            _errors.Add($"File {file.FullName}, Error: LLM is still processing the request.");
+            _errors.Add($"File {prediction.FileName}, Error: LLM is still processing the request.");
     }
 
     private HandlerResult CreateHandlerResult()

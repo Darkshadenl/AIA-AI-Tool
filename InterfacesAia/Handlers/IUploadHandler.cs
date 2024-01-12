@@ -1,5 +1,4 @@
-﻿
-namespace InterfacesAia.Handlers;
+﻿namespace InterfacesAia.Handlers;
 
 public interface IUploadHandler
 {
