@@ -1,7 +1,6 @@
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
-using aia_api.Application.Helpers;
 using aia_api.Application.OpenAi;
 using aia_api.Configuration.Records;
 using aia_api.Database;

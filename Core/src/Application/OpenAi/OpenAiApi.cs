@@ -1,6 +1,5 @@
 using aia_api.Application.Helpers;
 using aia_api.Configuration.Records;
-using aia_api.Database;
 using Azure;
 using Azure.AI.OpenAI;
 using InterfacesAia.Database;
