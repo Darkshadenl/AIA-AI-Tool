@@ -32,25 +32,6 @@ public class OpenAiApi
         _predictionDatabaseService = predictionDatabaseService;
     }
 
-    public async Task<ChatChoice> SendOpenAiCompletion(IDbPrediction dbPrediction)
-    {
-        ChatCompletionsOptions options = CreateChatCompletionsOptions(dbPrediction.Prompt);
-        OpenAIClient openAiClient = new OpenAIClient(_openAiSettings.ApiToken);
-
-        try
-        {
-            var response = await openAiClient.GetChatCompletionsAsync(_openAiSettings.ModelName, options);
-            _logger.LogDebug("LLM usage for {fileName} was {usage}", dbPrediction.FileName, response.Value.Usage);
-            return response.Value.Choices.First();
-        }
-        catch (Exception e)
-        {
-            await _signalRService.InvokeErrorMessage(dbPrediction.ClientConnectionId,
-                "The connection with the OpenAI API could not be established.");
-            throw;
-        }
-    }
-
     public async Task<Dictionary<IDbPrediction, ChatChoice>> SendOpenAiCompletionAsync(List<IDbPrediction> dbPredictions)
     {
         OpenAIClient openAiClient = new OpenAIClient(_openAiSettings.ApiToken);
