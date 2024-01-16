@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using InterfacesAia;
 using InterfacesAia.Database;
 
 namespace aia_api.Database;

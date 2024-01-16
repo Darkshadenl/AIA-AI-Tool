@@ -1,5 +1,3 @@
-using System.Drawing;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace aia_api.Application.Helpers;

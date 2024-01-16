@@ -30,34 +30,72 @@ public class OpenAiApi
         _predictionDatabaseService = predictionDatabaseService;
     }
 
-    public async Task<ChatChoice> SendOpenAiCompletion(IDbPrediction dbPrediction)
+    public async Task<Dictionary<IDbPrediction, ChatChoice>> SendOpenAiCompletionAsync(List<IDbPrediction> dbPredictions)
     {
-        ChatCompletionsOptions options = CreateChatCompletionsOptions(dbPrediction.Prompt);
         OpenAIClient openAiClient = new OpenAIClient(_openAiSettings.ApiToken);
+        var mapDbPredictionResponse = new Dictionary<IDbPrediction, ChatChoice>();
+        var chatCompletionsOptionsList = PlaceIdAndCreateChatCompletions(dbPredictions);
 
         try
         {
-            var response = await openAiClient.GetChatCompletionsAsync(_openAiSettings.ModelName, options);
-            _logger.LogDebug("LLM usage for {fileName} was {usage}", dbPrediction.FileName, response.Value.Usage);
-            return response.Value.Choices.First();
+            List<Task<Response<ChatCompletions>>> tasks = new List<Task<Response<ChatCompletions>>>();
+
+            foreach (var chatCompletionsOptions in chatCompletionsOptionsList)
+            {
+                tasks.Add(openAiClient.GetChatCompletionsAsync(_openAiSettings.ModelName, chatCompletionsOptions));
+            }
+
+            var responses = await Task.WhenAll(tasks);
+
+            foreach (var response in responses)
+            {
+                var llmResponseValue = response.Value.Choices.First().Message.Content;
+                var stringIndex = llmResponseValue.IndexOf(Environment.NewLine, StringComparison.CurrentCulture);
+                int id;
+                Int32.TryParse(llmResponseValue.Substring(0, stringIndex), out id);
+
+                foreach (var dbPrediction in dbPredictions)
+                {
+                    if (id != dbPrediction.Id) continue;
+
+                    mapDbPredictionResponse.Add(dbPrediction, response.Value.Choices.First());
+                    break;
+                }
+            }
         }
         catch (Exception e)
         {
-            await _signalRService.InvokeErrorMessage(dbPrediction.ClientConnectionId, "The connection with the OpenAI API could not be established.");
-            throw;
+            _logger.LogError(e.Message);
         }
+
+        return mapDbPredictionResponse;
     }
 
     public void ProcessApiResponse(ChatChoice openAiResponse, IDbPrediction dbPrediction)
     {
-        _logger.LogDebug("LLM response for {fileName} was {response}", dbPrediction.FileName, openAiResponse.Message.Content);
+        _logger.LogDebug("LLM response for {fileName} was {response}", dbPrediction.FileName,
+            openAiResponse.Message.Content);
         _logger.LogDebug("End of llm response for {fileName}", dbPrediction.FileName);
         string codeWithComments =
             _commentManipulationHelper.ReplaceCommentsInCode(openAiResponse.Message.Content, dbPrediction.InputCode);
 
         _predictionDatabaseService.UpdatePredictionResponseText(dbPrediction, openAiResponse.Message.Content);
         _predictionDatabaseService.UpdatePredictionEditedResponseText(dbPrediction, codeWithComments);
-        _signalRService.SendLlmResponse(dbPrediction.ClientConnectionId, dbPrediction.FileName, dbPrediction.FileExtension, codeWithComments, dbPrediction.InputCode);
+        _signalRService.SendLlmResponse(dbPrediction.ClientConnectionId, dbPrediction.FileName, dbPrediction.FileExtension, 
+            codeWithComments, dbPrediction.InputCode);
+    }
+
+    private List<ChatCompletionsOptions> PlaceIdAndCreateChatCompletions(List<IDbPrediction> dbPredictions)
+    {
+        var chatCompletionsOptionsList = new List<ChatCompletionsOptions>();
+
+        foreach (IDbPrediction dbPrediction in dbPredictions)
+        {
+            dbPrediction.Prompt = dbPrediction.Prompt.Replace("${ID}", dbPrediction.Id.ToString());
+            chatCompletionsOptionsList.Add(CreateChatCompletionsOptions(dbPrediction.Prompt));
+        }
+
+        return chatCompletionsOptionsList;
     }
 
     private ChatCompletionsOptions CreateChatCompletionsOptions(string prompt)

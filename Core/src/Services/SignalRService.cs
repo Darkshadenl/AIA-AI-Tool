@@ -1,4 +1,3 @@
-using InterfacesAia;
 using InterfacesAia.Services;
 using Microsoft.AspNetCore.SignalR.Client;
 
